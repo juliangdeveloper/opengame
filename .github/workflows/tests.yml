@@ -1,0 +1,78 @@
+name: tests
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  godot-skill-system:
+    name: Godot — skill system smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Godot 4.6.3
+        run: |
+          wget -q https://github.com/godotengine/godot-builds/releases/download/4.6.3-stable/Godot_v4.6.3-stable_linux.x86_64.zip
+          unzip -q Godot_v4.6.3-stable_linux.x86_64.zip
+          sudo mv Godot_v4.6.3-stable_linux.x86_64 /usr/local/bin/godot
+          sudo chmod +x /usr/local/bin/godot
+      - name: Headless import
+        run: godot --headless --quit --editor
+      - name: Run smoke test
+        run: godot --headless --script scripts/skill/smoke_test.gd
+
+  godot-mcp-jsonrpc:
+    name: Godot — MCP JSON-RPC test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Godot 4.6.3
+        run: |
+          wget -q https://github.com/godotengine/godot-builds/releases/download/4.6.3-stable/Godot_v4.6.3-stable_linux.x86_64.zip
+          unzip -q Godot_v4.6.3-stable_linux.x86_64.zip
+          sudo mv Godot_v4.6.3-stable_linux.x86_64 /usr/local/bin/godot
+          sudo chmod +x /usr/local/bin/godot
+      - name: Headless import
+        run: godot --headless --quit --editor
+      - name: Run MCP test
+        run: godot --headless scenes/mcp_test.tscn
+
+  mcp-server-e2e:
+    name: MCP server end-to-end
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Godot 4.6.3
+        run: |
+          wget -q https://github.com/godotengine/godot-builds/releases/download/4.6.3-stable/Godot_v4.6.3-stable_linux.x86_64.zip
+          unzip -q Godot_v4.6.3-stable_linux.x86_64.zip
+          sudo mv Godot_v4.6.3-stable_linux.x86_64 /usr/local/bin/godot
+          sudo chmod +x /usr/local/bin/godot
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install --break-system-packages -r mcp_bridge/requirements.txt
+          pip install --break-system-packages fastmcp
+      - name: Headless import
+        run: godot --headless --quit --editor
+      - name: Start Godot idle
+        run: godot --headless scenes/mcp_idle.tscn &
+      - name: Start bridge
+        run: python mcp_bridge/bridge.py &
+      - name: Wait for bridge health
+        run: |
+          for i in $(seq 1 20); do
+            if curl -sf http://127.0.0.1:8000/health | grep -q godot_connected; then
+              echo "bridge ready"
+              break
+            fi
+            sleep 1
+          done
+      - name: Run FastMCP E2E
+        run: python mcp_bridge/test_mcp_server.py

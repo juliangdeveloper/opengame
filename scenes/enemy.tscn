@@ -1,0 +1,88 @@
+[gd_scene load_steps=10 format=3 uid="uid://b2enemyuid"]
+
+[ext_resource type="Script" path="res://scripts/enemy.gd" id="1_enemy"]
+
+[sub_resource type="CapsuleShape3D" id="cs_enemy"]
+radius = 0.4
+height = 1.8
+
+[sub_resource type="CapsuleMesh" id="cm_enemy"]
+radius = 0.4
+height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="mat_enemy"]
+albedo_color = Color(0.8, 0.15, 0.2, 1)
+metallic = 0.0
+roughness = 0.7
+
+[sub_resource type="BoxShape3D" id="bs_attack"]
+size = Vector3(1.4, 0.9, 1.4)
+
+[sub_resource type="BoxMesh" id="bm_hitbox"]
+size = Vector3(1.4, 0.9, 1.4)
+
+[sub_resource type="StandardMaterial3D" id="mat_hitbox"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(1, 0.7, 0.1, 0.35)
+cull_mode = 2
+
+[sub_resource type="LabelSettings" id="lbl_hp"]
+font_size = 32
+outline_size = 4
+outline_color = Color(0, 0, 0, 1)
+font_color = Color(1, 1, 1, 1)
+
+[sub_resource type="LabelSettings" id="lbl_parry"]
+font_size = 72
+outline_size = 8
+outline_color = Color(0, 0, 0, 1)
+font_color = Color(1, 0.95, 0.2, 1)
+
+[node name="Enemy" type="CharacterBody3D"]
+collision_layer = 4
+collision_mask = 3
+script = ExtResource("1_enemy")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("cs_enemy")
+
+[node name="Model" type="Node3D" parent="."]
+
+[node name="Body" type="MeshInstance3D" parent="Model"]
+mesh = SubResource("cm_enemy")
+material_override = SubResource("mat_enemy")
+
+[node name="HP_Label" type="Label3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
+text = "100/100"
+label_settings = SubResource("lbl_hp")
+billboard = 1
+fixed_size = true
+outline_size = 0
+
+[node name="ParryLabel" type="Label3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, 0)
+text = "PARRY!"
+label_settings = SubResource("lbl_parry")
+billboard = 1
+fixed_size = true
+outline_size = 0
+visible = false
+
+[node name="AttackArea" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 2
+monitoring = false
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="AttackArea"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, -0.7)
+shape = SubResource("bs_attack")
+disabled = true
+
+[node name="HitboxDebug" type="MeshInstance3D" parent="AttackArea"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, -0.7)
+mesh = SubResource("bm_hitbox")
+material_override = SubResource("mat_hitbox")
+visible = false

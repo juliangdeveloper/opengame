@@ -1,0 +1,23 @@
+[gd_scene load_steps=4 format=3 uid="uid://b2dummyuid"]
+
+[ext_resource type="Script" path="res://scripts/dummy.gd" id="1_dummy"]
+
+[sub_resource type="CapsuleShape3D" id="cs_d"]
+radius = 0.5
+height = 2.0
+
+[sub_resource type="CapsuleMesh" id="cm_d"]
+radius = 0.5
+height = 2.0
+
+[node name="Dummy" type="CharacterBody3D"]
+collision_layer = 4
+collision_mask = 3
+script = ExtResource("1_dummy")
+
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("cs_d")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("cm_d")

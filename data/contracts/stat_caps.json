@@ -1,0 +1,61 @@
+{
+  "$schema": "stat_caps.v1",
+  "description": "Límites absolutos (hard ceiling) que el LLM no puede exceder al diseñar skills. El validador clampea designed_max a estos valores.",
+  "caps": {
+    "damage": {
+      "amount": { "max": 10000, "default": 100 },
+      "dpt": { "max": 1000, "default": 10 },
+      "crit_chance": { "max": 1.0, "default": 0.1 }
+    },
+    "radius": {
+      "value": { "max": 50, "default": 5 }
+    },
+    "duration": {
+      "value": { "max": 120, "default": 5 }
+    },
+    "cooldown": {
+      "value": { "max": 600, "default": 8, "description": "En segundos. Límite para 'cooldown muy largo' (ej. Puño Serio 24h se modela como 86400 pero validamos aparte)" }
+    },
+    "stamina_cost": {
+      "value": { "max": 200, "default": 50 }
+    },
+    "charge_time": {
+      "value": { "max": 10, "default": 0 }
+    },
+    "knockback": {
+      "value": { "max": 100, "default": 5 }
+    },
+    "heal": {
+      "amount": { "max": 10000, "default": 100 },
+      "amount_per_tick": { "max": 1000, "default": 10 }
+    },
+    "shield": {
+      "amount": { "max": 10000, "default": 200 }
+    },
+    "speed_mult": {
+      "value": { "max": 5.0, "min": 0.1, "default": 1.0 }
+    },
+    "damage_mult": {
+      "value": { "max": 10.0, "min": 0.1, "default": 1.0 }
+    },
+    "projectile": {
+      "speed": { "max": 200, "min": 5, "default": 30 },
+      "hitbox_radius": { "max": 5, "min": 0.1, "default": 0.5 },
+      "lifetime": { "max": 30, "min": 0.5, "default": 5 },
+      "count": { "max": 10, "min": 1, "default": 1 }
+    },
+    "npc_summon": {
+      "count": { "max": 10, "min": 1, "default": 1 },
+      "duration": { "max": 120, "min": 0, "default": 30 }
+    },
+    "status": {
+      "duration": { "max": 30, "min": 0.1, "default": 3 },
+      "magnitude": { "max": 1.0, "min": 0, "default": 1.0 }
+    }
+  },
+  "validation_notes": [
+    "El LLM puede diseñar valores arbitrarios en su JSON, pero el validador los clampea a estos caps antes de crear la SkillResource.",
+    "Si el LLM diseña un stat fuera del rango válido, el valor se clampea al max (o min) y se reporta warning al sistema de logs.",
+    "El cap real efectivo es el menor entre (designed_max * proficiency_tier_soft_cap) y el cap absoluto."
+  ]
+}
