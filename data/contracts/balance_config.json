@@ -1,0 +1,56 @@
+{
+  "$schema": "balance_config.v1",
+  "description": "Curvas, tiers y coeficientes del sistema de balanceo. Cuatro capas: forced floor, soft cap con diminishing, hard cap por proficiency, cost scaling.",
+  "balance": {
+    "starting_ratio": 0.05,
+    "soft_cap_ratio": 0.5,
+    "hard_cap_ratio": 1.0,
+    "soft_curve_exponent": 0.7,
+    "hard_curve_exponent": 0.5,
+    "cost_scales_with_power": true,
+    "cost_min_ratio": 0.3,
+    "cost_inverse_exponent": 0.5,
+    "max_points_per_stat": 5,
+    "max_atoms_per_skill": 5,
+    "max_targets_per_effect": 3,
+    "max_combo_triggers_per_skill": 2
+  },
+  "proficiency_tiers": [
+    { "name": "Novice",      "threshold": 0,   "soft_cap_ratio": 0.10, "description": "Cualquier skill capped a 10% del max." },
+    { "name": "Apprentice",  "threshold": 5,   "soft_cap_ratio": 0.20 },
+    { "name": "Adept",       "threshold": 15,  "soft_cap_ratio": 0.35 },
+    { "name": "Expert",      "threshold": 30,  "soft_cap_ratio": 0.50 },
+    { "name": "Master",      "threshold": 50,  "soft_cap_ratio": 0.65 },
+    { "name": "Grandmaster", "threshold": 75,  "soft_cap_ratio": 0.80 },
+    { "name": "Legend",      "threshold": 100, "soft_cap_ratio": 0.92 },
+    { "name": "Mythic",      "threshold": 150, "soft_cap_ratio": 1.00 }
+  ],
+  "formulas": {
+    "compute_effective": "value = soft_value + (hard_cap - soft_value) * level_bonus",
+    "soft_value": "lvl1 + (soft - lvl1) * (points / max_points) ^ soft_curve_exponent",
+    "lvl1": "designed_max * starting_ratio",
+    "soft": "designed_max * soft_cap_ratio",
+    "hard_cap": "designed_max * tier.soft_cap_ratio",
+    "level_bonus": "smoothstep(0, 1, (proficiency / tier.next_threshold) ^ hard_curve_exponent)",
+    "cost_effective": "designed_cost * (current_value / designed_max) ^ cost_inverse_exponent * (1 - cost_min_ratio) + designed_cost * cost_min_ratio",
+    "_formulas_notes": [
+      "El cost_effective se aplica a stats invertidas (cooldown, stamina, charge_time):",
+      "  - A lvl1 (value ≈ 5% de max), cost ≈ designed * cost_min_ratio (30%). Spam-friendly.",
+      "  - A max power (value ≈ 100% de max), cost ≈ designed. Caro pero potente.",
+      "Stamina NO usa cost_min_ratio floor exactamente: sigue la curva exponencial.",
+      "Cooldown y charge_time son inverted en semántica: 'menos' es mejor. Por eso el cost_effective es más alto cuando el value efectivo es bajo."
+    ]
+  },
+  "_example_kamehameha": {
+    "designed_max": { "damage": 100, "radius": 5, "cooldown": 8, "stamina": 50, "charge_time": 2 },
+    "table": [
+      { "stage": "Lvl1 Novice (0 pts)",   "damage": 5,   "radius": 0.25, "cooldown": 12, "stamina": 15 },
+      { "stage": "+2 pts damage",         "damage": 16,  "radius": 0.25, "cooldown": 12, "stamina": 15 },
+      { "stage": "+5 pts damage (soft)",  "damage": 50,  "radius": 0.25, "cooldown": 12, "stamina": 15 },
+      { "stage": "Adept (15 pts total)",  "damage": 65,  "radius": 0.5,  "cooldown": 10, "stamina": 20 },
+      { "stage": "Expert (30 pts)",       "damage": 80,  "radius": 1.0,  "cooldown": 8,  "stamina": 30 },
+      { "stage": "Master (50 pts)",       "damage": 87,  "radius": 1.4,  "cooldown": 7,  "stamina": 35 },
+      { "stage": "Mythic (150 pts)",      "damage": 100, "radius": 5.0,  "cooldown": 4,  "stamina": 50 }
+    ]
+  }
+}

@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"uraraka_zero_gravity_001"
+name = "Ingravidez"
+description = "Quita la gravedad al objetivo. Flota, indefenso, mientras sufre náuseas espaciales."
+flavor_text = "Zero gravity... shuush..."
+category = &"control_spatial"
+type = &"control"
+target_resolver = {
+"kind": "selected_npc",
+"params": {
+}
+}
+designed_max = {
+"duration": 10.0,
+"dpt": 5.0,
+"magnitude": 1.0,
+"cooldown": 15.0,
+"stamina": 20.0
+}
+atoms = [{
+"type": "status",
+"params": {
+"kind": "root",
+"duration": 10.0,
+"magnitude": 1.0
+},
+"applies_to_target": "primary"
+}, {
+"type": "dot",
+"params": {
+"dpt": 5.0,
+"duration": 10.0,
+"tick_interval": 2.0
+},
+"applies_to_target": "primary"
+}]
+combo_triggers = []
+costs = {
+"stamina": 20.0,
+"cooldown": 15.0
+}
+vfx = {
+"cast_particle": "pink_glow"
+}
+icon_hint = "uraraka"

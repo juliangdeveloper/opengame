@@ -1,0 +1,207 @@
+{
+  "$schema": "skill_atoms.v1",
+  "description": "Biblioteca cerrada de 14 átomos que el LLM puede componer para crear skills. Cada átomo es parametrizable. El LLM no puede inventar átomos nuevos.",
+  "atoms": {
+    "hit": {
+      "category": "damage",
+      "skill_types": ["damage"],
+      "params": {
+        "amount": { "type": "float", "required": true, "unit": "hp", "min": 0, "max": 10000, "cap": "designed_max_damage" },
+        "damage_type": { "type": "enum", "values": ["physical", "fire", "ice", "lightning", "energy", "mental", "true"], "default": "physical" },
+        "knockback": { "type": "float", "required": false, "default": 0.0, "unit": "meters", "min": 0, "max": 100 },
+        "crit_chance": { "type": "float", "required": false, "default": 0.0, "min": 0, "max": 1.0 }
+      },
+      "target_resolvers": ["selected_npc", "nearest_npc_in_range", "aoe", "self_aoe", "projectile_carrier", "chain"],
+      "description": "Golpe único de daño. Se ejecuta una vez al activarse el átomo."
+    },
+    "dot": {
+      "category": "damage",
+      "skill_types": ["damage"],
+      "params": {
+        "dpt": { "type": "float", "required": true, "unit": "hp/s", "min": 0, "max": 1000 },
+        "duration": { "type": "float", "required": true, "unit": "seconds", "min": 0.1, "max": 60 },
+        "tick_interval": { "type": "float", "required": true, "default": 1.0, "unit": "seconds", "min": 0.1, "max": 5 },
+        "status_on_tick": { "type": "string", "required": false, "default": "" }
+      },
+      "target_resolvers": ["selected_npc", "nearest_npc_in_range", "self_aoe"],
+      "description": "Damage over time. Tick damage cada tick_interval segundos durante duration."
+    },
+    "burst_aoe": {
+      "category": "damage",
+      "skill_types": ["damage"],
+      "params": {
+        "radius": { "type": "float", "required": true, "unit": "meters", "min": 0.1, "max": 50 },
+        "amount": { "type": "float", "required": true, "unit": "hp", "min": 0, "max": 10000 },
+        "damage_type": { "type": "enum", "values": ["physical", "fire", "ice", "lightning", "energy", "mental", "true"], "default": "energy" },
+        "falloff": { "type": "enum", "values": ["linear", "constant", "exponential"], "default": "linear" }
+      },
+      "target_resolvers": ["aoe", "self_aoe"],
+      "description": "Burst de daño instantáneo en un área. Falloff controla cómo cae el daño con la distancia al centro."
+    },
+    "persistent_zone": {
+      "category": "damage",
+      "skill_types": ["damage", "control"],
+      "params": {
+        "radius": { "type": "float", "required": true, "unit": "meters", "min": 0.1, "max": 50 },
+        "duration": { "type": "float", "required": true, "unit": "seconds", "min": 0.5, "max": 120 },
+        "dpt": { "type": "float", "required": true, "unit": "hp/s", "min": 0, "max": 1000 },
+        "tick_interval": { "type": "float", "required": true, "default": 1.0, "unit": "seconds", "min": 0.1, "max": 5 },
+        "slow_inside": { "type": "float", "required": false, "default": 0.0, "min": 0, "max": 1.0, "description": "0 = no slow, 1 = root" }
+      },
+      "target_resolvers": ["aoe", "self_aoe"],
+      "description": "Zona persistente que causa daño mientras estés dentro."
+    },
+    "heal": {
+      "category": "heal",
+      "skill_types": ["damage", "control"],
+      "params": {
+        "amount": { "type": "float", "required": true, "unit": "hp", "min": 0, "max": 10000 },
+        "target": { "type": "enum", "values": ["self", "selected_ally"], "default": "self" }
+      },
+      "target_resolvers": ["self", "selected_npc"],
+      "description": "Curación instantánea. Si target=self, se cura el caster. Si target=selected_ally, requiere un aliado seleccionado (placeholder para fase 5)."
+    },
+    "hot": {
+      "category": "heal",
+      "skill_types": ["damage", "control"],
+      "params": {
+        "amount_per_tick": { "type": "float", "required": true, "unit": "hp/s", "min": 0, "max": 1000 },
+        "duration": { "type": "float", "required": true, "unit": "seconds", "min": 0.5, "max": 60 },
+        "tick_interval": { "type": "float", "required": true, "default": 1.0, "unit": "seconds", "min": 0.1, "max": 5 },
+        "target": { "type": "enum", "values": ["self", "selected_ally"], "default": "self" }
+      },
+      "target_resolvers": ["self", "selected_npc"],
+      "description": "Curación over time (heal over time)."
+    },
+    "shield": {
+      "category": "heal",
+      "skill_types": ["damage", "control"],
+      "params": {
+        "amount": { "type": "float", "required": true, "unit": "hp", "min": 0, "max": 10000 },
+        "duration": { "type": "float", "required": true, "unit": "seconds", "min": 0.5, "max": 60 },
+        "absorbs": { "type": "enum", "values": ["physical", "magical", "all"], "default": "all" }
+      },
+      "target_resolvers": ["self", "selected_npc"],
+      "description": "Escudo que absorbe damage hasta amount o duration."
+    },
+    "move": {
+      "category": "motion",
+      "skill_types": ["control"],
+      "params": {
+        "kind": { "type": "enum", "values": ["dash", "teleport", "knockback", "pull", "launch"], "required": true },
+        "distance": { "type": "float", "required": true, "unit": "meters", "min": 0.5, "max": 200 },
+        "duration": { "type": "float", "required": false, "default": 0.0, "unit": "seconds", "min": 0, "max": 5, "description": "0 = instantáneo; >0 = gradual" },
+        "target_relative": { "type": "enum", "values": ["self", "selected_npc", "forward", "backward", "away_from_caster", "toward_caster"], "default": "forward" }
+      },
+      "target_resolvers": ["self", "selected_npc", "nearest_npc_in_range"],
+      "description": "Mueve al caster o al target. kind define cómo se mueve. distance y duration controlan magnitud y velocidad."
+    },
+    "morph": {
+      "category": "transform",
+      "skill_types": ["control"],
+      "params": {
+        "kind": { "type": "enum", "values": ["polymorph", "scale", "possess"], "required": true },
+        "into": { "type": "string", "required": false, "description": "Para polymorph: nombre del template. Para scale: 'small'/'big'. Para possess: 'caster'." },
+        "scale_multiplier": { "type": "float", "required": false, "min": 0.1, "max": 10.0 },
+        "duration": { "type": "float", "required": true, "unit": "seconds", "min": 0.5, "max": 60 },
+        "stat_overrides": { "type": "dict", "required": false, "description": "{stat_name: multiplier} mientras dura el morph" }
+      },
+      "target_resolvers": ["self", "selected_npc"],
+      "description": "Transforma al target. polymorph = cambia de forma; scale = cambia tamaño; possess = el caster controla el cuerpo del target."
+    },
+    "buff": {
+      "category": "transform",
+      "skill_types": ["damage", "control"],
+      "params": {
+        "stat": { "type": "enum", "values": ["damage_mult", "speed_mult", "defense", "stamina_regen", "skill_points_gain", "cooldown_mult", "knockback_resist"], "required": true },
+        "value": { "type": "float", "required": true, "min": -5.0, "max": 10.0 },
+        "kind": { "type": "enum", "values": ["add", "multiply"], "default": "multiply" },
+        "duration": { "type": "float", "required": true, "unit": "seconds", "min": 0.5, "max": 120 }
+      },
+      "target_resolvers": ["self", "selected_npc", "self_aoe"],
+      "description": "Buff/debuff de stat. kind=add suma, multiply multiplica. Para debuff usar value negativo."
+    },
+    "status": {
+      "category": "control",
+      "skill_types": ["control"],
+      "params": {
+        "kind": { "type": "enum", "values": ["stun", "root", "slow", "silence", "disarm", "sleep", "blind", "charm", "fear", "taunt", "confuse"], "required": true },
+        "duration": { "type": "float", "required": true, "unit": "seconds", "min": 0.1, "max": 30 },
+        "magnitude": { "type": "float", "required": false, "default": 1.0, "min": 0, "max": 1.0, "description": "Para slow=porcentaje de slow, para fear=intensidad, etc." }
+      },
+      "target_resolvers": ["selected_npc", "nearest_npc_in_range", "self_aoe"],
+      "description": "Aplica un estado. Cada kind tiene semántica fija: stun=no acciones, root=no movimiento, silence=no skills, disarm=no attacks, etc."
+    },
+    "mind": {
+      "category": "control",
+      "skill_types": ["control"],
+      "params": {
+        "kind": { "type": "enum", "values": ["mind_control", "charm", "taunt", "confuse"], "required": true },
+        "duration": { "type": "float", "required": true, "unit": "seconds", "min": 0.5, "max": 30 },
+        "post_effect": { "type": "enum", "values": ["attack_allies", "flee", "stop", "idle"], "default": "idle" }
+      },
+      "target_resolvers": ["selected_npc"],
+      "description": "Control mental. mind_control = el target obedece al caster. charm = el target no puede atacar al caster. taunt = el target solo ataca al caster. confuse = el target elige targets random."
+    },
+    "projectile": {
+      "category": "summon",
+      "skill_types": ["damage", "control"],
+      "params": {
+        "speed": { "type": "float", "required": true, "unit": "m/s", "min": 5, "max": 200 },
+        "hitbox_radius": { "type": "float", "required": true, "unit": "meters", "min": 0.1, "max": 5 },
+        "lifetime": { "type": "float", "required": true, "unit": "seconds", "min": 0.5, "max": 30 },
+        "on_hit_effect": { "type": "string", "required": false, "description": "atom_id a ejecutar al impactar" },
+        "friendly": { "type": "bool", "required": false, "default": false }
+      },
+      "target_resolvers": ["self"],
+      "description": "Spawnea un proyectil. Se mueve desde el caster en la dirección del target/forward. on_hit_effect se ejecuta al chocar con algo."
+    },
+    "npc": {
+      "category": "summon",
+      "skill_types": ["damage", "control"],
+      "params": {
+        "template": { "type": "string", "required": true, "description": "Nombre del NPC template (saibaman, clone, etc.)" },
+        "count": { "type": "int", "required": true, "min": 1, "max": 10 },
+        "duration": { "type": "float", "required": false, "default": 0, "unit": "seconds", "description": "0 = permanente hasta morir" },
+        "friendly": { "type": "bool", "required": true },
+        "on_spawn_effect": { "type": "string", "required": false },
+        "on_death_effect": { "type": "string", "required": false },
+        "position": { "type": "enum", "values": ["around_caster", "at_target", "in_front", "behind_target"], "default": "around_caster" }
+      },
+      "target_resolvers": ["self", "selected_npc", "aoe"],
+      "description": "Spawnea NPC(s). friendly=true = aliado, false = enemigo."
+    },
+    "zone": {
+      "category": "summon",
+      "skill_types": ["damage", "control"],
+      "params": {
+        "kind": { "type": "enum", "values": ["damage", "slow", "stun", "reveal", "heal", "shield"], "required": true },
+        "radius": { "type": "float", "required": true, "unit": "meters", "min": 0.5, "max": 50 },
+        "duration": { "type": "float", "required": true, "unit": "seconds", "min": 0.5, "max": 120 },
+        "tick_interval": { "type": "float", "required": false, "default": 1.0, "unit": "seconds", "min": 0.1, "max": 5 },
+        "friendly": { "type": "bool", "required": true },
+        "enter_effect": { "type": "string", "required": false, "description": "atom_id al entrar" }
+      },
+      "target_resolvers": ["self", "selected_npc", "aoe"],
+      "description": "Spawnea una zona persistente. kind define qué hace. friendly=true solo afecta aliados."
+    },
+    "trigger": {
+      "category": "trigger",
+      "skill_types": ["damage", "control"],
+      "params": {
+        "when": { "type": "enum", "values": ["on_hit", "on_kill", "on_take_damage", "on_health_below", "on_skill_used", "on_status_applied", "delay"], "required": true },
+        "delay": { "type": "float", "required": false, "default": 0.0, "unit": "seconds", "description": "Para when=delay" },
+        "condition": { "type": "string", "required": false, "description": "Expresión simple, ej 'enemy_hp > 0.5', 'caster_hp < 0.3'" },
+        "then_effect": { "type": "string", "required": false, "description": "atom_id dentro de esta skill a ejecutar" },
+        "then_skill_id": { "type": "string", "required": false, "description": "Para combo: ID de otra skill owned por el caster" }
+      },
+      "target_resolvers": ["self"],
+      "description": "Ejecuta un efecto retardado o condicional. Si when=on_skill_used y then_skill_id está set, es un combo trigger."
+    }
+  },
+  "limits": {
+    "max_atoms_per_skill": 5,
+    "max_combo_triggers_per_skill": 2,
+    "max_heal_atoms_per_skill": 1
+  }
+}

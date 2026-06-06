@@ -1,0 +1,11 @@
+[gd_scene format=3 uid="uid://playtestmain"]
+
+[ext_resource type="PackedScene" path="res://scenes/test_world.tscn" id="1_world"]
+[ext_resource type="Script" path="res://scripts/playtest_driver.gd" id="2_driver"]
+
+[node name="PlaytestRoot" type="Node"]
+
+[node name="Driver" type="Node" parent="."]
+script = ExtResource("2_driver")
+
+[node name="TestWorld" parent="." instance=ExtResource("1_world")]

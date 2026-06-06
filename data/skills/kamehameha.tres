@@ -1,0 +1,66 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"kamehameha_001"
+name = "Kamehameha"
+description = "Concentra energía en las palmas y libérala en un rayo frontal devastador. Maestro Roshi te enseñó este arte marcial."
+flavor_text = "¡Kame... Hame... HA!"
+category = &"ranged_projectile"
+type = &"damage"
+target_resolver = {
+"kind": "aoe",
+"params": {
+"position": "in_front_of_caster",
+"radius": 5.0,
+"distance_forward": 5.0
+}
+}
+designed_max = {
+"amount": 100.0,
+"radius": 5.0,
+"cooldown": 8.0,
+"stamina": 50.0,
+"charge_time": 2.0,
+"knockback": 8.0
+}
+atoms = [{
+"type": "buff",
+"params": {
+"stat": "damage_mult",
+"value": 2.0,
+"kind": "multiply",
+"duration": 3.0
+},
+"applies_to_target": "primary"
+}, {
+"type": "trigger",
+"params": {
+"when": "delay",
+"delay": 2.0,
+"then_effect": "burst_aoe"
+},
+"applies_to_target": "primary"
+}, {
+"type": "burst_aoe",
+"params": {
+"radius": 5.0,
+"amount": 100.0,
+"damage_type": "energy",
+"falloff": "linear"
+},
+"applies_to_target": "all_in_aoe"
+}]
+combo_triggers = []
+costs = {
+"stamina": 50.0,
+"cooldown": 8.0,
+"charge_time": 2.0
+}
+vfx = {
+"screen_text": "¡Kamehameha!",
+"cast_particle": "blue_glow"
+}
+icon_hint = "kamehameha"

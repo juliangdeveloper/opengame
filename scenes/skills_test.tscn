@@ -1,0 +1,13 @@
+[gd_scene load_steps=4 format=3 uid="uid://b2skillstest"]
+
+[ext_resource type="PackedScene" path="res://scenes/test_world.tscn" id="1_world"]
+[ext_resource type="PackedScene" path="res://scenes/hud.tscn" id="2_hud"]
+[ext_resource type="PackedScene" path="res://scenes/ui/skill_allocator.tscn" id="3_alloc"]
+
+[node name="SkillsTestRoot" type="Node"]
+
+[node name="TestWorld" parent="." instance=ExtResource("1_world")]
+
+[node name="HUD" parent="." instance=ExtResource("2_hud")]
+
+[node name="SkillAllocator" parent="." instance=ExtResource("3_alloc")]

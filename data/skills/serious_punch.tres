@@ -1,0 +1,58 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"serious_punch_001"
+name = "Puño Serio"
+description = "Un solo golpe. Sin adornos. Sin wasted movement. Termina cualquier combate."
+flavor_text = "..."
+category = &"melee_swing"
+type = &"damage"
+target_resolver = {
+"kind": "selected_npc",
+"params": {
+}
+}
+designed_max = {
+"amount": 9999.0,
+"knockback": 200.0,
+"cooldown": 86400.0,
+"stamina": 0.0
+}
+atoms = [{
+"type": "move",
+"params": {
+"kind": "dash",
+"distance": 3.0,
+"duration": 0.05,
+"target_relative": "forward"
+},
+"applies_to_target": "primary"
+}, {
+"type": "hit",
+"params": {
+"amount": 9999.0,
+"damage_type": "true"
+},
+"applies_to_target": "primary"
+}, {
+"type": "move",
+"params": {
+"kind": "launch",
+"distance": 200.0,
+"duration": 1.5,
+"target_relative": "forward"
+},
+"applies_to_target": "primary"
+}]
+combo_triggers = []
+costs = {
+"stamina": 0.0,
+"cooldown": 86400.0
+}
+vfx = {
+"screen_text": "..."
+}
+icon_hint = "fist"
