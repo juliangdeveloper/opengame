@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://b2skillstest"]
+[gd_scene format=3 uid="uid://b2skillstest"]
 
 [ext_resource type="PackedScene" path="res://scenes/test_world.tscn" id="1_world"]
 [ext_resource type="PackedScene" path="res://scenes/hud.tscn" id="2_hud"]

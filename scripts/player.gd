@@ -18,6 +18,8 @@ extends CharacterBody3D
 
 const SkillResource := preload("res://scripts/skill/skill_resource.gd")
 const SkillExecutorScript := preload("res://scripts/skill/skill_executor.gd")
+const SKILL_BOOK_SCENE := preload("res://scenes/ui/skill_book.tscn")
+const SKILL_BOOK_NODE_NAME := "SkillBook"
 
 # --- Signals for external observability (HUD, bot, sim logger) ---
 signal parry_succeeded(enemy: Node)
@@ -182,9 +184,12 @@ func _physics_process(delta: float) -> void:
 	# Data-driven skill system: input + cooldowns
 	_process_skill_cooldowns(delta)
 	handle_skill_input()
-	# Tab abre el skill allocator (UI)
+	# Tab abre el skill allocator viejo (UI clásica)
 	if Input.is_action_just_pressed("open_skill_allocator"):
 		_toggle_skill_allocator()
+	# SHARE button (PS4 JOY_BUTTON 8) abre el skill book (nuevo compendio)
+	if Input.is_action_just_pressed("open_skill_book"):
+		_toggle_skill_book()
 
 	# Tick parry window
 	if parry_window_timer > 0.0:
@@ -585,3 +590,24 @@ func _toggle_skill_allocator() -> void:
 	else:
 		if allocator.has_method("open"):
 			allocator.open()
+
+
+## Abre o cierra el Skill Book (libro de skills, SHARE button PS4).
+## Lazy-instancia la escena la primera vez y la agrega al root.
+var _skill_book_instance: Control = null
+
+func _toggle_skill_book() -> void:
+	if _skill_book_instance == null or not is_instance_valid(_skill_book_instance):
+		_skill_book_instance = SKILL_BOOK_SCENE.instantiate()
+		_skill_book_instance.name = SKILL_BOOK_NODE_NAME
+		get_tree().root.add_child(_skill_book_instance)
+		# Esperar un frame para que _ready corra antes de abrir
+		await get_tree().process_frame
+	if not is_instance_valid(_skill_book_instance):
+		return
+	if _skill_book_instance.visible:
+		if _skill_book_instance.has_method("close"):
+			_skill_book_instance.close()
+	else:
+		if _skill_book_instance.has_method("open"):
+			_skill_book_instance.open()
