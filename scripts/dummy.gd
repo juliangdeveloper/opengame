@@ -17,7 +17,7 @@ func _ready() -> void:
 	mesh_instance.material_override = mat
 
 
-func take_damage(amount: float) -> void:
+func take_damage(amount: float, source: Node = null) -> void:
 	hp -= amount
 	# visual feedback
 	mat.albedo_color = flash_color
