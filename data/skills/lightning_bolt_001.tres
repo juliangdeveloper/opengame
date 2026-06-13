@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"lightning_bolt_001"
+name = "Lightning Bolt"
+description = "Un rayo rápido de electricidad."
+flavor_text = "¡ZAP!"
+category = &"ranged_projectile"
+type = &"damage"
+target_resolver = {"kind": "player", "params": {}}
+designed_max = {"amount": 60, "cooldown": 1.5, "stamina": 18}
+atoms = [{"type": "burst_aoe", "params": {"amount": 60, "radius": 1.8, "damage_type": "energy", "element": "lightning", "applies_status": "stun", "status_chance": 0.3, "status_duration": 1, "falloff": "linear"}, "hitbox": {"shape": "sphere", "size": [1.8, 1.8, 1.8], "position": "at_target", "color": [0.7, 0.9, 1, 0.9], "emission": 6, "duration": 0.3}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 18, "cooldown": 1.5}
+vfx = {}
+icon_hint = ""

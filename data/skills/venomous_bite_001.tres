@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"venomous_bite_001"
+name = "Venomous Bite"
+description = "Mordida venenosa melee. Daño + poison DoT."
+flavor_text = "Muerde."
+category = &"melee_swing"
+type = &"damage"
+target_resolver = {"kind": "player", "params": {}}
+designed_max = {"amount": 30, "dpt": 5, "duration": 4, "cooldown": 2.5, "stamina": 10}
+atoms = [{"type": "hit", "params": {"amount": 30, "damage_type": "physical", "element": "dark", "knockback": 0, "applies_status": "poison", "status_chance": 1, "status_duration": 4}, "applies_to_target": "primary"}, {"type": "dot", "params": {"dpt": 5, "duration": 4, "tick_interval": 1, "element": "dark"}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 10, "cooldown": 2.5}
+vfx = {}
+icon_hint = ""

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"crucio_001"
+name = "Crucio"
+description = "Maldición de dolor. DoT damage + fear."
+flavor_text = "Siente mi dolor."
+category = &"dot"
+type = &"damage"
+target_resolver = {"kind": "player", "params": {}}
+designed_max = {"dpt": 10, "duration": 4, "cooldown": 10, "stamina": 20}
+atoms = [{"type": "dot", "params": {"dpt": 10, "duration": 4, "tick_interval": 1, "element": "dark", "applies_status": "fear", "status_chance": 1, "status_duration": 4}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 20, "cooldown": 10}
+vfx = {}
+icon_hint = ""

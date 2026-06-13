@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"dark_spike_001"
+name = "Dark Spike"
+description = "Púas oscuras del suelo en zona fija."
+flavor_text = "Desde abajo."
+category = &"zone"
+type = &"damage"
+target_resolver = {"kind": "player_aoe", "params": {"radius": 4}}
+designed_max = {"amount": 45, "radius": 4, "cooldown": 5, "stamina": 18}
+atoms = [{"type": "burst_aoe", "params": {"amount": 45, "radius": 4, "damage_type": "energy", "element": "dark", "falloff": "linear"}, "hitbox": {"shape": "sphere", "size": [4, 1.5, 4], "position": "in_front_of_caster", "color": [0.3, 0, 0.5, 0.9], "emission": 3, "duration": 0.4}, "applies_to_target": "all_in_aoe"}]
+combo_triggers = []
+costs = {"stamina": 18, "cooldown": 5}
+vfx = {}
+icon_hint = ""

@@ -136,6 +136,37 @@ def main():
                 {},
                 lambda r: r.get("count", 0) >= 3 and r.get("missions") is not None,
             ),
+            # === OBJECTIVES (5 nuevos) ===
+            (
+                "list_objectives",
+                {},
+                lambda r: r.get("count", 0) == 20 and r.get("objectives") is not None,
+            ),
+            (
+                "get_objective",
+                {"objective_id": "boss_frieza"},
+                lambda r: str(r.get("id", "")) == "boss_frieza" and r.get("display_name") == "Frieza",
+            ),
+            (
+                "start_objective",
+                {"objective_id": "boss_joker"},
+                lambda r: r.get("ok") is True and "boss_path" in r,
+            ),
+            (
+                "get_objective",
+                {"objective_id": "boss_joker"},
+                lambda r: r.get("is_active") is True,
+            ),
+            (
+                "complete_objective",
+                {"objective_id": "boss_joker"},
+                lambda r: r.get("ok") is True and r.get("reward_skill_points", 0) >= 10,
+            ),
+            (
+                "get_completed_objectives",
+                {},
+                lambda r: "boss_joker" in r.get("completed", []),
+            ),
         ]
         for name, args, check in tests:
             # Resolve chain (use cached result of a previous tool)
@@ -160,7 +191,7 @@ def main():
                         resolved_args["mission_id"] = mid
                     else:
                         resolved_args = dict(args)
-                        del resolved_args["_chain_from"]
+                        resolved_args.pop("_chain_from", None)
                 else:
                     resolved_args[k] = v
             try:

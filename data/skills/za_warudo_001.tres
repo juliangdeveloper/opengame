@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"za_warudo_001"
+name = "Za Warudo"
+description = "Detener el tiempo. El caster gana 3s de turnos extra. STUN al target."
+flavor_text = "¡Za Warudo!"
+category = &"ultimate"
+type = &"control"
+target_resolver = {"kind": "player", "params": {}}
+designed_max = {"duration": 3, "cooldown": 20, "stamina": 40}
+atoms = [{"type": "status", "params": {"kind": "stun", "duration": 3, "magnitude": 1}, "applies_to_target": "primary"}, {"type": "buff", "params": {"stat": "speed_mult", "value": 2, "kind": "multiply", "duration": 3}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 40, "cooldown": 20}
+vfx = {}
+icon_hint = ""

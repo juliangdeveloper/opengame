@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"firebreath_001"
+name = "Fire Breath"
+description = "Aliento de fuego en cono frontal."
+flavor_text = "Arde en el infierno."
+category = &"cone_aoe"
+type = &"damage"
+target_resolver = {"kind": "player_aoe", "params": {"radius": 6}}
+designed_max = {"amount": 70, "radius": 6, "cooldown": 7, "stamina": 25}
+atoms = [{"type": "burst_aoe", "params": {"amount": 70, "radius": 6, "damage_type": "fire", "element": "fire", "applies_status": "burn", "status_chance": 0.7, "status_duration": 3, "falloff": "linear"}, "hitbox": {"shape": "sphere", "size": [6, 2, 6], "position": "in_front_of_caster", "color": [1, 0.4, 0, 0.95], "emission": 8, "duration": 0.7}, "applies_to_target": "all_in_aoe"}]
+combo_triggers = []
+costs = {"stamina": 25, "cooldown": 7}
+vfx = {}
+icon_hint = ""

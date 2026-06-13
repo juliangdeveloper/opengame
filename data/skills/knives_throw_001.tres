@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"knives_throw_001"
+name = "Knives Throw"
+description = "Lanza 5 cuchillos rápidos."
+flavor_text = "¡MUERE!"
+category = &"ranged_projectile"
+type = &"damage"
+target_resolver = {"kind": "player", "params": {}}
+designed_max = {"amount": 25, "cooldown": 3, "stamina": 12}
+atoms = [{"type": "hit", "params": {"amount": 25, "damage_type": "physical", "element": "physical", "knockback": 0.5}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 12, "cooldown": 3}
+vfx = {}
+icon_hint = ""

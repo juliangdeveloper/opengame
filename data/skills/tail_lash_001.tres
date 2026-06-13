@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"tail_lash_001"
+name = "Tail Lash"
+description = "Azote con cola: hit + push back."
+flavor_text = "¡FUA!"
+category = &"melee_swing"
+type = &"damage"
+target_resolver = {"kind": "player", "params": {}}
+designed_max = {"amount": 35, "cooldown": 2, "stamina": 12}
+atoms = [{"type": "move", "params": {"kind": "dash", "distance": 2, "duration": 0.2, "target_relative": "forward"}, "applies_to_target": "primary"}, {"type": "hit", "params": {"amount": 35, "damage_type": "physical", "element": "physical", "knockback": 5}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 12, "cooldown": 2}
+vfx = {}
+icon_hint = ""

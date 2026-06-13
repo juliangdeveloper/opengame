@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"photon_sterilizer_001"
+name = "Photon Sterilizer"
+description = "Rayo de fotones. Largo y poderoso."
+flavor_text = "Esterilización."
+category = &"beam"
+type = &"damage"
+target_resolver = {"kind": "player", "params": {}}
+designed_max = {"amount": 100, "beam_length": 15, "radius": 1.5, "cooldown": 8, "stamina": 30}
+atoms = [{"type": "burst_aoe", "params": {"amount": 100, "radius": 1.5, "damage_type": "energy", "element": "light", "falloff": "linear"}, "hitbox": {"shape": "beam", "size": [1.5, 1.5, 15], "position": "in_front_of_caster", "distance_forward": 1, "color": [1, 1, 0.8, 0.95], "emission": 8, "duration": 0.7}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 30, "cooldown": 8}
+vfx = {}
+icon_hint = ""

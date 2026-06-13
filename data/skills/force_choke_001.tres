@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"force_choke_001"
+name = "Force Choke"
+description = "Agarra al objetivo con la Fuerza. Daño + STUN 1s."
+flavor_text = "Tú me decepcionas."
+category = &"control"
+type = &"damage"
+target_resolver = {"kind": "player", "params": {}}
+designed_max = {"amount": 40, "cooldown": 7, "stamina": 18}
+atoms = [{"type": "hit", "params": {"amount": 40, "damage_type": "energy", "element": "dark", "knockback": 0}, "applies_to_target": "primary"}, {"type": "status", "params": {"kind": "stun", "duration": 1, "magnitude": 1}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 18, "cooldown": 7}
+vfx = {}
+icon_hint = ""

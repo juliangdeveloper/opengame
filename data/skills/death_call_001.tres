@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"death_call_001"
+name = "Death Call"
+description = "Invoca espíritus que atacan al objetivo durante 4s."
+flavor_text = "¡Vengan, almas!"
+category = &"summon"
+type = &"damage"
+target_resolver = {"kind": "player", "params": {}}
+designed_max = {"dpt": 12, "duration": 4, "tick_interval": 0.5, "cooldown": 14, "stamina": 25}
+atoms = [{"type": "dot", "params": {"dpt": 12, "duration": 4, "tick_interval": 0.5, "element": "dark"}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 25, "cooldown": 14}
+vfx = {}
+icon_hint = ""

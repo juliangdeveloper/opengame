@@ -334,3 +334,45 @@ focus_mode = 1
 text = "↻ Siguiente misión"
 focus_neighbor_top = NodePath("../ActionButton")
 
+[node name="ObjectivesPanel" type="PanelContainer" parent="Panel/Margin/VBox"]
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ObjectivesMargin" type="MarginContainer" parent="Panel/Margin/VBox/ObjectivesPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="ObjectivesVBox" type="VBoxContainer" parent="Panel/Margin/VBox/ObjectivesPanel/ObjectivesMargin"]
+layout_mode = 2
+
+[node name="ObjHeader" type="Label" parent="Panel/Margin/VBox/ObjectivesPanel/ObjectivesMargin/ObjectivesVBox"]
+layout_mode = 2
+text = "— Objetivos: 20 villanos predefinidos —"
+horizontal_alignment = 1
+
+[node name="ObjSubHeader" type="Label" parent="Panel/Margin/VBox/ObjectivesPanel/ObjectivesMargin/ObjectivesVBox"]
+layout_mode = 2
+text = "Cada objetivo es un villano único con skills propias. Recompensa: 10-25 skill points."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="ObjScroll" type="ScrollContainer" parent="Panel/Margin/VBox/ObjectivesPanel/ObjectivesMargin/ObjectivesVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_horizontal = 3
+follow_focus = true
+
+[node name="ObjList" type="VBoxContainer" parent="Panel/Margin/VBox/ObjectivesPanel/ObjectivesMargin/ObjectivesVBox/ObjScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ObjBackButton" type="Button" parent="Panel/Margin/VBox/ObjectivesPanel/ObjectivesMargin/ObjectivesVBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 1
+text = "← Volver al menú principal"
+

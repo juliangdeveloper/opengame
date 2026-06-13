@@ -34,8 +34,8 @@ const BINDINGS: Array = [
 
 const SWALLOW_WINDOW := 0.2
 
-# Tab order. 0=Skills, 1=Misión, 2=Elementos, 3=Atributos, 4=Armas
-const TABS: Array = [&"skills", &"mision", &"elementos", &"atributos", &"armas"]
+# Tab order. 0=Skills, 1=Misión, 2=Objetivos, 3=Elementos, 4=Atributos, 5=Armas
+const TABS: Array = [&"skills", &"mision", &"objetivos", &"elementos", &"atributos", &"armas"]
 
 # --- Nodos (configurados en .tscn) ---
 @onready var skill_list: ItemList = $Panel/Margin/VBox/HBoxBody/LeftPanel/LeftMargin/Scroll/ItemList
@@ -54,7 +54,9 @@ const TABS: Array = [&"skills", &"mision", &"elementos", &"atributos", &"armas"]
 @onready var mission_panel: Control = $Panel/Margin/VBox/MissionPanel
 
 const MISSION_TAB_SCENE := preload("res://scripts/ui/mission_tab_content.gd")
+const OBJECTIVES_TAB_SCENE := preload("res://scripts/ui/objectives_tab_content.gd")
 var _mission_tab: RefCounted = null  # control node that implements mission tab logic
+var _objectives_tab: RefCounted = null  # control node that implements objectives tab logic
 
 var _scroll_left: ScrollContainer = null
 var _scroll_right: ScrollContainer = null
@@ -135,6 +137,12 @@ func _switch_to_tab(idx: int) -> void:
 	_update_top_bar_tabs()
 	_close_internal_no_release_pause()
 	_close_all_slave_tabs()
+	# Hide all panel-style tabs by default
+	if mission_panel != null:
+		mission_panel.visible = false
+	var obj_panel: Control = get_node_or_null("Panel/Margin/VBox/ObjectivesPanel")
+	if obj_panel != null:
+		obj_panel.visible = false
 	var tab_id_str: StringName = TABS[idx]
 	var parent_layer: Node = get_tree().root.find_child("SkillBookContainer", true, false)
 	if parent_layer == null:
@@ -158,6 +166,20 @@ func _switch_to_tab(idx: int) -> void:
 			if _mission_tab != null:
 				_mission_tab.refresh()
 				_mission_tab.focus_default()
+		return
+	if tab_id_str == &"objetivos":
+		visible = true
+		$HBoxBody.visible = false
+		if mission_panel != null:
+			mission_panel.visible = false
+		var objectives_panel_node: Control = get_node_or_null("Panel/Margin/VBox/ObjectivesPanel")
+		if objectives_panel_node != null:
+			objectives_panel_node.visible = true
+			# Attach the objectives tab content if not yet
+			if _objectives_tab == null:
+				_objectives_tab = OBJECTIVES_TAB_SCENE.new()
+			(_objectives_tab as Object).call("attach", self)
+			(_objectives_tab as Object).call("refresh")
 		return
 	if tab_id_str == &"elementos":
 		var ea: Control = parent_layer.get_node_or_null("ElementAllocator") if parent_layer else null
@@ -209,6 +231,7 @@ func _tab_display_name(id: StringName) -> String:
 	match id:
 		&"skills":    return "Skills"
 		&"mision":    return "Misión"
+		&"objetivos": return "Objetivos"
 		&"elementos": return "Elementos"
 		&"atributos": return "Atributos"
 		&"armas":     return "Armas"

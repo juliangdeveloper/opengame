@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"ice_lance_001"
+name = "Ice Lance"
+description = "Lanza de hielo piercing. Ralentiza al impactar."
+flavor_text = "Frío mortal."
+category = &"ranged_projectile"
+type = &"damage"
+target_resolver = {"kind": "player", "params": {}}
+designed_max = {"amount": 50, "cooldown": 1.8, "stamina": 18}
+atoms = [{"type": "burst_aoe", "params": {"amount": 50, "radius": 1.5, "damage_type": "energy", "element": "water", "applies_status": "slow", "status_chance": 0.7, "status_duration": 2.5, "falloff": "linear"}, "hitbox": {"shape": "sphere", "size": [1.5, 1.5, 1.5], "position": "at_target", "color": [0.6, 0.85, 1, 0.85], "emission": 4, "duration": 0.35}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 18, "cooldown": 1.8}
+vfx = {}
+icon_hint = ""

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"tornado_001"
+name = "Tornado"
+description = "Crea un tornado: zona de daño contínuo por 5s."
+flavor_text = "Remolino."
+category = &"zone"
+type = &"damage"
+target_resolver = {"kind": "player_aoe", "params": {"radius": 3}}
+designed_max = {"dpt": 8, "duration": 5, "radius": 3, "tick_interval": 0.5, "cooldown": 10, "stamina": 25}
+atoms = [{"type": "persistent_zone", "params": {"dpt": 8, "duration": 5, "radius": 3, "tick_interval": 0.5, "element": "air", "slow_inside": 0.3}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 25, "cooldown": 10}
+vfx = {}
+icon_hint = ""

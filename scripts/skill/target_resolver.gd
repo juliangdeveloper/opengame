@@ -86,8 +86,34 @@ static func resolve(
 				result.append(env_obj)
 		&"weapon_nearest":
 			var wpn := _get_nearest_weapon_in_range(caster, params)
-			if wpn:
+			if wpn != null:
 				result.append(wpn)
+		&"player":
+			# Para boss AI: el caster (boss) siempre apunta al player.
+			# Devuelve el nodo "Player" del root, sin importar distancia.
+			# Los átomos con falloff/range check se encargan de filtrar.
+			var pl: Node = null
+			if caster and caster.get_tree():
+				pl = caster.get_tree().root.find_child("Player", true, false)
+			if pl != null:
+				result.append(pl)
+		&"player_aoe":
+			# Boss AoE: devolver TODOS los nodos en PLAYER_GROUP dentro del radio.
+			# Útil para bosses con skills de "campo" que no quieren auto-dañarse.
+			var center_p: Node3D = null
+			if caster is Node3D:
+				center_p = caster as Node3D
+			elif params.has("position") and params.position is Vector3:
+				center_p = params.position
+			var r_p: float = float(params.get("radius", 6.0))
+			if center_p == null:
+				return result
+			var r2_p := r_p * r_p
+			for n in Engine.get_main_loop().get_nodes_in_group(PLAYER_GROUP) if Engine.get_main_loop() else []:
+				if not is_instance_valid(n) or not n is Node3D:
+					continue
+				if (n as Node3D).global_position.distance_squared_to(center_p.global_position) <= r2_p:
+					result.append(n)
 	return result
 
 

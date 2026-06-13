@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"charging_tackle_001"
+name = "Charging Tackle"
+description = "Carga frontal: avanza 8m e inflige daño al impacto."
+flavor_text = "¡CARGAAA!"
+category = &"dash"
+type = &"damage"
+target_resolver = {"kind": "player", "params": {}}
+designed_max = {"amount": 60, "distance": 8, "duration": 0.5, "cooldown": 5, "stamina": 20}
+atoms = [{"type": "move", "params": {"kind": "dash", "distance": 8, "duration": 0.5, "target_relative": "forward"}, "applies_to_target": "primary"}, {"type": "hit", "params": {"amount": 60, "damage_type": "physical", "element": "physical", "knockback": 4}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 20, "cooldown": 5}
+vfx = {}
+icon_hint = ""

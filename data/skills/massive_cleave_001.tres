@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"massive_cleave_001"
+name = "Massive Cleave"
+description = "Cleave 360° masivo. Alto daño en área."
+flavor_text = "Dragonslayer."
+category = &"aoe_burst"
+type = &"damage"
+target_resolver = {"kind": "player_aoe", "params": {"radius": 4}}
+designed_max = {"amount": 95, "radius": 4, "cooldown": 7, "stamina": 32}
+atoms = [{"type": "burst_aoe", "params": {"amount": 95, "radius": 4, "damage_type": "physical", "element": "physical", "falloff": "linear", "knockback": 4}, "hitbox": {"shape": "sphere", "size": [4, 1.5, 4], "position": "in_front_of_caster", "color": [0.8, 0, 0, 0.9], "emission": 5, "duration": 0.5}, "applies_to_target": "all_in_aoe"}]
+combo_triggers = []
+costs = {"stamina": 32, "cooldown": 7}
+vfx = {}
+icon_hint = ""
