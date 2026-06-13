@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"nen_pulse_001"
+name = "Nen Pulse"
+description = "Pulso de aura Nen. Reflect 50% del daño recibido por 4s."
+flavor_text = "Pulso Nen."
+category = &"buff"
+type = &"control"
+target_resolver = {"kind": "self", "params": {}}
+designed_max = {"duration": 4, "cooldown": 18, "stamina": 22, "shield_amount": 80}
+atoms = [{"type": "shield", "params": {"shield_amount": 80, "duration": 4, "element": "arcane"}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 22, "cooldown": 18}
+vfx = {}
+icon_hint = ""

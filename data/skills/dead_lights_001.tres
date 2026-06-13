@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"dead_lights_001"
+name = "Dead Lights"
+description = "Las luces muertas. MASSIVE daño si target HP<10%."
+flavor_text = "Flotando... en el vacío..."
+category = &"ultimate"
+type = &"damage"
+target_resolver = {"kind": "player", "params": {}}
+designed_max = {"amount": 500, "cooldown": 60, "stamina": 80}
+atoms = [{"type": "burst_aoe", "params": {"amount": 500, "radius": 3, "damage_type": "energy", "element": "arcane", "falloff": "linear"}, "hitbox": {"shape": "sphere", "size": [3, 3, 3], "position": "at_target", "color": [1, 0.5, 0.8, 1], "emission": 15, "duration": 1}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 80, "cooldown": 60}
+vfx = {}
+icon_hint = ""

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"summon_minion_001"
+name = "Summon Minion"
+description = "Invoca un esbirro menor. (placeholder: buff de stats)"
+flavor_text = "¡Levántate!"
+category = &"summon"
+type = &"control"
+target_resolver = {"kind": "self", "params": {}}
+designed_max = {"duration": 20, "cooldown": 30, "stamina": 30, "shield_amount": 50}
+atoms = [{"type": "shield", "params": {"shield_amount": 50, "duration": 20, "element": "dark"}, "applies_to_target": "primary"}, {"type": "buff", "params": {"stat": "damage_mult", "value": 1.2, "kind": "multiply", "duration": 20}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 30, "cooldown": 30}
+vfx = {}
+icon_hint = ""

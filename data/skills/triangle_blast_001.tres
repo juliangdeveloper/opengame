@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"triangle_blast_001"
+name = "Triangle Blast"
+description = "Tres proyectiles de magia oscura en cono."
+flavor_text = "Trifuerza."
+category = &"cone_aoe"
+type = &"damage"
+target_resolver = {"kind": "player_aoe", "params": {"radius": 6}}
+designed_max = {"amount": 50, "radius": 6, "cooldown": 6, "stamina": 22}
+atoms = [{"type": "burst_aoe", "params": {"amount": 50, "radius": 6, "damage_type": "energy", "element": "dark", "falloff": "linear"}, "hitbox": {"shape": "sphere", "size": [6, 2, 6], "position": "in_front_of_caster", "color": [0.6, 0, 1, 0.9], "emission": 6, "duration": 0.5}, "applies_to_target": "all_in_aoe"}]
+combo_triggers = []
+costs = {"stamina": 22, "cooldown": 6}
+vfx = {}
+icon_hint = ""

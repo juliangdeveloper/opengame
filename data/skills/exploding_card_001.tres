@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"exploding_card_001"
+name = "Exploding Card"
+description = "Carta explosiva: AoE pequeño + knockback."
+flavor_text = "¡BANG!"
+category = &"aoe_burst"
+type = &"damage"
+target_resolver = {"kind": "player_aoe", "params": {"radius": 3}}
+designed_max = {"amount": 50, "radius": 3, "cooldown": 4, "stamina": 15}
+atoms = [{"type": "burst_aoe", "params": {"amount": 50, "radius": 3, "damage_type": "fire", "element": "fire", "falloff": "linear", "knockback": 3}, "hitbox": {"shape": "sphere", "size": [3, 1, 3], "position": "in_front_of_caster", "color": [1, 0.6, 0, 0.9], "emission": 4, "duration": 0.4}, "applies_to_target": "all_in_aoe"}]
+combo_triggers = []
+costs = {"stamina": 15, "cooldown": 4}
+vfx = {}
+icon_hint = ""

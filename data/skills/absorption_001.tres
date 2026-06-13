@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"absorption_001"
+name = "Absorption"
+description = "Drena HP del objetivo (20) y se lo suma al caster."
+flavor_text = "Absorber."
+category = &"lifesteal"
+type = &"damage"
+target_resolver = {"kind": "player", "params": {}}
+designed_max = {"amount": 20, "heal_amount": 20, "cooldown": 6, "stamina": 15}
+atoms = [{"type": "hit", "params": {"amount": 20, "damage_type": "energy", "element": "dark", "knockback": 0}, "applies_to_target": "primary"}, {"type": "heal", "params": {"amount": 20}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 15, "cooldown": 6}
+vfx = {}
+icon_hint = ""

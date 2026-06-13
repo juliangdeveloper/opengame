@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"chain_lightning_001"
+name = "Chain Lightning"
+description = "Rayo que salta al target. (placeholder: hit + stun)"
+flavor_text = "Salta."
+category = &"chain"
+type = &"damage"
+target_resolver = {"kind": "player", "params": {}}
+designed_max = {"amount": 70, "cooldown": 5, "stamina": 18}
+atoms = [{"type": "hit", "params": {"amount": 70, "damage_type": "energy", "element": "lightning", "knockback": 1, "applies_status": "stun", "status_chance": 0.4, "status_duration": 1}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 18, "cooldown": 5}
+vfx = {}
+icon_hint = ""

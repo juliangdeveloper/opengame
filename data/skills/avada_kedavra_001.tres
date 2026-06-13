@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"avada_kedavra_001"
+name = "Avada Kedavra"
+description = "Maldición imperdonable. Damage masivo directo. 1.5s cast."
+flavor_text = "¡AVADA KEDAVRA!"
+category = &"ultimate"
+type = &"damage"
+target_resolver = {"kind": "player", "params": {}}
+designed_max = {"amount": 250, "charge_time": 1.5, "cooldown": 30, "stamina": 60}
+atoms = [{"type": "hit", "params": {"amount": 250, "damage_type": "true", "element": "dark", "knockback": 0}, "hitbox": {"shape": "sphere", "size": [1.5, 1.5, 1.5], "position": "at_target", "color": [0, 1, 0, 1], "emission": 12, "duration": 0.6}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 60, "cooldown": 30, "charge_time": 1.5}
+vfx = {}
+icon_hint = ""

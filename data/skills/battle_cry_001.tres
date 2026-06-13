@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"battle_cry_001"
+name = "Battle Cry"
+description = "Grito de guerra: +30% daño por 8s."
+flavor_text = "¡GUERRA!"
+category = &"buff"
+type = &"control"
+target_resolver = {"kind": "self", "params": {}}
+designed_max = {"duration": 8, "cooldown": 15, "stamina": 20}
+atoms = [{"type": "buff", "params": {"stat": "damage_mult", "value": 1.3, "kind": "multiply", "duration": 8}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 20, "cooldown": 15}
+vfx = {}
+icon_hint = ""

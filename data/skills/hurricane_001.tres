@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"hurricane_001"
+name = "Hurricane"
+description = "Huracán: zona de daño contínuo y slow por 6s."
+flavor_text = "Huracán."
+category = &"zone"
+type = &"damage"
+target_resolver = {"kind": "player_aoe", "params": {"radius": 5}}
+designed_max = {"dpt": 10, "duration": 6, "radius": 5, "tick_interval": 0.5, "cooldown": 14, "stamina": 30}
+atoms = [{"type": "persistent_zone", "params": {"dpt": 10, "duration": 6, "radius": 5, "tick_interval": 0.5, "element": "air", "slow_inside": 0.5}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 30, "cooldown": 14}
+vfx = {}
+icon_hint = ""

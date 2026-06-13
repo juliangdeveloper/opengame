@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"arrogant_dodge_001"
+name = "Arrogant Dodge"
+description = "Esquiva hacia atrás con i-frames. Counter listo."
+flavor_text = "¿Eso es todo?"
+category = &"tactical"
+type = &"control"
+target_resolver = {"kind": "self", "params": {}}
+designed_max = {"distance": 5, "duration": 0.4, "cooldown": 6, "stamina": 10}
+atoms = [{"type": "move", "params": {"kind": "dash", "distance": 5, "duration": 0.4, "target_relative": "backward", "i_frames": true, "blink": true}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 10, "cooldown": 6}
+vfx = {}
+icon_hint = ""

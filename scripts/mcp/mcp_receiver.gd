@@ -143,6 +143,16 @@ func _handle_command(cmd: Dictionary) -> void:
 			result = _cmd_get_mission_state(params)
 		"list_missions":
 			result = _cmd_list_missions(params)
+		"list_objectives":
+			result = _cmd_list_objectives(params)
+		"get_objective":
+			result = _cmd_get_objective(params)
+		"start_objective":
+			result = _cmd_start_objective(params)
+		"complete_objective":
+			result = _cmd_complete_objective(params)
+		"get_completed_objectives":
+			result = _cmd_get_completed_objectives(params)
 		# === SISTEMA DE ARMAS (Post-MVP) ===
 		"create_weapon":
 			result = _cmd_create_weapon(params)
@@ -482,6 +492,49 @@ func _cmd_list_missions(_params: Dictionary) -> Dictionary:
 	for m in missions:
 		out.append(mm.get_state_snapshot(StringName(String(m.id))))
 	return {"missions": out, "count": out.size(), "active_mission_id": String(mm.get_active_mission().id) if mm.get_active_mission() != null else ""}
+
+
+# === OBJECTIVE HANDLERS (5) ===
+# El LLM/jugador puede listar los 20 bosses, ver detalles, iniciar uno
+# (lo que spawnea el boss cerca del player), o forzar completado (testing).
+
+func _cmd_list_objectives(_params: Dictionary) -> Dictionary:
+	var om: Node = Engine.get_main_loop().root.get_node_or_null("ObjectivesManager")
+	if om == null:
+		return {"error": "ObjectivesManager not found", "objectives": []}
+	var objectives: Array = om.list_objectives()
+	return {"objectives": objectives, "count": objectives.size()}
+
+
+func _cmd_get_objective(params: Dictionary) -> Dictionary:
+	var om: Node = Engine.get_main_loop().root.get_node_or_null("ObjectivesManager")
+	if om == null:
+		return {"error": "ObjectivesManager not found"}
+	var id: StringName = StringName(String(params.get("objective_id", "")))
+	return om.get_objective(id)
+
+
+func _cmd_start_objective(params: Dictionary) -> Dictionary:
+	var om: Node = Engine.get_main_loop().root.get_node_or_null("ObjectivesManager")
+	if om == null:
+		return {"error": "ObjectivesManager not found"}
+	var id: StringName = StringName(String(params.get("objective_id", "")))
+	return om.start_objective(id)
+
+
+func _cmd_complete_objective(params: Dictionary) -> Dictionary:
+	var om: Node = Engine.get_main_loop().root.get_node_or_null("ObjectivesManager")
+	if om == null:
+		return {"error": "ObjectivesManager not found"}
+	var id: StringName = StringName(String(params.get("objective_id", "")))
+	return om.complete_objective(id)
+
+
+func _cmd_get_completed_objectives(_params: Dictionary) -> Dictionary:
+	var om: Node = Engine.get_main_loop().root.get_node_or_null("ObjectivesManager")
+	if om == null:
+		return {"error": "ObjectivesManager not found", "completed": []}
+	return {"completed": om.get_completed_objectives()}
 
 
 ## allocate_skill_points(params) — Asigna puntos a un stat de una skill owned.

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"supernova_001"
+name = "Supernova"
+description = "Explosión cósmica AoE enorme. Daño masivo en radio 10m."
+flavor_text = "Una estrella muere."
+category = &"ultimate"
+type = &"damage"
+target_resolver = {"kind": "player_aoe", "params": {"radius": 10}}
+designed_max = {"amount": 200, "radius": 10, "cooldown": 60, "stamina": 80}
+atoms = [{"type": "burst_aoe", "params": {"amount": 200, "radius": 10, "damage_type": "energy", "element": "arcane", "falloff": "linear", "knockback": 8}, "hitbox": {"shape": "sphere", "size": [10, 4, 10], "position": "in_front_of_caster", "color": [1, 0.95, 0.9, 1], "emission": 12, "duration": 1.5}, "applies_to_target": "all_in_aoe"}]
+combo_triggers = []
+costs = {"stamina": 80, "cooldown": 60}
+vfx = {}
+icon_hint = ""

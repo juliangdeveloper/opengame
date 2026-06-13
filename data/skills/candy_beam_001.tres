@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"candy_beam_001"
+name = "Candy Beam"
+description = "Transforma al objetivo en caramelo: STUN 2s."
+flavor_text = "Candy."
+category = &"debuff"
+type = &"control"
+target_resolver = {"kind": "player", "params": {}}
+designed_max = {"duration": 2, "cooldown": 11, "stamina": 18}
+atoms = [{"type": "status", "params": {"kind": "stun", "duration": 2, "magnitude": 1}, "applies_to_target": "primary"}, {"type": "hit", "params": {"amount": 25, "damage_type": "energy", "element": "arcane", "knockback": 0}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 18, "cooldown": 11}
+vfx = {}
+icon_hint = ""

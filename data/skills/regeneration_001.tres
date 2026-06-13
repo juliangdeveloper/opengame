@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"regeneration_001"
+name = "Regeneration"
+description = "Regenera 5% HP/seg por 6s."
+flavor_text = "Recuperarse."
+category = &"buff"
+type = &"control"
+target_resolver = {"kind": "self", "params": {}}
+designed_max = {"hot_per_tick": 5, "duration": 6, "tick_interval": 1, "cooldown": 18, "stamina": 25}
+atoms = [{"type": "hot", "params": {"hot_per_tick": 5, "duration": 6, "tick_interval": 1}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 25, "cooldown": 18}
+vfx = {}
+icon_hint = ""

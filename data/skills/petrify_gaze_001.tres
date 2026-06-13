@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"petrify_gaze_001"
+name = "Petrify Gaze"
+description = "Mirada petrificante. STUN 2.5s si el target está de frente."
+flavor_text = "No me mires."
+category = &"debuff"
+type = &"control"
+target_resolver = {"kind": "player", "params": {}}
+designed_max = {"duration": 2.5, "cooldown": 12, "stamina": 18}
+atoms = [{"type": "status", "params": {"kind": "stun", "duration": 2.5, "magnitude": 1}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 18, "cooldown": 12}
+vfx = {}
+icon_hint = ""

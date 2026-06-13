@@ -193,6 +193,45 @@ def list_missions() -> Dict[str, Any]:
 
 
 @mcp.tool()
+def list_objectives() -> Dict[str, Any]:
+    """List all 20 predefined objective bosses with their stats, skills, weakness, and reward.
+
+    Each objective is a unique villain inspired by famous characters, with custom
+    skills, weapons, behavior, and elemental weaknesses. Defeating them grants many
+    skill_points (10-25 depending on tier).
+    """
+    return _call_godot("list_objectives", {})
+
+
+@mcp.tool()
+def get_objective(objective_id: str) -> Dict[str, Any]:
+    """Get the full details of one objective: stats, skill_ids, weakness, strategy hint."""
+    return _call_godot("get_objective", {"objective_id": objective_id})
+
+
+@mcp.tool()
+def start_objective(objective_id: str) -> Dict[str, Any]:
+    """Spawn the objective boss near the player. Returns the boss path.
+
+    The boss is alive until killed; rewards are granted on death.
+    Only one objective can be active at a time.
+    """
+    return _call_godot("start_objective", {"objective_id": objective_id})
+
+
+@mcp.tool()
+def complete_objective(objective_id: str) -> Dict[str, Any]:
+    """Mark an objective as completed and grant its reward. Idempotent."""
+    return _call_godot("complete_objective", {"objective_id": objective_id})
+
+
+@mcp.tool()
+def get_completed_objectives() -> Dict[str, Any]:
+    """List IDs of objectives already completed by the player (persisted to disk)."""
+    return _call_godot("get_completed_objectives", {})
+
+
+@mcp.tool()
 def set_objective(text: str) -> Dict[str, Any]:
     """Set the HUD objective text."""
     return _call_godot("set_objective", {"text": text})

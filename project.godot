@@ -21,6 +21,7 @@ config/icon="res://icon.svg"
 ProgressionState="*res://scripts/skill/progression_state.gd"
 MCPReceiver="*res://scripts/mcp/mcp_receiver.gd"
 MissionManager="*res://scripts/missions/mission_manager.gd"
+ObjectivesManager="*res://scripts/objectives/objectives_manager.gd"
 
 [display]
 

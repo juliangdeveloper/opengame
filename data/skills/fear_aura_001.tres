@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"fear_aura_001"
+name = "Fear Aura"
+description = "Aura de miedo: reduce daño del objetivo 30% por 5s."
+flavor_text = "Terror."
+category = &"debuff"
+type = &"control"
+target_resolver = {"kind": "player_aoe", "params": {"radius": 8}}
+designed_max = {"duration": 5, "cooldown": 14, "stamina": 20}
+atoms = [{"type": "status", "params": {"kind": "weaken", "duration": 5, "magnitude": 0.7}, "applies_to_target": "all_in_aoe"}]
+combo_triggers = []
+costs = {"stamina": 20, "cooldown": 14}
+vfx = {}
+icon_hint = ""

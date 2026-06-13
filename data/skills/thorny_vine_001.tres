@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"thorny_vine_001"
+name = "Thorny Vine"
+description = "Zona de vides espinosas. Daño + root 4s."
+flavor_text = "¡Vides!"
+category = &"zone"
+type = &"damage"
+target_resolver = {"kind": "player_aoe", "params": {"radius": 3}}
+designed_max = {"dpt": 7, "duration": 4, "radius": 3, "tick_interval": 1, "cooldown": 10, "stamina": 22}
+atoms = [{"type": "persistent_zone", "params": {"dpt": 7, "duration": 4, "radius": 3, "tick_interval": 1, "element": "earth", "slow_inside": 0.7}, "applies_to_target": "primary"}, {"type": "status", "params": {"kind": "root", "duration": 4, "magnitude": 1}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 22, "cooldown": 10}
+vfx = {}
+icon_hint = ""

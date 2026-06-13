@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"break_defense_001"
+name = "Break Defense"
+description = "Quita toda la defensa del objetivo y lo aturde 1.5s."
+flavor_text = "¡ROMPER!"
+category = &"debuff"
+type = &"control"
+target_resolver = {"kind": "player", "params": {}}
+designed_max = {"duration": 1.5, "cooldown": 14, "stamina": 20}
+atoms = [{"type": "status", "params": {"kind": "stun", "duration": 1.5, "magnitude": 1}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 20, "cooldown": 14}
+vfx = {}
+icon_hint = ""

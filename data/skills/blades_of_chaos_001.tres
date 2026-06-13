@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"blades_of_chaos_001"
+name = "Blades of Chaos"
+description = "Cadenas con cuchillas. Daño + bleed."
+flavor_text = "Aaaargh!"
+category = &"melee_swing"
+type = &"damage"
+target_resolver = {"kind": "player", "params": {}}
+designed_max = {"amount": 55, "dpt": 4, "duration": 4, "cooldown": 4, "stamina": 18}
+atoms = [{"type": "hit", "params": {"amount": 55, "damage_type": "physical", "element": "fire", "knockback": 2, "applies_status": "bleed", "status_chance": 0.8, "status_duration": 4}, "applies_to_target": "primary"}, {"type": "dot", "params": {"dpt": 4, "duration": 4, "tick_interval": 1, "element": "fire"}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 18, "cooldown": 4}
+vfx = {}
+icon_hint = ""

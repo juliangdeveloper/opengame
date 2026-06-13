@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"dark_bolt_001"
+name = "Dark Bolt"
+description = "Rayo de energía oscura. Daño puro."
+flavor_text = "La oscuridad consume."
+category = &"ranged_projectile"
+type = &"damage"
+target_resolver = {"kind": "player", "params": {}}
+designed_max = {"amount": 45, "cooldown": 1.2, "stamina": 14}
+atoms = [{"type": "burst_aoe", "params": {"amount": 45, "radius": 1.6, "damage_type": "energy", "element": "dark", "falloff": "linear"}, "hitbox": {"shape": "sphere", "size": [1.6, 1.6, 1.6], "position": "at_target", "color": [0.3, 0, 0.5, 0.9], "emission": 5, "duration": 0.3}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 14, "cooldown": 1.2}
+vfx = {}
+icon_hint = ""

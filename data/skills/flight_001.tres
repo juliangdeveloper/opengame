@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"flight_001"
+name = "Flight"
+description = "Vuela. El caster no puede ser target de melee por 4s."
+flavor_text = "¡Arriba!"
+category = &"tactical"
+type = &"control"
+target_resolver = {"kind": "self", "params": {}}
+designed_max = {"distance": 3, "duration": 4, "cooldown": 18, "stamina": 25}
+atoms = [{"type": "move", "params": {"kind": "launch", "distance": 3, "duration": 0.5, "target_relative": "self", "i_frames": true}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 25, "cooldown": 18}
+vfx = {}
+icon_hint = ""

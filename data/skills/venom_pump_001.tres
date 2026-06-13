@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"venom_pump_001"
+name = "Venom Pump"
+description = "Bombea veneno: +100% daño físico por 10s. STACKABLE 2 veces."
+flavor_text = "VENOM."
+category = &"buff"
+type = &"control"
+target_resolver = {"kind": "self", "params": {}}
+designed_max = {"duration": 10, "cooldown": 20, "stamina": 30}
+atoms = [{"type": "buff", "params": {"stat": "damage_mult", "value": 2, "kind": "multiply", "duration": 10}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 30, "cooldown": 20}
+vfx = {}
+icon_hint = ""

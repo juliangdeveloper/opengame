@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"dark_pact_001"
+name = "Dark Pact"
+description = "Sacrifica 30 HP propio por +50% daño 10s."
+flavor_text = "Pacto oscuro."
+category = &"buff"
+type = &"control"
+target_resolver = {"kind": "self", "params": {}}
+designed_max = {"duration": 10, "cooldown": 25, "stamina": 0, "amount": 30}
+atoms = [{"type": "hit", "params": {"amount": 30, "damage_type": "energy", "element": "dark", "knockback": 0}, "applies_to_target": "primary"}, {"type": "buff", "params": {"stat": "damage_mult", "value": 1.5, "kind": "multiply", "duration": 10}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 0, "cooldown": 25}
+vfx = {}
+icon_hint = ""

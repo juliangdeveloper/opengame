@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"helm_splitter_001"
+name = "Helm Splitter"
+description = "Hachazo que parte el aire. Daño masivo single target."
+flavor_text = "¡DIVIDE!"
+category = &"melee_swing"
+type = &"damage"
+target_resolver = {"kind": "player", "params": {}}
+designed_max = {"amount": 90, "cooldown": 6, "stamina": 28}
+atoms = [{"type": "hit", "params": {"amount": 90, "damage_type": "physical", "element": "fire", "knockback": 5}, "hitbox": {"shape": "sphere", "size": [1.5, 1.5, 1.5], "position": "at_target", "color": [1, 0.3, 0, 0.95], "emission": 6, "duration": 0.3}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 28, "cooldown": 6}
+vfx = {}
+icon_hint = ""

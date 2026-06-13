@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"cannon_arm_001"
+name = "Cannon Arm"
+description = "Brazo de cañón. Disparo explosivo."
+flavor_text = "¡BOOM!"
+category = &"ranged_projectile"
+type = &"damage"
+target_resolver = {"kind": "player", "params": {}}
+designed_max = {"amount": 75, "cooldown": 5, "stamina": 22}
+atoms = [{"type": "burst_aoe", "params": {"amount": 75, "radius": 2, "damage_type": "physical", "element": "fire", "falloff": "linear", "knockback": 3}, "hitbox": {"shape": "sphere", "size": [2, 2, 2], "position": "at_target", "color": [1, 0.6, 0, 0.95], "emission": 5, "duration": 0.4}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 22, "cooldown": 5}
+vfx = {}
+icon_hint = ""

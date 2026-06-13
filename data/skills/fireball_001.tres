@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"fireball_001"
+name = "Fireball"
+description = "Bola de fuego que inflige daño y aplica quemadura."
+flavor_text = "Arde."
+category = &"ranged_projectile"
+type = &"damage"
+target_resolver = {"kind": "player", "params": {}}
+designed_max = {"amount": 55, "cooldown": 1.5, "stamina": 16}
+atoms = [{"type": "burst_aoe", "params": {"amount": 55, "radius": 2, "damage_type": "fire", "element": "fire", "applies_status": "burn", "status_chance": 0.6, "status_duration": 3, "falloff": "linear"}, "hitbox": {"shape": "sphere", "size": [2, 2, 2], "position": "at_target", "color": [1, 0.5, 0.1, 0.9], "emission": 5, "duration": 0.4}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 16, "cooldown": 1.5}
+vfx = {}
+icon_hint = ""

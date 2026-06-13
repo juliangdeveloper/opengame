@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"lich_form_001"
+name = "Lich Form"
+description = "El caster entra en forma lich. Inmune a daño durante 5s."
+flavor_text = "Soy inmortal."
+category = &"buff"
+type = &"control"
+target_resolver = {"kind": "self", "params": {}}
+designed_max = {"duration": 5, "cooldown": 30, "stamina": 35, "shield_amount": 999}
+atoms = [{"type": "shield", "params": {"shield_amount": 9999, "duration": 5, "element": "dark"}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 35, "cooldown": 30}
+vfx = {}
+icon_hint = ""

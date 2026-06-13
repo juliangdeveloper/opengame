@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"ground_pound_001"
+name = "Ground Pound"
+description = "Salta y golpea el suelo. AoE físico grande."
+flavor_text = "¡BOOM!"
+category = &"aoe_burst"
+type = &"damage"
+target_resolver = {"kind": "player_aoe", "params": {"radius": 5}}
+designed_max = {"amount": 80, "radius": 5, "cooldown": 8, "stamina": 30}
+atoms = [{"type": "burst_aoe", "params": {"amount": 80, "radius": 5, "damage_type": "physical", "element": "physical", "falloff": "linear", "knockback": 6}, "hitbox": {"shape": "sphere", "size": [5, 1, 5], "position": "in_front_of_caster", "color": [0.7, 0.5, 0.3, 0.9], "emission": 4, "duration": 0.6}, "applies_to_target": "all_in_aoe"}]
+combo_triggers = []
+costs = {"stamina": 30, "cooldown": 8}
+vfx = {}
+icon_hint = ""

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+
+id = &"smoke_bomb_001"
+name = "Smoke Bomb"
+description = "Bomba de humo. Invisibilidad 3s + teleport corto."
+flavor_text = "¡POOF!"
+category = &"tactical"
+type = &"control"
+target_resolver = {"kind": "self", "params": {}}
+designed_max = {"distance": 8, "duration": 3, "cooldown": 12, "stamina": 18}
+atoms = [{"type": "move", "params": {"kind": "teleport", "distance": 8, "duration": 0, "target_relative": "backward", "i_frames": true, "blink": true}, "applies_to_target": "primary"}]
+combo_triggers = []
+costs = {"stamina": 18, "cooldown": 12}
+vfx = {}
+icon_hint = ""
