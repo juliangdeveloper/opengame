@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"esquivar_001"
+name = "Esquivar"
+description = "Dash con i-frames. Consume stamina; al terminar, vulnerable de nuevo."
+flavor_text = "El movimiento es vida. Quien se queda quieto, muere."
+category = &"control_dash"
+type = &"control"
+target_resolver = {
+"kind": "self",
+"params": {}
+}
+designed_max = {
+"distance": 4.0,
+"duration": 0.3,
+"stamina": 18.0,
+"cooldown": 0.4
+}
+atoms = [{
+"type": "move",
+"params": {
+"kind": "dash",
+"target_relative": "forward",
+"distance": 4.0,
+"duration": 0.3,
+"i_frames": true,
+"blink": true,
+"stamina_drain": 18.0
+},
+"applies_to_target": "self"
+}]
+combo_triggers = []
+costs = {
+"stamina": 18.0,
+"cooldown": 0.4
+}
+vfx = {
+"cast_sound": "dodge_whoosh"
+}
+icon_hint = "dodge"

@@ -1,0 +1,68 @@
+extends SceneTree
+
+# Test: toggle from player (Share button) — the full Share-button lifecycle.
+
+var SKILL_BOOK_SCENE: PackedScene = preload("res://scenes/ui/skill_book.tscn")
+
+
+func _initialize() -> void:
+	print("=== PLAYER TOGGLE: Share button lifecycle ===")
+	var ps_scene: PackedScene = load("res://scenes/play.tscn")
+	var play := ps_scene.instantiate()
+	root.add_child(play)
+	await process_frame
+	await process_frame
+
+	var player: Node = root.find_child("Player", true, false)
+	if player == null:
+		print("FAIL: Player not found")
+		quit()
+		return
+	print("[setup] Player found: %s" % player.name)
+
+	# 1st toggle: open
+	player._toggle_skill_book()
+	await process_frame
+	await process_frame
+	var sb: Node = root.find_child("SkillBook", true, false)
+	var ok1: bool = sb != null and sb.visible and paused
+	print("[1st toggle - open] %s (sb.visible=%s, paused=%s)" % ["PASS" if ok1 else "FAIL", sb.visible, paused])
+
+	# 2nd toggle: close
+	player._toggle_skill_book()
+	await process_frame
+	var ok2: bool = sb != null and not sb.visible and not paused
+	print("[2nd toggle - close] %s (sb.visible=%s, paused=%s)" % ["PASS" if ok2 else "FAIL", sb.visible, paused])
+
+	# 3rd toggle: open again (re-uses same instance)
+	player._toggle_skill_book()
+	await process_frame
+	await process_frame
+	var ok3: bool = sb != null and sb.visible and paused
+	print("[3rd toggle - reopen] %s (sb.visible=%s, paused=%s)" % ["PASS" if ok3 else "FAIL", sb.visible, paused])
+
+	# Now navigate to elementos and toggle from there (should close everything)
+	sb._on_next_tab()
+	await process_frame
+	await process_frame
+	var ea: Node = root.find_child("SkillBookContainer", true, false).get_node_or_null("ElementAllocator")
+	var ok4: bool = not sb.visible and ea.visible and paused
+	print("[to-elementos] %s (sb=%s, ea=%s, paused=%s)" % ["PASS" if ok4 else "FAIL", sb.visible, ea.visible, paused])
+
+	# Toggle from here should close EA and REOPEN the master (UX: Share = "salir del sub-tab")
+	player._toggle_skill_book()
+	await process_frame
+	var ok5: bool = sb.visible and not ea.visible and paused
+	print("[toggle-from-elementos] %s (sb=%s, ea=%s, paused=%s)" % ["PASS" if ok5 else "FAIL", sb.visible, ea.visible, paused])
+	if not ok5:
+		print("    EXPECTED: sb.visible=true, ea.visible=false, paused=true (master reabierto)")
+
+	# Now toggle again to fully close
+	player._toggle_skill_book()
+	await process_frame
+	var ok6: bool = not sb.visible and not ea.visible and not paused
+	print("[toggle-from-master] %s (sb=%s, ea=%s, paused=%s)" % ["PASS" if ok6 else "FAIL", sb.visible, ea.visible, paused])
+
+	var all_pass: bool = ok1 and ok2 and ok3 and ok4 and ok5 and ok6
+	print("\n=== RESULT: %s ===" % ("ALL PASS" if all_pass else "SOME FAILED"))
+	quit()

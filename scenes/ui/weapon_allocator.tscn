@@ -1,0 +1,209 @@
+[gd_scene load_steps=4 format=3 uid="b2weaponallocator"]
+
+[ext_resource type="Script" path="res://scripts/ui/weapon_allocator.gd" id="1_wa"]
+
+[sub_resource type="StyleBoxFlat" id="sb_book"]
+bg_color = Color(0.16, 0.13, 0.18, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.55, 0.50, 0.65, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+content_margin_left = 12.0
+content_margin_top = 12.0
+content_margin_right = 12.0
+content_margin_bottom = 12.0
+
+[sub_resource type="StyleBoxFlat" id="sb_page"]
+bg_color = Color(0.22, 0.19, 0.24, 0.85)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.40, 0.36, 0.46, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+
+[node name="WeaponAllocator" type="Control"]
+process_mode = 3
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 0
+focus_mode = 0
+script = ExtResource("1_wa")
+scroll_step = 48
+tab_id = &"armas"
+
+[node name="Background" type="ColorRect" parent="."]
+process_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.6)
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="."]
+process_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -500.0
+offset_top = -320.0
+offset_right = 500.0
+offset_bottom = 320.0
+theme_override_styles/panel = SubResource("sb_book")
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 0
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_right = 0
+theme_override_constants/margin_bottom = 0
+
+[node name="VBox" type="VBoxContainer" parent="Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TopBar" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="OpenSkillBookButton" type="Button" parent="Panel/Margin/VBox/TopBar"]
+layout_mode = 2
+text = "← Skills"
+focus_mode = 1
+
+[node name="HeaderLabel" type="Label" parent="Panel/Margin/VBox/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Arsenal — Equipa y mejora tus armas"
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+
+[node name="CloseButton" type="Button" parent="Panel/Margin/VBox/TopBar"]
+layout_mode = 2
+text = "X"
+focus_mode = 1
+
+[node name="PointsLabel" type="Label" parent="Panel/Margin/VBox"]
+layout_mode = 2
+text = "Armas en inventario: 0   |   Puntos de arma: 0"
+theme_override_font_sizes/font_size = 13
+horizontal_alignment = 1
+
+[node name="HSep" type="HSeparator" parent="Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="HBoxBody" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="LeftPanel" type="PanelContainer" parent="Panel/Margin/VBox/HBoxBody"]
+custom_minimum_size = Vector2(320, 0)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("sb_page")
+
+[node name="LeftMargin" type="MarginContainer" parent="Panel/Margin/VBox/HBoxBody/LeftPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 0
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_right = 0
+theme_override_constants/margin_bottom = 0
+
+[node name="Scroll" type="ScrollContainer" parent="Panel/Margin/VBox/HBoxBody/LeftPanel/LeftMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="WeaponsContainer" type="VBoxContainer" parent="Panel/Margin/VBox/HBoxBody/LeftPanel/LeftMargin/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 3
+
+[node name="VSeparator" type="VSeparator" parent="Panel/Margin/VBox/HBoxBody"]
+layout_mode = 2
+
+[node name="DetailPanel" type="PanelContainer" parent="Panel/Margin/VBox/HBoxBody"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("sb_page")
+
+[node name="DetailMargin" type="MarginContainer" parent="Panel/Margin/VBox/HBoxBody/DetailPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 0
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_right = 0
+theme_override_constants/margin_bottom = 0
+
+[node name="DetailScroll" type="ScrollContainer" parent="Panel/Margin/VBox/HBoxBody/DetailPanel/DetailMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="DetailVBox" type="VBoxContainer" parent="Panel/Margin/VBox/HBoxBody/DetailPanel/DetailMargin/DetailScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 6
+
+[node name="NameLabel" type="Label" parent="Panel/Margin/VBox/HBoxBody/DetailPanel/DetailMargin/DetailScroll/DetailVBox"]
+layout_mode = 2
+text = "Selecciona un arma"
+theme_override_font_sizes/font_size = 18
+
+[node name="FamilyLabel" type="Label" parent="Panel/Margin/VBox/HBoxBody/DetailPanel/DetailMargin/DetailScroll/DetailVBox"]
+layout_mode = 2
+text = ""
+theme_override_font_sizes/font_size = 12
+modulate = Color(0.8, 0.8, 1, 1)
+
+[node name="StatsLabel" type="Label" parent="Panel/Margin/VBox/HBoxBody/DetailPanel/DetailMargin/DetailScroll/DetailVBox"]
+layout_mode = 2
+text = ""
+theme_override_font_sizes/font_size = 12
+autowrap_mode = 2
+
+[node name="CompatLabel" type="Label" parent="Panel/Margin/VBox/HBoxBody/DetailPanel/DetailMargin/DetailScroll/DetailVBox"]
+layout_mode = 2
+text = ""
+theme_override_font_sizes/font_size = 11
+modulate = Color(0.9, 0.8, 0.6, 1)
+autowrap_mode = 2
+
+[node name="FlavorLabel" type="Label" parent="Panel/Margin/VBox/HBoxBody/DetailPanel/DetailMargin/DetailScroll/DetailVBox"]
+layout_mode = 2
+text = ""
+theme_override_font_sizes/font_size = 11
+modulate = Color(0.7, 0.7, 0.7, 1)
+autowrap_mode = 2
+
+[node name="EquipButton" type="Button" parent="Panel/Margin/VBox/HBoxBody/DetailPanel/DetailMargin/DetailScroll/DetailVBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 30)
+text = "Equipar"
+focus_mode = 1
+
+[node name="StatRows" type="VBoxContainer" parent="Panel/Margin/VBox/HBoxBody/DetailPanel/DetailMargin/DetailScroll/DetailVBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 3

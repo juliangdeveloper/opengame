@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="WeaponResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/weapon_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"unarmed"
+display_name = "Sin arma (puños)"
+flavor_text = "Tus puños. Lentos, débiles, pero siempre disponibles."
+family = 9
+hands = 1
+designed_stats = {
+"dmg": 4.0,
+"speed": 1.0,
+"reach": 0.7,
+"weight": 0.0,
+"parry_bonus": -0.1,
+"crit_chance": 0.05
+}
+stat_scaling = {
+"strength_to_dmg": 0.15,
+"dexterity_to_speed": 0.05,
+"dexterity_to_crit": 0.02,
+"faith_to_parry": 0.0
+}
+class_dmg_mult = {}
+compatible_skill_ids = [&"unarmed_punch"]
+blocked_skill_ids = []
+mesh_hint = "unarmed"
+tint_color = Color(0.7, 0.6, 0.55, 1)
+blade_length = 0.0
+trail_color = Color(1, 0.9, 0.7, 0.6)
+hit_sound = "fist_hit"
+category = &"melee"

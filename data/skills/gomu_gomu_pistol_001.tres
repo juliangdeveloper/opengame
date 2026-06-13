@@ -1,0 +1,68 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"gomu_gomu_pistol_001"
+name = "Pistola de Goma"
+description = "Estira el brazo hacia adelante y golpea con un puñetazo a distancia. Come goma, lo convierte en arma."
+flavor_text = "¡Gomu Gomu no... PISTOL!"
+category = &"melee_dash"
+type = &"damage"
+target_resolver = {
+"kind": "nearest_npc_in_range",
+"params": {
+"max_distance": 15.0
+}
+}
+designed_max = {
+"amount": 50.0,
+"distance": 10.0,
+"duration": 0.3,
+"knockback": 8.0,
+"cooldown": 4.0,
+"stamina": 30.0
+}
+atoms = [{
+"type": "move",
+"params": {
+"kind": "dash",
+"distance": 10.0,
+"duration": 0.3,
+"target_relative": "to_target"
+},
+"applies_to_target": "primary"
+}, {
+"type": "hit",
+"params": {
+"amount": 50.0,
+"damage_type": "physical",
+"element": "physical",
+"applies_status": "bleed",
+"status_chance": 0.4,
+"status_duration": 4.0,
+"knockback": 8.0
+},
+"hitbox": {
+"shape": "sphere",
+"size": [1.5, 1.5, 1.5],
+"position": "at_target",
+"color": [1.0, 0.8, 0.0, 0.9],
+"emission": 8.0,
+"blend_mode": 1,
+"duration": 0.5,
+"fade_out": true
+},
+"applies_to_target": "primary"
+}]
+combo_triggers = []
+costs = {
+"stamina": 30.0,
+"cooldown": 4.0
+}
+vfx = {
+"screen_text": "¡Gomu Gomu no Pistol!",
+"cast_particle": "stretch_arm"
+}
+icon_hint = "gomu"

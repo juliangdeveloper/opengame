@@ -28,6 +28,8 @@ var _skills_container: VBoxContainer
 var _close_button: Button
 
 var _skill_panels: Dictionary = {}  # StringName -> SkillPanel instance
+var _skill_icon_hud: VBoxContainer
+var _skill_icon_rows: Dictionary = {}
 
 var _was_paused: bool = false
 
@@ -67,6 +69,15 @@ func _build_ui() -> void:
 	_header_label.text = "Skill Allocator"
 	_header_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_root_vbox.add_child(_header_label)
+
+	# Skill bar HUD
+	var hud_title := Label.new()
+	hud_title.text = "Skill Bar"
+	hud_title.add_theme_font_size_override("font_size", 16)
+	_root_vbox.add_child(hud_title)
+	_skill_icon_hud = VBoxContainer.new()
+	_skill_icon_hud.add_theme_constant_override("separation", 6)
+	_root_vbox.add_child(_skill_icon_hud)
 
 	# Close button
 	_close_button = Button.new()
@@ -109,6 +120,7 @@ func _refresh() -> void:
 		ps.proficiency,
 		ps.get_tier_name()
 	]
+	_refresh_skill_bar_hud(ps)
 	# Limpia paneles viejos
 	for child in _skills_container.get_children():
 		child.queue_free()
@@ -124,9 +136,70 @@ func _refresh() -> void:
 		_skill_panels[skill_id] = panel
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	if not visible:
+func _refresh_skill_bar_hud(ps: Node) -> void:
+	if _skill_icon_hud == null:
 		return
-	if event.is_action_pressed("ui_cancel") or (event is InputEventKey and event.pressed and event.keycode == KEY_TAB):
-		_close()
-		get_viewport().set_input_as_handled()
+	for child in _skill_icon_hud.get_children():
+		child.queue_free()
+	_skill_icon_rows.clear()
+	var player := get_tree().root.find_child("Player", true, false)
+	var bar: Array = []
+	if player and "skill_bar" in player:
+		bar = player.skill_bar
+	for slot_idx in range(3):
+		var skill_id: StringName = &""
+		if slot_idx < bar.size():
+			skill_id = bar[slot_idx]
+		var skill = ps.get_skill(skill_id) if skill_id != &"" else null
+		_skill_icon_hud.add_child(_make_skill_slot_row(ps, skill, skill_id, slot_idx, player))
+
+
+func _make_skill_slot_row(ps: Node, skill, skill_id: StringName, slot_idx: int, player: Node) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	var icon := ColorRect.new()
+	icon.custom_minimum_size = Vector2(22, 22)
+	icon.color = _skill_color_for(skill_id)
+	row.add_child(icon)
+	var label := Label.new()
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var binding_text := _binding_text_for_slot(slot_idx)
+	var cd_text := "READY"
+	var cooldown_left := 0.0
+	if player and "_skill_cooldowns" in player:
+		cooldown_left = float(player._skill_cooldowns.get(String(skill_id), 0.0))
+	if cooldown_left > 0.0:
+		cd_text = "CD %.1fs" % cooldown_left
+	if skill == null:
+		label.text = "Slot %d — vacío" % (slot_idx + 1)
+	else:
+		label.text = "%s | %s | %s" % [String(skill.name), binding_text, cd_text]
+		if skill.has("icon_hint") and String(skill.icon_hint) != "":
+			label.text += " | %s" % String(skill.icon_hint)
+	row.add_child(label)
+	return row
+
+
+func _binding_text_for_slot(slot_idx: int) -> String:
+	match slot_idx:
+		0:
+			return "T"
+		1:
+			return "G"
+		2:
+			return "H"
+		_:
+			return "?"
+
+
+func _skill_color_for(skill_id: StringName) -> Color:
+	if skill_id == &"":
+		return Color(0.35, 0.35, 0.35)
+	var sid := String(skill_id)
+	if sid.find("kamehameha") != -1:
+		return Color(0.2, 0.6, 1.0)
+	if sid.find("pistol") != -1 or sid.find("gomu") != -1:
+		return Color(1.0, 0.65, 0.2)
+	if sid.find("punch") != -1:
+		return Color(1.0, 0.2, 0.2)
+	return Color(0.8, 0.8, 0.8)

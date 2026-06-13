@@ -1,0 +1,77 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"uraraka_zero_gravity_001"
+name = "Ingravidez"
+description = "Quita la gravedad al objetivo. Flota, indefenso, mientras sufre náuseas espaciales."
+flavor_text = "Zero gravity... shuush..."
+category = &"control_spatial"
+type = &"control"
+target_resolver = {
+"kind": "selected_npc",
+"params": {
+}
+}
+designed_max = {
+"duration": 10.0,
+"dpt": 5.0,
+"magnitude": 1.0,
+"cooldown": 15.0,
+"stamina": 20.0
+}
+atoms = [{
+"type": "status",
+"params": {
+"kind": "root",
+"duration": 10.0,
+"magnitude": 1.0,
+"applies_resistance_to_caster": "light",
+"resistance_duration": 5.0,
+"resistance_multiplier": 0.5
+},
+"hitbox": {
+"shape": "sphere",
+"size": [2.0, 2.0, 2.0],
+"position": "at_target",
+"color": [1.0, 0.55, 0.85, 0.55],
+"emission": 5.0,
+"blend_mode": 1,
+"duration": 1.5,
+"fade_out": true
+},
+"applies_to_target": "primary"
+}, {
+"type": "dot",
+"params": {
+"dpt": 5.0,
+"duration": 10.0,
+"tick_interval": 2.0,
+"element": "earth",
+"applies_status": "poison",
+"status_chance": 1.0,
+"status_duration": 10.0
+},
+"hitbox": {
+"shape": "sphere",
+"size": [1.2, 1.2, 1.2],
+"position": "at_target",
+"color": [1.0, 0.3, 0.7, 0.7],
+"emission": 6.0,
+"blend_mode": 1,
+"duration": 0.6,
+"fade_out": true
+},
+"applies_to_target": "primary"
+}]
+combo_triggers = []
+costs = {
+"stamina": 20.0,
+"cooldown": 15.0
+}
+vfx = {
+"cast_particle": "pink_glow"
+}
+icon_hint = "uraraka"

@@ -1,0 +1,136 @@
+[gd_scene load_steps=4 format=3 uid="uid://dfhcrju1skhbu"]
+
+[ext_resource type="Script" path="res://scripts/ui/element_allocator.gd" id="1_ea"]
+
+[sub_resource type="StyleBoxFlat" id="sb_book"]
+bg_color = Color(0.16, 0.13, 0.18, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.55, 0.50, 0.65, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+content_margin_left = 12.0
+content_margin_top = 12.0
+content_margin_right = 12.0
+content_margin_bottom = 12.0
+
+[sub_resource type="StyleBoxFlat" id="sb_page"]
+bg_color = Color(0.22, 0.19, 0.24, 0.85)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.40, 0.36, 0.46, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+
+[node name="ElementAllocator" type="Control"]
+process_mode = 3
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 0
+script = ExtResource("1_ea")
+scroll_step = 48
+tab_id = &"elementos"
+
+[node name="Background" type="ColorRect" parent="."]
+process_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.6)
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="."]
+process_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -500.0
+offset_top = -320.0
+offset_right = 500.0
+offset_bottom = 320.0
+theme_override_styles/panel = SubResource("sb_book")
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 0
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_right = 0
+theme_override_constants/margin_bottom = 0
+
+[node name="VBox" type="VBoxContainer" parent="Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TopBar" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="HeaderLabel" type="Label" parent="Panel/Margin/VBox/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Elementos"
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+
+[node name="OpenSkillBookButton" type="Button" parent="Panel/Margin/VBox/TopBar"]
+layout_mode = 2
+text = "← Skills"
+focus_mode = 1
+
+[node name="CloseButton" type="Button" parent="Panel/Margin/VBox/TopBar"]
+layout_mode = 2
+text = "X"
+focus_mode = 1
+
+[node name="PointsLabel" type="Label" parent="Panel/Margin/VBox"]
+layout_mode = 2
+text = "Skill Points: 0  |  Allocated: 0 / 0"
+theme_override_font_sizes/font_size = 13
+horizontal_alignment = 1
+
+[node name="HelpLabel" type="Label" parent="Panel/Margin/VBox"]
+layout_mode = 2
+text = "Cada punto sube tu ataque del elemento Y tu resistencia al recibirlo. D-pad para navegar, A/Enter para asignar, Esc/Backspace para cerrar."
+theme_override_font_sizes/font_size = 11
+modulate = Color(0.7, 0.7, 0.7, 1)
+autowrap_mode = 2
+horizontal_alignment = 1
+
+[node name="HSep" type="HSeparator" parent="Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="Scroll" type="ScrollContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="ElementsContainer" type="VBoxContainer" parent="Panel/Margin/VBox/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 6
+
+[node name="BottomBar" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="ResetButton" type="Button" parent="Panel/Margin/VBox/BottomBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Reset All (devolver todos los puntos)"
+focus_mode = 1

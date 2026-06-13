@@ -1,0 +1,83 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"kamehameha_001"
+name = "Kamehameha"
+description = "Concentra energía en las palmas y libérala en un rayo frontal devastador. Maestro Roshi te enseñó este arte marcial."
+flavor_text = "¡Kame... Hame... HA!"
+category = &"ranged_projectile"
+type = &"damage"
+	target_resolver = {
+	"kind": "beam",
+	"params": {
+	"shape": "beam",
+	"position": "in_front_of_caster",
+	"radius": 1.6,
+	"distance_forward": 1.2,
+	"beam_length": 13.0
+	}
+	}
+	designed_max = {
+	"amount": 100.0,
+	"radius": 1.6,
+	"cooldown": 8.0,
+	"stamina": 50.0,
+	"charge_time": 2.0,
+	"knockback": 8.0,
+	"beam_length": 13.0
+	}
+	atoms = [{
+"type": "buff",
+"params": {
+"stat": "damage_mult",
+"value": 2.0,
+"kind": "multiply",
+"duration": 3.0
+},
+"applies_to_target": "primary"
+}, {
+"type": "trigger",
+"params": {
+"when": "delay",
+"delay": 2.0,
+"then_effect": "burst_aoe",
+"then_params": {
+"amount": 100.0,
+"damage_type": "energy",
+"element": "arcane",
+"applies_status": "burn",
+"status_chance": 0.5,
+"status_duration": 3.0,
+"shape": "beam",
+"distance_forward": 1.2,
+"beam_length": 13.0,
+"falloff": "linear"
+},
+"then_hitbox": {
+"shape": "beam",
+"size": [3.2, 3.2, 13.0],
+"position": "in_front_of_caster",
+"distance_forward": 1.2,
+"color": [1.0, 0.5, 0.05, 0.95],
+"emission": 8.0,
+"blend_mode": 1,
+"duration": 1.5,
+"fade_out": true
+}
+},
+"applies_to_target": "primary"
+}]
+combo_triggers = []
+costs = {
+"stamina": 50.0,
+"cooldown": 8.0,
+"charge_time": 2.0
+}
+vfx = {
+"screen_text": "¡Kamehameha!",
+"cast_particle": "blue_glow"
+}
+icon_hint = "kamehameha"

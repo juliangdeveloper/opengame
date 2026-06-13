@@ -102,38 +102,94 @@ def grant_skill(skill_id: str) -> Dict[str, Any]:
 
 
 @mcp.tool()
-def spawn_challenge(
-    enemy_count: int = 3,
-    radius: float = 6.0,
-    objective: str = "Defeat all enemies",
-    reward_skill: str = "",
-    reward_points: int = 1,
+def spawn_enemy(scene: str = "res://scenes/dummy.tscn", x: float = 0.0, y: float = 1.0, z: float = 3.0) -> Dict[str, Any]:
+    """Spawn a single enemy at (x,y,z). Useful for ad-hoc encounters."""
+    return _call_godot(
+        "spawn_enemy", {"scene": scene, "position": {"x": x, "y": y, "z": z}},
+    )
+
+
+# === MISSION SYSTEM (replaces old spawn_challenge) ===
+# El LLM solo diseña el propósito de la misión; el juego asigna dificultad,
+# enemigos, recompensas y damage_modifiers.
+
+@mcp.tool()
+def create_mission(
+    purpose: str,
+    target_id: str,
+    mission_type: str = "defeat_enemies",
+    title: str = "",
 ) -> Dict[str, Any]:
     """
-    Design a challenge: spawn N enemies around the player, set the HUD objective,
-    and grant `reward_skill` + `reward_points` upon completion.
+    Create a new mission. The LLM only declares the purpose; the game
+    computes enemy config, rewards, and damage_modifiers when the player
+    picks a difficulty.
 
-    Use this to give the player a quest that unlocks a new skill or points.
+    Args:
+        purpose: "teach_skill" or "teach_weapon"
+        target_id: skill_id (e.g. "kamehameha_001") or weapon_id (e.g. "short_sword")
+        mission_type: defeat_enemies | 1v1 | timed | reach_destination | survive | cast_skill_n
+        title: optional UI title (auto-generated if empty)
     """
     return _call_godot(
-        "spawn_challenge",
+        "create_mission",
         {
-            "enemy_count": int(enemy_count),
-            "radius": float(radius),
-            "objective": objective,
-            "reward_skill": reward_skill,
-            "reward_points": int(reward_points),
+            "purpose": purpose,
+            "target_id": target_id,
+            "mission_type": mission_type,
+            "title": title,
         },
     )
 
 
 @mcp.tool()
-def spawn_enemy(scene: str = "res://scenes/dummy.tscn", x: float = 0.0, y: float = 1.0, z: float = 3.0) -> Dict[str, Any]:
-    """Spawn a single enemy at (x,y,z). Useful for ad-hoc encounters."""
+def set_mission_difficulty(mission_id: str, difficulty: int = 1) -> Dict[str, Any]:
+    """
+    Set the difficulty (1-5) for an AVAILABLE mission. Recalculates
+    enemy_count, HP mult, time limit, rewards, and damage_modifiers.
+    """
     return _call_godot(
-        "spawn_enemy",
-        {"scene": scene, "position": {"x": x, "y": y, "z": z}},
+        "set_mission_difficulty",
+        {"mission_id": mission_id, "difficulty": int(difficulty)},
     )
+
+
+@mcp.tool()
+def start_mission(mission_id: str) -> Dict[str, Any]:
+    """Start a READY mission. Spawns enemies, sets HUD objective, begins timer."""
+    return _call_godot("start_mission", {"mission_id": mission_id})
+
+
+@mcp.tool()
+def abandon_mission(mission_id: str) -> Dict[str, Any]:
+    """Abandon a READY or ACTIVE mission. No rewards. Can retry or edit after."""
+    return _call_godot("abandon_mission", {"mission_id": mission_id})
+
+
+@mcp.tool()
+def retry_mission(mission_id: str) -> Dict[str, Any]:
+    """Retry a terminal mission (COMPLETED/FAILED/ABANDONED) with same config."""
+    return _call_godot("retry_mission", {"mission_id": mission_id})
+
+
+@mcp.tool()
+def edit_mission(mission_id: str, new_difficulty: int = 1) -> Dict[str, Any]:
+    """Edit a terminal/AVAILABLE mission's difficulty. Resets to READY."""
+    return _call_godot(
+        "edit_mission", {"mission_id": mission_id, "new_difficulty": int(new_difficulty)}
+    )
+
+
+@mcp.tool()
+def get_mission_state(mission_id: str) -> Dict[str, Any]:
+    """Read the full state of a mission (state, config, progress, rewards)."""
+    return _call_godot("get_mission_state", {"mission_id": mission_id})
+
+
+@mcp.tool()
+def list_missions() -> Dict[str, Any]:
+    """List all missions with their state. Includes the active_mission_id."""
+    return _call_godot("list_missions", {})
 
 
 @mcp.tool()
@@ -199,6 +255,99 @@ def create_skill(
             "designed_max": designed_max,
             "costs": costs,
         },
+    )
+
+
+@mcp.tool()
+def create_weapon(
+    id: str,
+    display_name: str = "",
+    family: str = "sword",
+    hands: int = 1,
+    designed_stats: dict = None,  # type: ignore[arg-type]
+    stat_scaling: dict = None,  # type: ignore[arg-type]
+    class_dmg_mult: dict = None,  # type: ignore[arg-type]
+    compatible_skill_ids: list = None,  # type: ignore[arg-type]
+    blocked_skill_ids: list = None,  # type: ignore[arg-type]
+    flavor_text: str = "",
+    mesh_hint: str = "",
+    category: str = "melee",
+) -> Dict[str, Any]:
+    """
+    Author a new weapon .tres on disk and register it in the catalog.
+
+    The LLM composes a weapon from the WeaponResource schema. Validator runs
+    server-side and in Godot. If validation fails, the weapon is NOT created
+    and errors are returned.
+
+    Args:
+        id: unique weapon id, e.g. "cursed_blade_001"
+        display_name: human-readable name
+        family: one of sword, scimitar, dagger, scythe, bow, spear, axe,
+                mace, staff, unarmed
+        hands: 1 (one-handed) or 2 (two-handed)
+        designed_stats: {dmg, speed, reach, weight, parry_bonus, crit_chance}
+        stat_scaling: {strength_to_dmg, dexterity_to_speed, ...}
+        class_dmg_mult: {target_family_name: multiplier, ...}
+        compatible_skill_ids: list of skill_ids that can be used with this weapon
+        blocked_skill_ids: list of skill_ids that REQUIRE a different weapon
+        flavor_text: short description
+        mesh_hint: identifier for visual model ("sword_short", "scythe", ...)
+        category: "melee", "ranged", or "magic"
+    """
+    if designed_stats is None:
+        designed_stats = {"dmg": 10.0, "speed": 1.0}
+    if stat_scaling is None:
+        stat_scaling = {}
+    if class_dmg_mult is None:
+        class_dmg_mult = {}
+    if compatible_skill_ids is None:
+        compatible_skill_ids = []
+    if blocked_skill_ids is None:
+        blocked_skill_ids = []
+    return _call_godot(
+        "create_weapon",
+        {
+            "id": id,
+            "display_name": display_name or id,
+            "family": family,
+            "hands": int(hands),
+            "designed_stats": designed_stats,
+            "stat_scaling": stat_scaling,
+            "class_dmg_mult": class_dmg_mult,
+            "compatible_skill_ids": compatible_skill_ids,
+            "blocked_skill_ids": blocked_skill_ids,
+            "flavor_text": flavor_text,
+            "mesh_hint": mesh_hint,
+            "category": category,
+        },
+    )
+
+
+@mcp.tool()
+def grant_weapon(weapon_id: str) -> Dict[str, Any]:
+    """Add a weapon to the player's inventory and auto-equip if slot is empty."""
+    return _call_godot("grant_weapon", {"weapon_id": weapon_id})
+
+
+@mcp.tool()
+def equip_weapon(weapon_id: str) -> Dict[str, Any]:
+    """Equip a weapon from the player's inventory."""
+    return _call_godot("equip_weapon", {"weapon_id": weapon_id})
+
+
+@mcp.tool()
+def list_weapons() -> Dict[str, Any]:
+    """List all weapons in the catalog (base + MCP-generated)."""
+    return _call_godot("list_weapons", {})
+
+
+@mcp.tool()
+def allocate_weapon_points(weapon_id: str, stat: str, points: int = 1) -> Dict[str, Any]:
+    """Allocate N points of an owned weapon to a stat (dmg, speed, crit, parry)."""
+    return _call_godot(
+        "allocate_weapon_points",
+        {"weapon_id": weapon_id, "stat": stat, "points": int(points)},
     )
 
 
@@ -297,7 +446,7 @@ def author_skill(theme: str, tier: str = "Novice") -> str:
         f"3. Compose a skill with at most 5 atoms, exactly 1 type ('damage' or 'control'),\n"
         f"   and a target_resolver kind from the allowed list.\n"
         f"4. Call create_skill() with id, name, atoms, designed_max, costs.\n"
-        f"5. After creation, call spawn_challenge() so the player can earn it.\n"
+        f"5. After creation, call create_mission() to give the player a quest to earn it.\n"
     )
 
 

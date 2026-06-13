@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="WeaponResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/weapon_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"arcane_staff"
+display_name = "Bastón arcano"
+flavor_text = "Bastón de madera tallada con un cristal. Potencia magias; débil en melee."
+family = 8
+hands = 2
+designed_stats = {
+"dmg": 10.0,
+"speed": 0.95,
+"reach": 1.2,
+"weight": 2.0,
+"parry_bonus": 0.05,
+"crit_chance": 0.06
+}
+stat_scaling = {
+"strength_to_dmg": 0.04,
+"dexterity_to_speed": 0.05,
+"dexterity_to_crit": 0.03,
+"faith_to_parry": 0.04
+}
+class_dmg_mult = {
+"unarmed": 1.2,
+"dagger": 1.2
+}
+compatible_skill_ids = [&"arcane_bolt", &"arcane_shield", &"mana_burst"]
+blocked_skill_ids = [&"melee_slash", &"heavy_swing"]
+mesh_hint = "staff"
+model_path = "res://assets/models/weapons/wpn_arcane_staff.glb"
+model_rotation = Vector3(0, 0, 0)
+grip_offset = 0.55
+model_scale = 1.0
+tint_color = Color(0.5, 0.4, 0.7, 1)
+blade_length = 0.0
+trail_color = Color(0.6, 0.5, 1.0, 0.7)
+hit_sound = "staff_hit"
+category = &"magic"

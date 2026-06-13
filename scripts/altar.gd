@@ -24,12 +24,23 @@ const MAX_ALIVE := 3  # máximo de NPCs vivos spawneados por altar
 @export var spawn_offset := Vector3(0, 0, 2.0)
 @export var interaction_radius := 2.5
 @export var interaction_min_distance := 3.0
-@export var prompt_text := "[E] Summon Saibaman"
+## Texto del prompt SIN el botón. El botón se calcula dinámicamente
+## ([E] si el último input fue teclado, [X] si fue control) y se prepende
+## al final. Ejemplo: base_prompt="Summon Saibaman" → "[E] Summon Saibaman"
+## o "[X] Summon Saibaman" según el último input del jugador.
+@export var base_prompt := "Summon Saibaman"
 
 # --- State ---
 var _player_in_range: bool = false
 var _spawned: Array[Node] = []  # NPCs spawneados por este altar (vivos o muertos)
 var _prompt_label: Label3D
+## True si el último input del jugador fue de un control (joypad).
+## Determina qué binding (E o X) mostrar en el prompt. Si no hay input
+## todavía, se asume teclado (default).
+var _last_input_was_gamepad: bool = false
+## Cache del último prompt aplicado, para evitar actualizar el Label3D
+## en cada _process cuando no cambió.
+var _last_prompt_text: String = ""
 
 # --- Nodes (configurados en .tscn) ---
 @onready var interaction_area: Area3D = $InteractionArea
@@ -44,12 +55,23 @@ func _ready() -> void:
 	if interaction_area:
 		interaction_area.body_entered.connect(_on_body_entered)
 		interaction_area.body_exited.connect(_on_body_exited)
-	# Cargar prompt_label y aplicar texto
+	# Cargar prompt_label y aplicar texto inicial
 	if model != null:
 		_prompt_label = model.get_node_or_null("SummonSaibaman")
-	if _prompt_label:
-		_prompt_label.text = prompt_text
-	print("[altar] %s ready prompt=%s" % [name, prompt_text])
+	# Si no se encuentra un Label3D dedicado, intentar crearlo como hijo del model
+	# para mantener retrocompatibilidad con escenas que no lo preconfiguran.
+	if not _prompt_label and model:
+		_prompt_label = Label3D.new()
+		_prompt_label.name = "SummonSaibaman"
+		_prompt_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		_prompt_label.fixed_size = true
+		_prompt_label.no_depth_test = true
+		_prompt_label.position = Vector3(0, 2.0, 0)
+		model.add_child(_prompt_label)
+	_update_prompt()
+	# Detectar input device
+	set_process_input(true)
+	print("[altar] %s ready base_prompt=%s" % [name, base_prompt])
 
 
 func _process(_delta: float) -> void:
@@ -57,11 +79,35 @@ func _process(_delta: float) -> void:
 		return
 	if Input.is_action_just_pressed("interact"):
 		spawn_npc()
+	# El prompt puede cambiar (jugador cambia de teclado a control);
+	# actualizamos el label solo cuando el texto realmente cambia.
+	_update_prompt()
 	# Animar cristal: pulso suave
 	if is_instance_valid(crystal):
 		var t := Time.get_ticks_msec() / 1000.0
 		var k := 0.8 + 0.2 * sin(t * 3.0)
 		crystal.scale = Vector3.ONE * k
+
+
+## Detecta si el último input del jugador vino de un control o del teclado.
+## Actualiza el prompt en consecuencia ([E] vs [X]).
+func _input(event: InputEvent) -> void:
+	if event is InputEventJoypadButton and event.pressed:
+		_last_input_was_gamepad = true
+	elif event is InputEventKey and event.pressed:
+		_last_input_was_gamepad = false
+
+
+## Actualiza el texto del Label3D. Formato: "[<button>] <base_prompt>"
+## donde <button> es "E" o "X" según el último input device.
+func _update_prompt() -> void:
+	if not _prompt_label:
+		return
+	var button: String = "X" if _last_input_was_gamepad else "E"
+	var text: String = "[%s] %s" % [button, base_prompt]
+	if text != _last_prompt_text:
+		_prompt_label.text = text
+		_last_prompt_text = text
 
 
 # --- Rango ---

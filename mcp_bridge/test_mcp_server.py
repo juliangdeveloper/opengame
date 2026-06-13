@@ -20,6 +20,7 @@ import time
 import urllib.request
 import json
 from pathlib import Path
+from typing import Dict
 
 PROJECT_ROOT = Path("/mnt/c/Users/Rog/Workspace/01_PROYECTOS/mcp-souls-game")
 BRIDGE_URL = "http://127.0.0.1:8000"
@@ -73,6 +74,7 @@ def main():
         return 1
     print("OK bridge+Godot up")
     results = []
+    cached: Dict[str, dict] = {}  # cache tool results for chain resolution
     async def run():
         tests = [
             ("ping", {}, lambda r: r.get("pong") is True),
@@ -103,18 +105,67 @@ def main():
                 lambda r: r.get("granted_skill") == "kamehameha_001",
             ),
             (
-                "spawn_challenge",
-                {"enemy_count": 2, "radius": 5.0, "objective": "Defeat 2 (E2E)", "reward_skill": "mcp_e2e_fireball", "reward_points": 1},
-                # mcp_idle.tscn has no Player, so we expect an error — this still validates the JSON-RPC roundtrip.
-                lambda r: (
-                    ("error" in r)  # no Player
-                    or (str(r.get("challenge_id", "")).startswith("challenge_") and int(r.get("enemies_spawned", 0)) == 2)
-                ),
+                "create_mission",
+                {
+                    "purpose": "teach_skill",
+                    "target_id": "kamehameha_001",
+                    "mission_type": "1v1",
+                    "title": "E2E Test Mission",
+                },
+                lambda r: str(r.get("mission_id", "")).startswith("mission_") and r.get("state") == "AVAILABLE",
+            ),
+            (
+                "set_mission_difficulty",
+                # Note: requires a mission_id from create_mission; we resolve at runtime
+                # by parsing the previous result. This is a chain.
+                {"_chain_from": "create_mission", "difficulty": 1},
+                lambda r: r.get("difficulty") == 1 and r.get("state") == "READY",
+            ),
+            (
+                "start_mission",
+                {"_chain_from": "set_mission_difficulty"},
+                lambda r: str(r.get("started", "")).startswith("mission_") and r.get("objective", "") != "",
+            ),
+            (
+                "get_mission_state",
+                {"_chain_from": "start_mission"},
+                lambda r: str(r.get("id", "")).startswith("mission_") and r.get("state") in ["ACTIVE", "READY", "COMPLETED", "FAILED"],
+            ),
+            (
+                "list_missions",
+                {},
+                lambda r: r.get("count", 0) >= 3 and r.get("missions") is not None,
             ),
         ]
         for name, args, check in tests:
+            # Resolve chain (use cached result of a previous tool)
+            resolved_args: dict = {}
+            for k, v in args.items():
+                if isinstance(v, str) and v.startswith("_chain_from:"):
+                    parent_name = v.split(":", 1)[1]
+                    parent = cached.get(parent_name, {})
+                    resolved_args[k] = parent.get("mission_id", "")
+                elif k == "_chain_from" and isinstance(v, str):
+                    parent = cached.get(v, {})
+                    # The "set_mission_difficulty" / "start_mission" / "get_mission_state" need mission_id
+                    if name == "set_mission_difficulty":
+                        resolved_args["mission_id"] = parent.get("mission_id", "")
+                        resolved_args["difficulty"] = args.get("difficulty", 1)
+                    elif name == "start_mission":
+                        resolved_args["mission_id"] = parent.get("mission_id", "")
+                    elif name == "get_mission_state":
+                        # start_mission returns {"started": "<id>"}, not {"mission_id": "..."}
+                        # create_mission returns {"mission_id": "..."}
+                        mid = parent.get("mission_id", "") or parent.get("started", "")
+                        resolved_args["mission_id"] = mid
+                    else:
+                        resolved_args = dict(args)
+                        del resolved_args["_chain_from"]
+                else:
+                    resolved_args[k] = v
             try:
-                r = await call_tool(name, args)
+                r = await call_tool(name, resolved_args)
+                cached[name] = r
                 ok = check(r)
                 print(f"  [{'PASS' if ok else 'FAIL'}] {name} -> {r}")
                 results.append(ok)
