@@ -674,7 +674,7 @@ func _weapon_glb_path(weapon: Resource) -> String:
 	return p
 
 
-func take_damage(amount: float, source: Node = null) -> void:
+func take_damage(amount: float, source: Node = null, element: StringName = &"physical") -> void:
 	if is_dying or damage_iframes_timer > 0.0 or is_dodging:
 		print("[player] damage_ignored reason=%s" % (
 			"dying" if is_dying
@@ -697,6 +697,7 @@ func take_damage(amount: float, source: Node = null) -> void:
 	# phys_res reduce daño FÍSICO, ele_res reduce daño ELEMENTAL.
 	# source puede traer "damage_type" (físico/elemental) o se infiere
 	# por su melee_atom.element.
+	# Si el caller pasó element explícito (e.g. SkillExecutor), tiene prioridad.
 	var phys_attr: Node = null
 	if has_node("AttributeComponent"):
 		phys_attr = get_node("AttributeComponent")
@@ -704,7 +705,9 @@ func take_damage(amount: float, source: Node = null) -> void:
 		# Heurística: si el source tiene un atributo "last_damage_type" lo usamos.
 		# Por defecto, melee NPC = physical; spells = elemental.
 		var dmg_type: String = "physical"
-		if source and "last_damage_type" in source:
+		if String(element) != "physical" and String(element) != "":
+			dmg_type = String(element)
+		elif source and "last_damage_type" in source:
 			dmg_type = String(source.last_damage_type)
 		if dmg_type == "physical":
 			final *= float(phys_attr.call("get_phys_res_multiplier"))
