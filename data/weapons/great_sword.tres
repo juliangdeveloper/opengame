@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="WeaponResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/weapon_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"great_sword"
+display_name = "Espadón a dos manos"
+flavor_text = "Hoja masiva de 1.5m. Daño devastador pero swings lentos. Dos manos obligatorias."
+family = 0
+hands = 2
+designed_stats = {
+"dmg": 42.0,
+"speed": 0.75,
+"reach": 1.4,
+"weight": 6.0,
+"parry_bonus": 0.05,
+"crit_chance": 0.10
+}
+stat_scaling = {
+"strength_to_dmg": 0.18,
+"dexterity_to_speed": 0.02,
+"dexterity_to_crit": 0.03,
+"faith_to_parry": 0.02
+}
+class_dmg_mult = {
+"spear": 1.4,
+"dagger": 1.5,
+"scimitar": 1.2
+}
+compatible_skill_ids = [&"great_sword_slash"]
+blocked_skill_ids = [&"dual_strike", &"parry_riposte"]
+mesh_hint = "sword_great"
+model_path = "res://assets/models/weapons/wpn_great_sword.glb"
+model_rotation = Vector3(0, 0, 0)
+grip_offset = 0.27
+model_scale = 1.0
+tint_color = Color(0.85, 0.85, 0.9, 1)
+blade_length = 1.5
+trail_color = Color(1.0, 0.95, 0.8, 0.8)
+hit_sound = "great_sword_hit"
+category = &"melee"

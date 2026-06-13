@@ -1,0 +1,336 @@
+[gd_scene load_steps=4 format=3 uid="uid://b2menu"]
+
+[ext_resource type="Script" path="res://scripts/ui/menu.gd" id="1_menu"]
+
+[sub_resource type="StyleBoxFlat" id="sb_book"]
+bg_color = Color(0.16, 0.13, 0.18, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.55, 0.50, 0.65, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+content_margin_left = 12.0
+content_margin_top = 12.0
+content_margin_right = 12.0
+content_margin_bottom = 12.0
+
+[sub_resource type="StyleBoxFlat" id="sb_page"]
+bg_color = Color(0.22, 0.19, 0.24, 0.85)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.40, 0.36, 0.46, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+
+[node name="Menu" type="Control"]
+process_mode = 3
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 0
+focus_mode = 0
+script = ExtResource("1_menu")
+scroll_step = 48
+
+[node name="Background" type="ColorRect" parent="."]
+process_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.6)
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="."]
+process_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -500.0
+offset_top = -300.0
+offset_right = 500.0
+offset_bottom = 300.0
+theme_override_styles/panel = SubResource("sb_book")
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 0
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_right = 0
+theme_override_constants/margin_bottom = 0
+
+[node name="VBox" type="VBoxContainer" parent="Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TopBar" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="PrevTabButton" type="Button" parent="Panel/Margin/VBox/TopBar"]
+layout_mode = 2
+text = "← Atributos"
+focus_mode = 1
+focus_neighbor_right = NodePath("../NextTabButton")
+focus_neighbor_bottom = NodePath("../../HBoxBody/LeftPanel/LeftMargin/Scroll/ItemList")
+tooltip_text = "L1 → pestaña anterior"
+
+[node name="HeaderLabel" type="Label" parent="Panel/Margin/VBox/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Skills"
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+
+[node name="NextTabButton" type="Button" parent="Panel/Margin/VBox/TopBar"]
+layout_mode = 2
+text = "Elementos →"
+focus_mode = 1
+focus_neighbor_left = NodePath("../PrevTabButton")
+focus_neighbor_right = NodePath("../CloseButton")
+focus_neighbor_bottom = NodePath("../../HBoxBody/RightPanel/RightMargin/Scroll/DetailVBox/BindingRow/BindingButton")
+tooltip_text = "R1 → pestaña siguiente"
+
+[node name="CloseButton" type="Button" parent="Panel/Margin/VBox/TopBar"]
+layout_mode = 2
+text = "X"
+focus_mode = 1
+focus_neighbor_left = NodePath("../NextTabButton")
+focus_neighbor_bottom = NodePath("../../HBoxBody/RightPanel/RightMargin/Scroll/DetailVBox/BindingRow/BindingButton")
+
+[node name="HSeparator" type="HSeparator" parent="Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="HBoxBody" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="LeftPanel" type="PanelContainer" parent="Panel/Margin/VBox/HBoxBody"]
+custom_minimum_size = Vector2(350, 0)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("sb_page")
+
+[node name="LeftMargin" type="MarginContainer" parent="Panel/Margin/VBox/HBoxBody/LeftPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 0
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_right = 0
+theme_override_constants/margin_bottom = 0
+
+[node name="Scroll" type="ScrollContainer" parent="Panel/Margin/VBox/HBoxBody/LeftPanel/LeftMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="ItemList" type="ItemList" parent="Panel/Margin/VBox/HBoxBody/LeftPanel/LeftMargin/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+focus_mode = 1
+focus_neighbor_top = NodePath("../../../../../TopBar/PrevTabButton")
+focus_neighbor_right = NodePath("../../../RightPanel/RightMargin/Scroll/DetailVBox/BindingRow/BindingButton")
+
+[node name="VSeparator" type="VSeparator" parent="Panel/Margin/VBox/HBoxBody"]
+layout_mode = 2
+
+[node name="RightPanel" type="PanelContainer" parent="Panel/Margin/VBox/HBoxBody"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("sb_page")
+
+[node name="RightMargin" type="MarginContainer" parent="Panel/Margin/VBox/HBoxBody/RightPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 0
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_right = 0
+theme_override_constants/margin_bottom = 0
+
+[node name="Scroll" type="ScrollContainer" parent="Panel/Margin/VBox/HBoxBody/RightPanel/RightMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="DetailVBox" type="VBoxContainer" parent="Panel/Margin/VBox/HBoxBody/RightPanel/RightMargin/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 6
+
+[node name="NameLabel" type="Label" parent="Panel/Margin/VBox/HBoxBody/RightPanel/RightMargin/Scroll/DetailVBox"]
+layout_mode = 2
+text = "<select a skill>"
+theme_override_font_sizes/font_size = 20
+
+[node name="DescLabel" type="Label" parent="Panel/Margin/VBox/HBoxBody/RightPanel/RightMargin/Scroll/DetailVBox"]
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+
+[node name="LevelLabel" type="Label" parent="Panel/Margin/VBox/HBoxBody/RightPanel/RightMargin/Scroll/DetailVBox"]
+layout_mode = 2
+text = "Tier: Novice"
+theme_override_font_sizes/font_size = 12
+
+[node name="PowerLabel" type="Label" parent="Panel/Margin/VBox/HBoxBody/RightPanel/RightMargin/Scroll/DetailVBox"]
+layout_mode = 2
+text = "Power: 0%"
+
+[node name="PointsLabel" type="Label" parent="Panel/Margin/VBox/HBoxBody/RightPanel/RightMargin/Scroll/DetailVBox"]
+layout_mode = 2
+text = "Points: 0"
+
+[node name="BindingRow" type="HBoxContainer" parent="Panel/Margin/VBox/HBoxBody/RightPanel/RightMargin/Scroll/DetailVBox"]
+layout_mode = 2
+
+[node name="BindingLabel" type="Label" parent="Panel/Margin/VBox/HBoxBody/RightPanel/RightMargin/Scroll/DetailVBox/BindingRow"]
+layout_mode = 2
+text = "Binding: "
+
+[node name="BindingButton" type="Button" parent="Panel/Margin/VBox/HBoxBody/RightPanel/RightMargin/Scroll/DetailVBox/BindingRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 1
+focus_neighbor_left = NodePath("../../../../../../LeftPanel/LeftMargin/Scroll/ItemList")
+focus_neighbor_top = NodePath("../../../../../../TopBar/NextTabButton")
+text = "— none —"
+clip_text = true
+
+[node name="AtomsHeader" type="Label" parent="Panel/Margin/VBox/HBoxBody/RightPanel/RightMargin/Scroll/DetailVBox"]
+layout_mode = 2
+text = "Stats / Atoms"
+theme_override_font_sizes/font_size = 12
+modulate = Color(0.8, 0.8, 0.8, 1)
+
+[node name="AtomRows" type="VBoxContainer" parent="Panel/Margin/VBox/HBoxBody/RightPanel/RightMargin/Scroll/DetailVBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+
+[node name="MissionPanel" type="PanelContainer" parent="Panel/Margin/VBox"]
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("sb_page")
+
+[node name="MissionMargin" type="MarginContainer" parent="Panel/Margin/VBox/MissionPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="MissionVBox" type="VBoxContainer" parent="Panel/Margin/VBox/MissionPanel/MissionMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="TitleLabel" type="Label" parent="Panel/Margin/VBox/MissionPanel/MissionMargin/MissionVBox"]
+layout_mode = 2
+text = "Sin misión activa"
+theme_override_font_sizes/font_size = 22
+
+[node name="PurposeLabel" type="Label" parent="Panel/Margin/VBox/MissionPanel/MissionMargin/MissionVBox"]
+layout_mode = 2
+text = "Pide al Dungeon Master que cree una con create_mission()"
+theme_override_font_sizes/font_size = 12
+modulate = Color(0.85, 0.85, 0.95, 1)
+
+[node name="TypeLabel" type="Label" parent="Panel/Margin/VBox/MissionPanel/MissionMargin/MissionVBox"]
+layout_mode = 2
+text = ""
+
+[node name="StateLabel" type="Label" parent="Panel/Margin/VBox/MissionPanel/MissionMargin/MissionVBox"]
+layout_mode = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+modulate = Color(1, 0.85, 0.3, 1)
+
+[node name="DifficultyRow" type="HBoxContainer" parent="Panel/Margin/VBox/MissionPanel/MissionMargin/MissionVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="DiffLabel" type="Label" parent="Panel/Margin/VBox/MissionPanel/MissionMargin/MissionVBox/DifficultyRow"]
+layout_mode = 2
+text = "Dificultad:"
+focus_mode = 0
+
+[node name="DiffBtn1" type="Button" parent="Panel/Margin/VBox/MissionPanel/MissionMargin/MissionVBox/DifficultyRow"]
+layout_mode = 2
+focus_mode = 1
+text = "1"
+focus_neighbor_right = NodePath("../DiffBtn2")
+
+[node name="DiffBtn2" type="Button" parent="Panel/Margin/VBox/MissionPanel/MissionMargin/MissionVBox/DifficultyRow"]
+layout_mode = 2
+focus_mode = 1
+text = "2"
+focus_neighbor_left = NodePath("../DiffBtn1")
+focus_neighbor_right = NodePath("../DiffBtn3")
+
+[node name="DiffBtn3" type="Button" parent="Panel/Margin/VBox/MissionPanel/MissionMargin/MissionVBox/DifficultyRow"]
+layout_mode = 2
+focus_mode = 1
+text = "3"
+focus_neighbor_left = NodePath("../DiffBtn2")
+focus_neighbor_right = NodePath("../DiffBtn4")
+
+[node name="DiffBtn4" type="Button" parent="Panel/Margin/VBox/MissionPanel/MissionMargin/MissionVBox/DifficultyRow"]
+layout_mode = 2
+focus_mode = 1
+text = "4"
+focus_neighbor_left = NodePath("../DiffBtn3")
+focus_neighbor_right = NodePath("../DiffBtn5")
+
+[node name="DiffBtn5" type="Button" parent="Panel/Margin/VBox/MissionPanel/MissionMargin/MissionVBox/DifficultyRow"]
+layout_mode = 2
+focus_mode = 1
+text = "5"
+focus_neighbor_left = NodePath("../DiffBtn4")
+focus_neighbor_right = NodePath("../../ActionButton")
+
+[node name="ConfigLabel" type="Label" parent="Panel/Margin/VBox/MissionPanel/MissionMargin/MissionVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+text = ""
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 12
+
+[node name="Separator" type="HSeparator" parent="Panel/Margin/VBox/MissionPanel/MissionMargin/MissionVBox"]
+layout_mode = 2
+
+[node name="ActionButton" type="Button" parent="Panel/Margin/VBox/MissionPanel/MissionMargin/MissionVBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 1
+text = "▶ START MISSION"
+focus_neighbor_top = NodePath("../DifficultyRow/DiffBtn5")
+focus_neighbor_bottom = NodePath("../MissionListButton")
+
+[node name="MissionListButton" type="Button" parent="Panel/Margin/VBox/MissionPanel/MissionMargin/MissionVBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 1
+text = "↻ Siguiente misión"
+focus_neighbor_top = NodePath("../ActionButton")
+

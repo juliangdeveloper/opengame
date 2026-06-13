@@ -110,7 +110,10 @@ static func validate(spec: Dictionary) -> Dictionary:
 			if kind not in [
 				&"self", &"selected_npc", &"nearest_npc_in_range",
 				&"aoe", &"self_aoe", &"projectile_carrier",
-				&"chain", &"zone_entered"
+				&"chain", &"zone_entered",
+				# Targets no-NPC (Post-MVP, para armas y entorno):
+				&"equipped_weapon", &"env_object_aoe", &"env_object_nearest",
+				&"weapon_nearest",
 			]:
 				errors.append("target_resolver.kind '%s' not supported" % kind)
 

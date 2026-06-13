@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"defenderse_001"
+name = "Defenderse"
+description = "Ventana de 0.4s en la que, si un enemigo está en WINDUP o ACTIVE, lo contraatacas y entra en STAGGER. El arma equipada aumenta la ventana y el contraataque."
+flavor_text = "La mejor defensa es un golpe bien medido."
+category = &"control_parry"
+type = &"control"
+target_resolver = {
+"kind": "self",
+"params": {}
+}
+designed_max = {
+"parry_window": 0.4,
+"stamina": 12.0,
+"cooldown": 0.8
+}
+atoms = [{
+"type": "status",
+"params": {
+"kind": "parry_window",
+"duration": 0.4,
+"magnitude": 1.0,
+"applies_status": "parry_ready"
+},
+"hitbox": {
+"shape": "sphere",
+"size": [0.6, 0.6, 0.6],
+"position": "at_caster",
+"color": [1.0, 0.95, 0.5, 0.8],
+"emission": 4.0,
+"blend_mode": 1,
+"duration": 0.4,
+"fade_out": true
+},
+"applies_to_target": "self"
+}]
+combo_triggers = [{
+"when": "parry_success",
+"trigger_skill_id": &"parry_riposte_001"
+}]
+costs = {
+"stamina": 12.0,
+"cooldown": 0.8
+}
+vfx = {
+"cast_sound": "shield_up"
+}
+icon_hint = "shield"

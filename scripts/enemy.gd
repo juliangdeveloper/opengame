@@ -13,7 +13,7 @@ enum State { IDLE, CHASE, WINDUP, ACTIVE, RECOVER, STAGGER, DEAD }
 
 @export_group("Ranges")
 @export var detection_range := 12.0
-@export var attack_range := 1.9
+@export var attack_range := 2.6
 @export var lose_range := 18.0
 
 @export_group("Attack Timings")
@@ -29,6 +29,13 @@ var hp: float
 var state_timer := 0.0
 var spawn_position: Vector3
 var is_dying: bool = false
+
+## Mission damage modifiers — multiplicador de daño RECIBIDO por elemento.
+## Default {} = neutral (no mission active). MissionManager puebla esto al
+## spawnear el enemigo con los modifiers del balance de la misión.
+## Ej: {&"fire": 1.8, &"water": 0.32, &"earth": 0.32, ...} → el enemigo
+## es vulnerable a fire y resistente a todo lo demás.
+var damage_modifiers: Dictionary = {}
 
 # Nodes
 @onready var model: Node3D = $Model
@@ -236,12 +243,18 @@ func _enter_stagger() -> void:
 
 # --- Damage + parry interface ---
 
-func take_damage(amount: float, source: Node = null) -> void:
+func take_damage(amount: float, source: Node = null, element: StringName = &"physical") -> void:
 	if state == State.DEAD:
 		return
-	hp -= amount
+	# Apply mission damage_modifiers (multiplicador por elemento)
+	var base_amount := float(amount)
+	var modified_amount := base_amount
+	if element != &"" and not damage_modifiers.is_empty():
+		var mult: float = float(damage_modifiers.get(element, 1.0))
+		modified_amount = base_amount * mult
+	hp -= modified_amount
 	_flash()
-	print("[enemy] %s hit dmg=%.1f hp=%.1f state=%s" % [name, amount, hp, State.keys()[state]])
+	print("[enemy] %s hit dmg=%.1f (raw=%.1f, elem=%s, mult=%.2f) hp=%.1f state=%s" % [name, modified_amount, base_amount, element, float(damage_modifiers.get(element, 1.0)), hp, State.keys()[state]])
 	# Light stagger on hit (less than full stagger from parry)
 	if state == State.WINDUP or state == State.ACTIVE:
 		_enter_stagger()

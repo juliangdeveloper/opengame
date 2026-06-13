@@ -1,6 +1,6 @@
 extends Node
 ## Playtest harness: drives the player via simulated input, snapshots viewport, logs state.
-## Run with:  godot scenes/playtest.tscn
+## Run with:  godot scenes/play.tscn
 ## Output:    ~/.local/share/godot/app_userdata/MCP Souls Game/playtest/<label>.png + log
 
 var player: CharacterBody3D

@@ -22,7 +22,7 @@
 ## El autoload se registra en project.godot.
 extends Node
 
-const DEFAULT_HOST := "127.0.0.1"
+const DEFAULT_HOST := "*"
 const DEFAULT_PORT := 9876
 
 var _server: TCPServer
@@ -32,10 +32,6 @@ var _poll_timer: Timer
 
 # Comandos pendientes de procesar en _process
 var _pending_commands: Array = []  # Array[Dictionary] {client_idx, request}
-
-# Challenge tracking
-var _challenges: Dictionary = {}
-var _challenge_monitors: Array = []  # Array[Timer]
 
 
 func _ready() -> void:
@@ -126,12 +122,38 @@ func _handle_command(cmd: Dictionary) -> void:
 			result = _cmd_create_skill(params)
 		"modify_skill":
 			result = _cmd_modify_skill(params)
-		"spawn_challenge":
-			result = _cmd_spawn_challenge(params)
 		"allocate_skill_points":
 			result = _cmd_allocate_skill_points(params)
 		"list_skills":
 			result = _cmd_list_skills(params)
+		# === MISSION SYSTEM (replaces old spawn_challenge) ===
+		"create_mission":
+			result = _cmd_create_mission(params)
+		"set_mission_difficulty":
+			result = _cmd_set_mission_difficulty(params)
+		"start_mission":
+			result = _cmd_start_mission(params)
+		"abandon_mission":
+			result = _cmd_abandon_mission(params)
+		"retry_mission":
+			result = _cmd_retry_mission(params)
+		"edit_mission":
+			result = _cmd_edit_mission(params)
+		"get_mission_state":
+			result = _cmd_get_mission_state(params)
+		"list_missions":
+			result = _cmd_list_missions(params)
+		# === SISTEMA DE ARMAS (Post-MVP) ===
+		"create_weapon":
+			result = _cmd_create_weapon(params)
+		"grant_weapon":
+			result = _cmd_grant_weapon(params)
+		"equip_weapon":
+			result = _cmd_equip_weapon(params)
+		"list_weapons":
+			result = _cmd_list_weapons(params)
+		"allocate_weapon_points":
+			result = _cmd_allocate_weapon_points(params)
 		_:
 			error = {"code": -32601, "message": "method not found: %s" % method}
 	# Responde
@@ -362,111 +384,104 @@ func _cmd_modify_skill(params: Dictionary) -> Dictionary:
 	return {"modified": path, "id": skill_id}
 
 
-## spawn_challenge(params) — Diseña un challenge: enemies + objective + reward.
-##
-## Params:
-##   enemy_count: int
-##   radius: float
-##   objective: String
-##   reward_skill: String (id de la skill a entregar al completar)
-##   reward_points: int
-##
-## Returns:
-##   {challenge_id, enemies_spawned, objective, reward}
-func _cmd_spawn_challenge(params: Dictionary) -> Dictionary:
-	var enemy_count: int = int(params.get("enemy_count", 3))
-	var radius: float = float(params.get("radius", 6.0))
-	var objective: String = String(params.get("objective", "Defeat all enemies"))
-	var reward_skill: String = String(params.get("reward_skill", ""))
-	var reward_points: int = int(params.get("reward_points", 1))
-	# Spawn enemies (re-uses run_skill_test logic)
-	var player: Node = get_tree().root.find_child("Player", true, false)
-	if player == null:
-		return {"error": "Player not found"}
-	var scene: PackedScene = load("res://scenes/enemy.tscn")
-	if scene == null:
-		return {"error": "enemy scene not loadable"}
-	var spawned: Array = []
-	for i in range(enemy_count):
-		var angle: float = TAU * float(i) / float(enemy_count)
-		var offset := Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
-		var pos: Vector3 = player.global_position + offset
-		var enemy: Node = scene.instantiate()
-		enemy.position = pos
-		enemy.add_to_group("challenge_enemies")
-		enemy.add_to_group("mcp_spawned")
-		get_tree().current_scene.add_child(enemy)
-		spawned.append({"id": enemy.get_instance_id(), "pos": [pos.x, pos.y, pos.z]})
-	# Set objective
-	var hud: Node = get_tree().root.find_child("HUD", true, false)
-	if hud != null and hud.has_method("set_objective"):
-		hud.set_objective(objective)
-	# Track challenge
-	var challenge_id: String = "challenge_%d" % Time.get_ticks_msec()
-	_challenges[challenge_id] = {
-		"enemies": spawned,
-		"reward_skill": reward_skill,
-		"reward_points": reward_points,
-		"objective": objective,
-		"completed": false,
-	}
-	# Connect a monitor (using a Timer for polling)
-	_start_challenge_monitor(challenge_id)
+## === MISSION HANDLERS (7) ===
+## El LLM crea misiones con `create_mission` (solo pasa purpose, target_id,
+## mission_type, title). El jugador escoge dificultad vía UI → set_difficulty.
+## El juego calcula enemigos, rewards y damage_modifiers en base a la
+## dificultad. Estos handlers son thin wrappers sobre MissionManager.
+
+func _cmd_create_mission(params: Dictionary) -> Dictionary:
+	var mm: Node = Engine.get_main_loop().root.get_node_or_null("MissionManager")
+	if mm == null:
+		return {"error": "MissionManager not found"}
+	var purpose: StringName = StringName(String(params.get("purpose", "")))
+	var target_id: StringName = StringName(String(params.get("target_id", "")))
+	var mission_type: StringName = StringName(String(params.get("mission_type", "defeat_enemies")))
+	var title: String = String(params.get("title", ""))
+	var m: Resource = mm.create_mission(purpose, target_id, mission_type, title)
+	if m == null:
+		return {"error": "validation failed (check purpose/target_id/mission_type)"}
 	return {
-		"challenge_id": challenge_id,
-		"enemies_spawned": spawned.size(),
-		"objective": objective,
-		"reward": {"skill": reward_skill, "points": reward_points},
+		"mission_id": String(m.id),
+		"title": m.title,
+		"purpose": String(m.purpose),
+		"target_id": String(m.target_id),
+		"mission_type": String(m.mission_type),
+		"state": String(m.state),
 	}
 
 
-func _start_challenge_monitor(challenge_id: String) -> void:
-	var t: Timer = Timer.new()
-	t.wait_time = 0.5
-	t.one_shot = false
-	t.autostart = true
-	t.timeout.connect(_check_challenge.bind(challenge_id))
-	add_child(t)
-	_challenge_monitors.append(t)
+func _cmd_set_mission_difficulty(params: Dictionary) -> Dictionary:
+	var mm: Node = Engine.get_main_loop().root.get_node_or_null("MissionManager")
+	if mm == null:
+		return {"error": "MissionManager not found"}
+	var mission_id: StringName = StringName(String(params.get("mission_id", "")))
+	var difficulty: int = int(params.get("difficulty", 1))
+	var m: Resource = mm.set_difficulty(mission_id, difficulty)
+	if m == null:
+		return {"error": "could not set difficulty (mission not in AVAILABLE state or invalid difficulty 1-5)"}
+	return {
+		"mission_id": String(m.id),
+		"difficulty": m.difficulty,
+		"state": String(m.state),
+		"enemy_count": m.enemy_count,
+		"enemy_hp_mult": m.enemy_hp_mult,
+		"time_limit_sec": m.time_limit_sec,
+		"rewards": m.rewards,
+		"damage_modifiers": m.damage_modifiers,
+	}
 
 
-func _check_challenge(challenge_id: String) -> void:
-	if not _challenges.has(challenge_id):
-		return
-	var c: Dictionary = _challenges[challenge_id]
-	if c.get("completed", false):
-		return
-	# Check if all enemies are dead (no longer in tree or invalid)
-	var alive_count: int = 0
-	for e in c.get("enemies", []):
-		var id: int = int(e.get("id", 0))
-		var node: Node = instance_from_id(id)
-		if node != null and is_instance_valid(node):
-			alive_count += 1
-	if alive_count > 0:
-		return
-	# Challenge complete!
-	c["completed"] = true
-	_challenges[challenge_id] = c
-	print("[MCPReceiver] challenge %s completed!" % challenge_id)
-	# Grant reward
-	var ps: Node = get_tree().root.get_node_or_null("ProgressionState")
-	if ps == null:
-		return
-	if int(c.get("reward_points", 0)) > 0:
-		ps.grant_skill_points(int(c["reward_points"]))
-	var reward_skill: String = String(c.get("reward_skill", ""))
-	if reward_skill != "":
-		var skill: Resource = _find_skill_resource(reward_skill)
-		if skill != null and StringName(reward_skill) not in ps.owned_skills:
-			ps.add_skill(skill)
-	# Notify objective
-	var hud: Node = get_tree().root.find_child("HUD", true, false)
-	if hud != null and hud.has_method("set_objective"):
-		hud.set_objective("Challenge complete! +%d points%s" % [
-			int(c.get("reward_points", 0)),
-			" + skill: " + reward_skill if reward_skill != "" else ""
-		])
+func _cmd_start_mission(params: Dictionary) -> Dictionary:
+	var mm: Node = Engine.get_main_loop().root.get_node_or_null("MissionManager")
+	if mm == null:
+		return {"error": "MissionManager not found"}
+	var mission_id: StringName = StringName(String(params.get("mission_id", "")))
+	return mm.start_mission(mission_id)
+
+
+func _cmd_abandon_mission(params: Dictionary) -> Dictionary:
+	var mm: Node = Engine.get_main_loop().root.get_node_or_null("MissionManager")
+	if mm == null:
+		return {"error": "MissionManager not found"}
+	var mission_id: StringName = StringName(String(params.get("mission_id", "")))
+	return mm.abandon_mission(mission_id)
+
+
+func _cmd_retry_mission(params: Dictionary) -> Dictionary:
+	var mm: Node = Engine.get_main_loop().root.get_node_or_null("MissionManager")
+	if mm == null:
+		return {"error": "MissionManager not found"}
+	var mission_id: StringName = StringName(String(params.get("mission_id", "")))
+	return mm.retry_mission(mission_id)
+
+
+func _cmd_edit_mission(params: Dictionary) -> Dictionary:
+	var mm: Node = Engine.get_main_loop().root.get_node_or_null("MissionManager")
+	if mm == null:
+		return {"error": "MissionManager not found"}
+	var mission_id: StringName = StringName(String(params.get("mission_id", "")))
+	var new_difficulty: int = int(params.get("new_difficulty", 1))
+	return mm.edit_mission(mission_id, new_difficulty)
+
+
+func _cmd_get_mission_state(params: Dictionary) -> Dictionary:
+	var mm: Node = Engine.get_main_loop().root.get_node_or_null("MissionManager")
+	if mm == null:
+		return {"error": "MissionManager not found"}
+	var mission_id: StringName = StringName(String(params.get("mission_id", "")))
+	return mm.get_state_snapshot(mission_id)
+
+
+func _cmd_list_missions(_params: Dictionary) -> Dictionary:
+	var mm: Node = Engine.get_main_loop().root.get_node_or_null("MissionManager")
+	if mm == null:
+		return {"error": "MissionManager not found", "missions": []}
+	var missions: Array = mm.list_missions()
+	var out: Array = []
+	for m in missions:
+		out.append(mm.get_state_snapshot(StringName(String(m.id))))
+	return {"missions": out, "count": out.size(), "active_mission_id": String(mm.get_active_mission().id) if mm.get_active_mission() != null else ""}
 
 
 ## allocate_skill_points(params) — Asigna puntos a un stat de una skill owned.
@@ -505,25 +520,32 @@ func _cmd_list_skills(_params: Dictionary) -> Dictionary:
 	return {"skills": skills, "count": skills.size()}
 
 
-## Format a skill dict as a .tres file. Mimics the existing kamehameha.tres style.
+## Format a skill dict as a .tres file. Mimics the existing kamehameha_001.tres style.
+##
+## Acepta un Dictionary (spec cruda del LLM) o un Resource (skill ya cargada).
+## Para Resources, extrae los campos TAL CUAL — sin forzar String() en campos
+## que pueden ser Dictionary/Array (target_resolver, atoms, designed_max, etc).
+## Luego _format_tres_value() se encarga de serializar el valor correcto
+## según su tipo. Bug anterior: String(skill.target_resolver) reventaba porque
+## target_resolver es Dict y GDScript 4 no tiene constructor String(Dict).
 func _format_skill_tres(skill) -> String:
 	var data: Dictionary
 	if skill is Dictionary:
 		data = skill.duplicate(true)
 	else:
-		# Resource — extract fields
+		# Resource — extraer campos raw (String/Dict/Array/etc sin forzar)
 		data = {
-			"id": String(skill.id) if "id" in skill else "",
-			"name": String(skill.name) if "name" in skill else "",
-			"description": String(skill.description) if "description" in skill else "",
-			"category": String(skill.category) if "category" in skill else "damage",
-			"target_resolver": String(skill.target_resolver) if "target_resolver" in skill else "nearest_npc_in_range",
+			"id": skill.id if "id" in skill else "",
+			"name": skill.name if "name" in skill else "",
+			"description": skill.description if "description" in skill else "",
+			"category": skill.category if "category" in skill else "damage",
+			"target_resolver": skill.target_resolver if "target_resolver" in skill else {},
 			"atoms": skill.atoms.duplicate(true) if "atoms" in skill and skill.atoms != null else [],
 			"designed_max": skill.designed_max.duplicate(true) if "designed_max" in skill and skill.designed_max != null else {},
 			"costs": skill.costs.duplicate(true) if "costs" in skill and skill.costs != null else {},
 			"cast": skill.cast.duplicate(true) if "cast" in skill and skill.cast != null else {},
 			"vfx": skill.vfx.duplicate(true) if "vfx" in skill and skill.vfx != null else {},
-			"tier_requirement": String(skill.tier_requirement) if "tier_requirement" in skill else "Novice",
+			"tier_requirement": skill.tier_requirement if "tier_requirement" in skill else "Novice",
 		}
 	var lines: Array = [
 		"[gd_resource type=\"Resource\" script_class=\"SkillResource\" load_steps=2 format=3]",
@@ -532,17 +554,173 @@ func _format_skill_tres(skill) -> String:
 		"",
 		"[resource]",
 		"script = ExtResource(\"1_skill\")",
-		"id = &\"%s\"" % data.get("id", ""),
-		"name = \"%s\"" % data.get("name", ""),
-		"description = \"%s\"" % data.get("description", "").replace("\"", "\\\""),
-		"category = \"%s\"" % data.get("category", "damage"),
+		"id = &\"%s\"" % String(data.get("id", "")),
+		"name = \"%s\"" % String(data.get("name", "")).replace("\"", "\\\""),
+		"description = \"%s\"" % String(data.get("description", "")).replace("\"", "\\\""),
+		"category = \"%s\"" % String(data.get("category", "damage")),
 		"target_resolver = " + _format_tres_value(data.get("target_resolver", {})),
-		"tier_requirement = \"%s\"" % data.get("tier_requirement", "Novice"),
+		"tier_requirement = \"%s\"" % String(data.get("tier_requirement", "Novice")),
 		"atoms = " + _format_tres_value(data.get("atoms", [])),
 		"designed_max = " + _format_tres_value(data.get("designed_max", {})),
 		"costs = " + _format_tres_value(data.get("costs", {})),
 		"cast = " + _format_tres_value(data.get("cast", {})),
 		"vfx = " + _format_tres_value(data.get("vfx", {})),
+	]
+	return "\n".join(lines) + "\n"
+
+
+## === SISTEMA DE ARMAS — HANDLERS MCP ===
+## _cmd_create_weapon(params) — Crea un nuevo WeaponResource .tres desde el LLM.
+func _cmd_create_weapon(params: Dictionary) -> Dictionary:
+	var id: String = String(params.get("id", ""))
+	if id == "":
+		return {"error": "id is required"}
+	# Sanitize el id para path
+	var safe_id: String = id.replace("/", "_").replace("\\", "_").replace("..", "_")
+	var out_path: String = "res://data/weapons/%s.tres" % safe_id
+	# Construir el dict para el .tres
+	var family_str: String = String(params.get("family", "sword"))
+	var family_idx: int = 0  # SWORD por defecto
+	match family_str:
+		"sword":    family_idx = 0
+		"scimitar": family_idx = 1
+		"dagger":   family_idx = 2
+		"scythe":   family_idx = 3
+		"bow":      family_idx = 4
+		"spear":    family_idx = 5
+		"axe":      family_idx = 6
+		"mace":     family_idx = 7
+		"staff":    family_idx = 8
+		"unarmed":  family_idx = 9
+	var spec: Dictionary = {
+		"id": StringName(id),
+		"display_name": String(params.get("display_name", id)),
+		"flavor_text": String(params.get("flavor_text", "")),
+		"family": family_idx,
+		"hands": int(params.get("hands", 1)),
+		"designed_stats": params.get("designed_stats", {"dmg": 10.0, "speed": 1.0}),
+		"stat_scaling": params.get("stat_scaling", {}),
+		"class_dmg_mult": params.get("class_dmg_mult", {}),
+		"compatible_skill_ids": params.get("compatible_skill_ids", []),
+		"blocked_skill_ids": params.get("blocked_skill_ids", []),
+		"mesh_hint": String(params.get("mesh_hint", "")),
+		"tint_color": Color(0.85, 0.85, 0.9, 1.0),
+		"trail_color": Color(1.0, 0.95, 0.7, 0.7),
+		"hit_sound": "weapon_hit",
+		"category": StringName(String(params.get("category", "melee"))),
+	}
+	# Validar tipos básicos
+	if not spec["designed_stats"] is Dictionary:
+		return {"error": "designed_stats must be a dict"}
+	if not spec["stat_scaling"] is Dictionary:
+		return {"error": "stat_scaling must be a dict"}
+	# Escribir el .tres
+	var tres: String = _format_weapon_tres(spec)
+	var f: FileAccess = FileAccess.open(out_path, FileAccess.WRITE)
+	if f == null:
+		return {"error": "could not open %s for writing" % out_path}
+	f.store_string(tres)
+	f.close()
+	# Re-load para verificar
+	var res: Resource = load(out_path)
+	if res == null:
+		return {"error": "created but failed to load"}
+	# Registrar en el catálogo
+	var catalog: GDScript = load("res://scripts/skill/weapon_catalog.gd")
+	var ok: bool = catalog.register_mcp_generated(StringName(id), out_path)
+	if not ok:
+		return {"error": "created but failed to register in catalog"}
+	print("[MCP] created weapon: %s -> %s" % [id, out_path])
+	return {"ok": true, "id": id, "path": out_path, "display_name": spec["display_name"], "family": family_str}
+
+
+func _cmd_grant_weapon(params: Dictionary) -> Dictionary:
+	var ps: Node = Engine.get_main_loop().root.get_node_or_null("ProgressionState")
+	if ps == null:
+		return {"error": "ProgressionState not found"}
+	var weapon_id: String = String(params.get("weapon_id", ""))
+	if weapon_id == "":
+		return {"error": "weapon_id is required"}
+	var ok: bool = ps.grant_weapon(StringName(weapon_id))
+	return {"ok": ok, "weapon_id": weapon_id}
+
+
+func _cmd_equip_weapon(params: Dictionary) -> Dictionary:
+	var ps: Node = Engine.get_main_loop().root.get_node_or_null("ProgressionState")
+	if ps == null:
+		return {"error": "ProgressionState not found"}
+	var weapon_id: String = String(params.get("weapon_id", ""))
+	if weapon_id == "":
+		return {"error": "weapon_id is required"}
+	var ok: bool = ps.equip_weapon(StringName(weapon_id))
+	if not ok:
+		return {"error": "could not equip (not owned or not in catalog)"}
+	return {"ok": true, "weapon_id": weapon_id, "equipped_weapon": String(ps.equipped_weapon.id)}
+
+
+func _cmd_list_weapons(_params: Dictionary) -> Dictionary:
+	var catalog: GDScript = load("res://scripts/skill/weapon_catalog.gd")
+	catalog.initialize()
+	var all: Array = catalog.list_all()
+	var result: Array = []
+	for w in all:
+		var wr: Resource = w
+		result.append({
+			"id": String(wr.id),
+			"display_name": wr.display_name,
+			"family": wr.get_family_name(),
+			"family_display": wr.get_family_display(),
+			"hands": wr.hands,
+			"dmg": float(wr.designed_stats.get("dmg", 0.0)),
+			"speed": float(wr.designed_stats.get("speed", 1.0)),
+			"crit_chance": float(wr.designed_stats.get("crit_chance", 0.05)),
+		})
+	return {"weapons": result, "count": result.size()}
+
+
+func _cmd_allocate_weapon_points(params: Dictionary) -> Dictionary:
+	var ps: Node = Engine.get_main_loop().root.get_node_or_null("ProgressionState")
+	if ps == null:
+		return {"error": "ProgressionState not found"}
+	var weapon_id: String = String(params.get("weapon_id", ""))
+	var stat: String = String(params.get("stat", ""))
+	var points: int = int(params.get("points", 1))
+	if weapon_id == "" or stat == "":
+		return {"error": "weapon_id and stat are required"}
+	var ok: bool = ps.allocate_weapon(StringName(weapon_id), StringName(stat), points)
+	return {
+		"ok": ok,
+		"weapon_id": weapon_id,
+		"stat": stat,
+		"new_points": int(ps.get_weapon_points(StringName(weapon_id), StringName(stat))),
+		"skill_points_remaining": int(ps.skill_points),
+	}
+
+
+## _format_weapon_tres(spec) — Escribe el contenido de un .tres para WeaponResource.
+func _format_weapon_tres(spec: Dictionary) -> String:
+	var lines: Array = [
+		"[gd_resource type=\"Resource\" script_class=\"WeaponResource\" load_steps=2 format=3]",
+		"",
+		"[ext_resource type=\"Script\" path=\"res://scripts/skill/weapon_resource.gd\" id=\"1\"]",
+		"",
+		"[resource]",
+		"script = ExtResource(\"1\")",
+		"id = &\"%s\"" % String(spec.get("id", "")),
+		"display_name = \"%s\"" % String(spec.get("display_name", "")).replace("\"", "\\\""),
+		"flavor_text = \"%s\"" % String(spec.get("flavor_text", "")).replace("\"", "\\\""),
+		"family = %d" % int(spec.get("family", 0)),
+		"hands = %d" % int(spec.get("hands", 1)),
+		"designed_stats = " + _format_tres_value(spec.get("designed_stats", {})),
+		"stat_scaling = " + _format_tres_value(spec.get("stat_scaling", {})),
+		"class_dmg_mult = " + _format_tres_value(spec.get("class_dmg_mult", {})),
+		"compatible_skill_ids = " + _format_tres_value(spec.get("compatible_skill_ids", [])),
+		"blocked_skill_ids = " + _format_tres_value(spec.get("blocked_skill_ids", [])),
+		"mesh_hint = \"%s\"" % String(spec.get("mesh_hint", "")),
+		"tint_color = %s" % _format_tres_value(spec.get("tint_color", Color(0.85, 0.85, 0.9, 1.0))),
+		"trail_color = %s" % _format_tres_value(spec.get("trail_color", Color(1.0, 0.95, 0.7, 0.7))),
+		"hit_sound = \"%s\"" % String(spec.get("hit_sound", "weapon_hit")),
+		"category = &\"%s\"" % String(spec.get("category", "melee")),
 	]
 	return "\n".join(lines) + "\n"
 

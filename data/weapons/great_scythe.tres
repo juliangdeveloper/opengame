@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="WeaponResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/weapon_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"great_scythe"
+display_name = "Guadaña grande"
+flavor_text = "Hoja curva de 1.8m en asta de 2m. Alcance extremo, swings amplios, lenta como un hacha."
+family = 3
+hands = 2
+designed_stats = {
+"dmg": 45.0,
+"speed": 0.65,
+"reach": 1.7,
+"weight": 7.0,
+"parry_bonus": -0.10,
+"crit_chance": 0.12
+}
+stat_scaling = {
+"strength_to_dmg": 0.20,
+"dexterity_to_speed": 0.02,
+"dexterity_to_crit": 0.03,
+"faith_to_parry": 0.0
+}
+class_dmg_mult = {
+"spear": 1.5,
+"sword": 1.2,
+"unarmed": 1.4
+}
+compatible_skill_ids = [&"scythe_sweep", &"scythe_reap"]
+blocked_skill_ids = []
+mesh_hint = "scythe"
+model_path = "res://assets/models/weapons/wpn_great_scythe.glb"
+model_rotation = Vector3(0, 0, 0)
+grip_offset = 0.55
+model_scale = 1.0
+tint_color = Color(0.75, 0.75, 0.8, 1)
+blade_length = 1.8
+trail_color = Color(0.5, 1.0, 0.5, 0.7)
+hit_sound = "scythe_swing"
+category = &"melee"

@@ -127,7 +127,7 @@ func _test_progression_grant_and_allocate(ps: Node) -> void:
 	ps.skill_catalog = {}
 
 	# Carga skill de prueba
-	var skill = load("res://data/skills/kamehameha.tres")
+	var skill = load("res://data/skills/kamehameha_001.tres")
 	ps.add_skill(skill)
 
 	_check("add_skill", &"kamehameha_001" in ps.owned_skills, "(owned=%s)" % str(ps.owned_skills))
@@ -259,14 +259,16 @@ func _test_skill_validator_negative() -> void:
 
 
 func _test_skill_resource_load() -> void:
-	var k = load("res://data/skills/kamehameha.tres")
+	var k = load("res://data/skills/kamehameha_001.tres")
 	_check("kamehameha_loaded", k != null and k.id == &"kamehameha_001", "(id=%s)" % str(k.id if k else "null"))
-	_check("kamehameha_atoms_count", k.atoms.size() == 3, "(got %d, expected 3)" % k.atoms.size())
+	# Kamehameha: 2 átomos (1x trigger con then_effect=burst_aoe, 1x buff de carga).
+	# Antes eran 3, pero el 3ro (burst_aoe inmediato) causaba doble rayo. Se quitó.
+	_check("kamehameha_atoms_count", k.atoms.size() == 2, "(got %d, expected 2: trigger+buff)" % k.atoms.size())
 	_check("kamehameha_designed_max",
 		float(k.designed_max.get("amount", 0)) == 100.0,
 		"(amount=%s)" % k.designed_max.get("amount", "?"))
 
-	var s = load("res://data/skills/serious_punch.tres")
+	var s = load("res://data/skills/serious_punch_001.tres")
 	_check("serious_punch_loaded", s != null and s.id == &"serious_punch_001")
 	_check("serious_punch_atoms_count", s.atoms.size() == 3, "(got %d)" % s.atoms.size())
 
@@ -278,7 +280,7 @@ func _test_skill_power_ratio(ps: Node) -> void:
 	ps.allocations = {}
 	ps.set("owned_skills", [] as Array[StringName])
 	ps.skill_catalog = {}
-	var skill = load("res://data/skills/kamehameha.tres")
+	var skill = load("res://data/skills/kamehameha_001.tres")
 	ps.add_skill(skill)
 	ps.grant_skill_points(5)
 	# Kamehameha tiene stat "amount" (no "damage"). Allocamos a amount.

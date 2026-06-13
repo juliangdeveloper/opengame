@@ -54,7 +54,7 @@ material_override = SubResource("mat_crystal")
 
 [node name="SummonSaibaman" type="Label3D" parent="Model"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
-text = "[E] Summon Saibaman"
+text =			"[Gamepad: X] Summon Saibaman"
 font_size = 32
 outline_size = 4
 outline_color = Color(0, 0, 0, 1)

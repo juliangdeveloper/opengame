@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="WeaponResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/weapon_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"cursed_blade_001"
+display_name = "Hoja Maldita"
+flavor_text = "Hoja negra que susurra. Inflige 2x a enemigos sin armadura."
+family = 0
+hands = 2
+designed_stats = {
+    "dmg": 50,
+    "speed": 0.9,
+    "reach": 1.3,
+    "weight": 4,
+    "parry_bonus": -0.1,
+    "crit_chance": 0.2
+}
+stat_scaling = {
+    "strength_to_dmg": 0.2,
+    "dexterity_to_speed": 0.04,
+    "dexterity_to_crit": 0.03
+}
+class_dmg_mult = {
+    "unarmed": 2,
+    "dagger": 1.5
+}
+compatible_skill_ids = []
+blocked_skill_ids = []
+mesh_hint = "cursed_blade"
+model_path = "res://assets/models/weapons/wpn_cursed_blade.glb"
+model_rotation = Vector3(0, 0, 0)
+grip_offset = 0.20
+model_scale = 1.0
+tint_color = "(0.85, 0.85, 0.9, 1.0)"
+trail_color = "(1.0, 0.95, 0.7, 0.7)"
+hit_sound = "weapon_hit"
+category = &"melee"

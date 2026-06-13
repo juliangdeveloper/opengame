@@ -1,0 +1,67 @@
+{
+  "_doc": "Tabla de dificultad de misiones. El juego usa esto para calcular enemigos, HP, recompensas, time limit, y damage modifiers. El LLM nunca setea estos valores — solo el jugador escoge la dificultad 1-5.",
+
+  "difficulty": {
+    "1": {
+      "label": "Aprendiz",
+      "enemy_count": 1,
+      "enemy_hp_mult": 0.7,
+      "skill_points": 2,
+      "proficiency": 0,
+      "resistance_strength": 0.3,
+      "time_limit_sec": 0,
+      "description": "1 enemigo débil, sin límite de tiempo. Para probar la skill."
+    },
+    "2": {
+      "label": "Practicante",
+      "enemy_count": 2,
+      "enemy_hp_mult": 1.0,
+      "skill_points": 3,
+      "proficiency": 1,
+      "resistance_strength": 0.5,
+      "time_limit_sec": 0,
+      "description": "2 enemigos, balanceados. Primer reto real."
+    },
+    "3": {
+      "label": "Guerrero",
+      "enemy_count": 3,
+      "enemy_hp_mult": 1.2,
+      "skill_points": 5,
+      "proficiency": 1,
+      "resistance_strength": 0.7,
+      "time_limit_sec": 180,
+      "description": "3 enemigos más resistentes, con time limit. Estándar."
+    },
+    "4": {
+      "label": "Veterano",
+      "enemy_count": 4,
+      "enemy_hp_mult": 1.5,
+      "skill_points": 7,
+      "proficiency": 2,
+      "resistance_strength": 0.85,
+      "time_limit_sec": 150,
+      "description": "4 enemigos duros. Dominio de la skill requerido."
+    },
+    "5": {
+      "label": "Maestro",
+      "enemy_count": 5,
+      "enemy_hp_mult": 1.8,
+      "skill_points": 10,
+      "proficiency": 3,
+      "resistance_strength": 1.0,
+      "time_limit_sec": 120,
+      "description": "5 enemigos letales. Solo los más hábiles sobreviven."
+    }
+  },
+
+  "_damage_modifier_formula": {
+    "other_elements": "max(0.2, 1.0 - 0.16 * difficulty) — fuerte resistencia a todo lo que no sea el target",
+    "target_element": "1.5 + 0.1 * difficulty — vulnerable al elemento de la skill",
+    "physical_for_teach_weapon": "1.5 + 0.1 * difficulty — vulnerable a physical cuando se enseña un arma",
+    "physical_for_teach_skill": "max(0.2, 1.0 - 0.16 * difficulty) — resistente a physical también (fuerza el uso de la skill)"
+  },
+
+  "_rewards_doc": "Todas las misiones otorgan SOLO skill_points (distribución libre) + proficiency (que sube de tier). Nunca items, nunca skills. La skill/weapon se enseña via el proposito de la misión, no como recompensa.",
+
+  "_enemy_type_doc": "Por ahora el enemy_type es siempre 'saibaman' (el único enemy.tscn disponible). Cuando haya más templates, este campo puede variar por mission_type o difficulty."
+}

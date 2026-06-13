@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"parry_riposte_001"
+name = "Contragolpe de parry"
+description = "Golpe automático al enemigo que intentaste defender. Se activa al parrear exitosamente."
+flavor_text = "Tu defensa se vuelve ataque."
+category = &"damage_riposte"
+type = &"damage"
+target_resolver = {
+"kind": "nearest_npc_in_range",
+"params": {
+"max_distance": 2.5
+}
+}
+designed_max = {
+"amount": 20.0,
+"knockback": 3.0,
+"stamina": 0.0,
+"cooldown": 0.0
+}
+atoms = [{
+"type": "hit",
+"params": {
+"amount": 20.0,
+"damage_type": "physical",
+"element": "physical",
+"knockback": 3.0
+},
+"hitbox": {
+"shape": "sphere",
+"size": [0.8, 0.8, 0.8],
+"position": "in_front_of_caster",
+"distance_forward": 1.0,
+"color": [1.0, 0.9, 0.3, 0.95],
+"emission": 7.0,
+"blend_mode": 1,
+"duration": 0.2,
+"fade_out": true
+},
+"applies_to_target": "primary"
+}]
+combo_triggers = []
+costs = {
+"stamina": 0.0,
+"cooldown": 0.0
+}
+vfx = {
+"hit_sound": "parry_riposte_impact"
+}
+icon_hint = "counter"

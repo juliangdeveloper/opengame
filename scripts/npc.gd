@@ -21,7 +21,8 @@ const SkillResource := preload("res://scripts/skill/skill_resource.gd")
 const SkillExecutorScript := preload("res://scripts/skill/skill_executor.gd")
 
 # Estado del NPC
-enum State { IDLE, CHASE, CAST, DEAD }
+# Estado del NPC
+enum State { IDLE, CHASE, CAST, MELEE_WINDUP, MELEE_ACTIVE, MELEE_RECOVER, DEAD }
 
 # --- Tunables (editor-exposed) ---
 @export_group("Stats")
@@ -29,8 +30,8 @@ enum State { IDLE, CHASE, CAST, DEAD }
 @export var move_speed := 1.8
 @export var detection_range := 8.0
 @export var lose_range := 14.0
-@export var attack_range := 1.8
-@export var melee_damage := 8.0
+@export var attack_range := 7.5
+@export var melee_damage := 0.0
 @export var attack_cooldown := 1.5
 @export var respawn_delay := 0.0  # 0 = no respawnea
 
@@ -38,7 +39,7 @@ enum State { IDLE, CHASE, CAST, DEAD }
 ## Skill .tres que el NPC castea. Si está vacío, usa light_attack como fallback.
 @export var skill: SkillResource = null
 ## Probabilidad de castear skill en vez de melee cuando está en rango (0..1).
-@export var skill_use_chance := 0.5
+@export var skill_use_chance := 1.0
 ## Cooldown del skill cast (segundos). Independiente del cooldown de la skill misma.
 @export var skill_cooldown := 4.0
 ## Tiempo de windup del skill cast antes de aplicar la skill (segundos).
@@ -47,6 +48,16 @@ enum State { IDLE, CHASE, CAST, DEAD }
 @export var cast_active := 0.2
 ## Duración de la recovery después del cast.
 @export var cast_recovery := 0.3
+
+@export_group("Melee")
+## Tiempo de windup del melee (telegraph amarillo del hitbox).
+@export var melee_windup := 0.45
+## Duración de la ventana activa del melee (hitbox rojo, hace daño).
+@export var melee_active := 0.18
+## Tiempo de recovery después del melee.
+@export var melee_recovery := 0.55
+
+# Estado del NPC (enum declarado arriba, en línea 24)
 
 @export_group("Visuals")
 @export var drop_label := "Saibaman"
@@ -83,9 +94,9 @@ const HITBOX_ACTIVE := Color(1.0, 0.2, 0.1, 0.55)   # rojo (CAST active)
 
 func _ready() -> void:
 	hp = max_hp
-	# Fallback: si nadie asignó una skill desde el editor, cargar light_attack.tres
+	# Fallback: si nadie asignó una skill desde el editor, cargar light_attack_001.tres
 	if skill == null:
-		skill = load("res://data/skills/light_attack.tres") as SkillResource
+		skill = load("res://data/skills/light_attack_001.tres") as SkillResource
 		if skill != null:
 			print("[npc] %s: no skill assigned, fallback a %s" % [name, skill.id])
 	# Materiales para body + hitbox
@@ -105,6 +116,20 @@ func _ready() -> void:
 	hitbox_debug.visible = false
 	attack_area.monitoring = false
 	hit_collision.disabled = true
+	# ResistanceComponent (resistencias elementales).
+	# El NPC empieza con resistencias fijas definidas en el .tres (futuro).
+	# Por ahora, sin permanente — el daño elemental pasa normal.
+	var ResistanceCompScript: GDScript = load("res://scripts/skill/components/ResistanceComponent.gd")
+	var rc: Node = ResistanceCompScript.new()
+	rc.name = "ResistanceComponent"
+	add_child(rc)
+	# AttributeComponent (HP/Stamina bonus + status resistances).
+	# El NPC empieza con allocations vacías; pueden ser configuradas vía
+	# .tres o en runtime. Útil para saibaman con fire_res natural, etc.
+	var AttributeCompScript: GDScript = load("res://scripts/attribute_component.gd")
+	var ac: Node = AttributeCompScript.new()
+	ac.name = "AttributeComponent"
+	add_child(ac)
 	# Añadir al grupo de enemigos para que player + AI los encuentre
 	add_to_group("enemies")
 	# Cargar executor con la skill
@@ -138,6 +163,12 @@ func _physics_process(delta: float) -> void:
 			_state_chase(delta)
 		State.CAST:
 			_state_cast()
+		State.MELEE_WINDUP:
+			_state_melee_windup()
+		State.MELEE_ACTIVE:
+			_state_melee_active()
+		State.MELEE_RECOVER:
+			_state_melee_recover()
 		_:
 			pass
 	# Gravedad (igual que player)
@@ -191,6 +222,29 @@ func _state_cast() -> void:
 		_enter_cast_active()
 
 
+func _state_melee_windup() -> void:
+	# Telegraph: lean forward + hitbox amarillo
+	velocity.x *= 0.7
+	velocity.z *= 0.7
+	if state_timer <= 0.0:
+		_enter_melee_active()
+
+
+func _state_melee_active() -> void:
+	# Hitbox rojo encendido, hace daño si el player está dentro
+	velocity.x = 0
+	velocity.z = 0
+	if state_timer <= 0.0:
+		_enter_melee_recover()
+
+
+func _state_melee_recover() -> void:
+	velocity.x *= 0.5
+	velocity.z *= 0.5
+	if state_timer <= 0.0:
+		_enter_idle()
+
+
 # --- Decisión: ¿skill o melee? ---
 
 func _decide_attack_or_skill() -> void:
@@ -222,14 +276,49 @@ func _enter_chase() -> void:
 
 
 func _enter_melee() -> void:
-	# Melee básico: hit instantáneo de melee_damage al player
-	state = State.IDLE  # vuelve a idle, no hay recover (rápido)
-	_attack_cooldown_left = attack_cooldown
-	if is_instance_valid(player) and player.has_method("take_damage"):
-		player.take_damage(melee_damage, self)
-		print("[npc] %s melee_hit dmg=%.1f target=%s" % [name, melee_damage, player.name])
-	else:
-		print("[npc] %s melee_missed (no player)" % name)
+	# Melee con windup/active/recover (hitbox visible) en vez de un hit instantáneo.
+	# El telegraph amarillo aparece durante el windup, el hitbox rojo hace daño
+	# durante el active, y hay un recovery antes de poder atacar de nuevo.
+	state = State.MELEE_WINDUP
+	state_timer = melee_windup
+	_attack_cooldown_left = melee_windup + melee_active + melee_recovery
+	# Visual: hitbox amarillo durante el windup
+	_hitbox_mat.albedo_color = HITBOX_WINDUP
+	hitbox_debug.visible = true
+	attack_area.monitoring = false
+	hit_collision.disabled = true
+	print("[npc] %s melee_windup t=%.2f" % [name, melee_windup])
+
+
+func _enter_melee_windup() -> void:
+	# Re-entry para el state machine (en caso de que se llame desde otro flujo).
+	state = State.MELEE_WINDUP
+	state_timer = melee_windup
+	_hitbox_mat.albedo_color = HITBOX_WINDUP
+	hitbox_debug.visible = true
+	attack_area.monitoring = false
+	hit_collision.disabled = true
+
+
+func _enter_melee_active() -> void:
+	# Active: hitbox rojo encendido, hace daño si el player está dentro del area.
+	state = State.MELEE_ACTIVE
+	state_timer = melee_active
+	_hitbox_mat.albedo_color = HITBOX_ACTIVE
+	hitbox_debug.visible = true
+	attack_area.monitoring = true
+	hit_collision.disabled = false
+	print("[npc] %s melee_ACTIVE dmg=%.1f" % [name, melee_damage])
+
+
+func _enter_melee_recover() -> void:
+	# Recovery: hitbox se apaga, NPC vulnerable pero quieto.
+	state = State.MELEE_RECOVER
+	state_timer = melee_recovery
+	hitbox_debug.visible = false
+	attack_area.monitoring = false
+	hit_collision.disabled = true
+	print("[npc] %s melee_recover t=%.2f" % [name, melee_recovery])
 
 
 func _enter_cast_windup() -> void:
@@ -277,20 +366,36 @@ func _enter_cast_active() -> void:
 func take_damage(amount: float, source: Node = null) -> void:
 	if is_dying or state == State.DEAD:
 		return
-	hp -= amount
+	# Aplicar resistencias de Atributos (AttributeComponent).
+	# phys_res reduce daño FÍSICO, ele_res reduce daño ELEMENTAL.
+	var final_amount: float = amount
+	if has_node("AttributeComponent"):
+		var attr: Node = get_node("AttributeComponent")
+		var dmg_type: String = "physical"
+		if source and "last_damage_type" in source:
+			dmg_type = String(source.last_damage_type)
+		if dmg_type == "physical":
+			final_amount *= float(attr.call("get_phys_res_multiplier"))
+		else:
+			final_amount *= float(attr.call("get_ele_res_multiplier"))
+	hp -= final_amount
 	_flash()
-	print("[npc] %s hit dmg=%.1f hp=%.1f state=%s" % [name, amount, hp, State.keys()[state]])
+	print("[npc] %s hit dmg=%.1f (raw=%.1f) hp=%.1f state=%s" % [name, final_amount, amount, hp, State.keys()[state]])
 	if hp <= 0.0:
 		_die()
 
 
 func is_attack_active() -> bool:
-	# Compatible con player.gd parry check
-	return state == State.CAST and state_timer <= cast_active and state_timer > 0.0
+	# Compatible con player.gd parry check.
+	# El player puede parrear durante el active del cast o del melee.
+	return (state == State.CAST and state_timer <= cast_active and state_timer > 0.0) \
+		or state == State.MELEE_ACTIVE
 
 
 func is_attack_winding_up() -> bool:
-	return state == State.CAST and state_timer > cast_active
+	# Telegraph: durante el windup del cast O del melee.
+	return (state == State.CAST and state_timer > cast_active) \
+		or state == State.MELEE_WINDUP
 
 
 func on_parried(_source: Node) -> void:
@@ -330,9 +435,12 @@ func _on_attack_body(body: Node) -> void:
 	# sirve como hitbox de respaldo (mismo patrón que enemy.gd).
 	if not is_instance_valid(body) or body == self:
 		return
+	# Solo aplicar daño si estamos en el frame activo del ataque
+	if state != State.MELEE_ACTIVE:
+		return
 	if body.has_method("take_damage") and (body is Node3D):
 		body.take_damage(melee_damage, self)
-		print("[npc] %s area_hit body=%s dmg=%.1f" % [name, body.name, melee_damage])
+		print("[npc] %s melee_hit body=%s dmg=%.1f" % [name, body.name, melee_damage])
 
 
 func _die() -> void:

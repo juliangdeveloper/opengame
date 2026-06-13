@@ -1,13 +1,14 @@
 ## ProgressionState — Estado del jugador: skill points, proficiency, allocations.
 ##
 ## Mantiene:
-## - skill_points_available: cuántos puntos tiene para gastar AHORA
+## - skill_points: cuántos puntos tiene para gastar AHORA
 ## - proficiency: total de skill points que ha ganado en su vida
-## - allocations: {skill_id: {stat_name: points}}
+## - allocations: {skill_id: {stat_name: points}}  (por skill individual)
+## - element_allocations: {element_id: points}  (sistema de elementos)
 ## - owned_skills: Array[StringName] de skill IDs
 ##
 ## Es un autoload singleton (Project Settings > Autoload) para que cualquier
-## nodo pueda acceder a él: ProgressionState.spend_points(...)
+## nodo pueda acceder a él: ProgressionState.xxx
 ##
 ## Comunicación con MCP (fase 2): el FastAPI bridge hace POSTs a este estado.
 ##
@@ -16,22 +17,46 @@
 extends Node
 
 const Balance := preload("res://scripts/skill/balance.gd")
+const Elements := preload("res://scripts/skill/elements.gd")
+const AttributeComponentScript := preload("res://scripts/attribute_component.gd")
 const SkillExecutorScript := preload("res://scripts/skill/skill_executor.gd")
+const WeaponCatalogScript := preload("res://scripts/skill/weapon_catalog.gd")
 
 signal skill_points_changed(new_value: int)
 signal proficiency_changed(new_value: int)
 signal allocation_changed(skill_id: StringName, stat: StringName, points: int)
+signal element_allocation_changed(element: StringName, points: int)
+signal attribute_points_changed(new_value: int)
+signal attribute_allocation_changed(attribute_id: StringName, points: int)
 signal skill_owned(skill_id: StringName)
 signal skill_unowned(skill_id: StringName)
+signal weapon_owned(weapon_id: StringName)
+signal weapon_unowned(weapon_id: StringName)
+signal weapon_equipped(weapon_id: StringName)
+signal weapon_unequipped()
+signal weapon_allocation_changed(weapon_id: StringName, stat: StringName, points: int)
 
-## Puntos disponibles para gastar. Empieza en 0 (jugador empieza sin nada).
+## Puntos disponibles para gastar en skills específicos. Empieza en 0.
 @export var skill_points: int = 0
+
+## Puntos disponibles para gastar en Atributos (HP, Stamina, Resistencias).
+@export var attribute_points: int = 0
 
 ## Proficiency total ganado en challenges.
 @export var proficiency: int = 0
 
 ## Allocations: {skill_id_string: {stat_string: points}}
 var allocations: Dictionary = {}
+
+## Allocations de ELEMENTOS: {element_id_string: points}
+## Cada punto sube TANTO el attack multiplier (1.0 + 0.1*pts) COMO el
+## resistance multiplier (1.0 - 0.1*pts) de ese elemento. Ver Elements.
+var element_allocations: Dictionary = {}
+
+## Allocations de ATRIBUTOS: {attribute_id_string: points}
+## Cada punto sube el stat correspondiente Y (para status_res) la
+## resistencia al status homónimo. Ver AttributeComponent.ATTRIBUTES.
+var attribute_allocations: Dictionary = {}
 
 ## Skills owned: Array[StringName]
 var owned_skills: Array[StringName] = []
@@ -40,12 +65,44 @@ var owned_skills: Array[StringName] = []
 ## Se llena al cargar skills .tres.
 var skill_catalog: Dictionary = {}  # {StringName(id): SkillResource}
 
+## === SISTEMA DE ARMAS (Post-MVP) ===
+## owned_weapons: Array[StringName] — armas en posesión del jugador.
+## equipped_weapon: Resource (WeaponResource) — el arma activa.
+## weapon_allocations: {weapon_id: {stat_name: points}} — puntos gastados
+##                    en stats concretos de un arma concreta (como skills).
+var owned_weapons: Array[StringName] = []
+var equipped_weapon: Resource = null
+var weapon_allocations: Dictionary = {}
+
 
 func _ready() -> void:
 	Balance.load_config()
+	# Inicializar el catálogo de armas (carga todos los .tres de data/weapons/).
+	# Llamar esto en _ready es seguro porque el catálogo es estático (no autoload).
+	WeaponCatalogScript.initialize()
+	# Auto-otorgar armas básicas al jugador si no las tiene.
+	# unarmed siempre está en owned; short_sword se otorga al primer ready.
+	_starter_weapon_grant()
 	print("[ProgressionState] ready (skill_points=%d, proficiency=%d, tier=%s)" % [
 		skill_points, proficiency, Balance.get_tier(proficiency).name
 	])
+	print("[ProgressionState] weapons in catalog: %d" % WeaponCatalogScript.list_ids().size())
+
+
+## Otorga las armas starter al jugador. Idempotente.
+##
+## Hasta nuevo aviso: forzamos short_sword como arma equipada. Cualquier
+## otra arma que el jugador haya equipado via MCP es re-equipada con
+## short_sword al boot. Cuando se reactive el modelado de armas, cambiar
+## este guard a un check de "no hay otra equipada todavía".
+func _starter_weapon_grant() -> void:
+	if &"unarmed" not in owned_weapons:
+		grant_weapon(&"unarmed")
+	# Starter weapon: short_sword. Auto-grant al boot.
+	if &"short_sword" not in owned_weapons:
+		grant_weapon(&"short_sword")
+	# FORCE: short_sword siempre equipada al boot (decisión temporal).
+	equip_weapon(&"short_sword")
 
 
 ## grant_skill_points(points) — añade puntos al bank y al proficiency.
@@ -235,9 +292,325 @@ func get_state_snapshot() -> Dictionary:
 			"effective_stats": eff,
 			"power_ratio": get_skill_power_ratio(sid),
 		})
+	# Snapshot de elementos con sus multipliers derivados
+	var element_snapshot := []
+	for e in Elements.ELEMENTS:
+		var id_v: StringName = e["id"]
+		var pts: int = int(element_allocations.get(id_v, 0))
+		element_snapshot.append({
+			"id": String(id_v),
+			"name": e["name"],
+			"points": pts,
+			"attack_mult": Elements.get_attack_multiplier(pts),
+			"resistance_mult": Elements.get_resistance_multiplier(pts),
+		})
 	return {
 		"skill_points_available": skill_points,
 		"proficiency": proficiency,
 		"proficiency_tier": Balance.get_tier(proficiency).name,
 		"owned_skills": owned,
+		"element_allocations": element_snapshot,
 	}
+
+
+# === ELEMENT ALLOCATION (sistema de fortalezas/resistencias) ===
+
+## allocate_element(element, points) — asigna puntos a un elemento.
+## Devuelve true si exitoso.
+func allocate_element(element: StringName, points: int) -> bool:
+	if points <= 0:
+		return false
+	if points > skill_points:
+		return false
+	if not can_allocate_element_more(element, points):
+		return false
+	if not spend_points(points):
+		return false
+	var current: int = int(element_allocations.get(element, 0))
+	element_allocations[element] = current + points
+	element_allocation_changed.emit(element, element_allocations[element])
+	print("[Progression] element allocate %s +%d (total=%d)" % [element, points, element_allocations[element]])
+	# Refrescar ResistanceComponent del player
+	_refresh_resistance_components()
+	return true
+
+
+## deallocate_element(element, points) — devuelve puntos al bank.
+func deallocate_element(element: StringName, points: int) -> bool:
+	if points <= 0:
+		return false
+	var current: int = int(element_allocations.get(element, 0))
+	if points > current:
+		return false
+	element_allocations[element] = current - points
+	if element_allocations[element] == 0:
+		element_allocations.erase(element)
+	skill_points += points
+	skill_points_changed.emit(skill_points)
+	element_allocation_changed.emit(element, int(element_allocations.get(element, 0)))
+	_refresh_resistance_components()
+	return true
+
+
+## can_allocate_element_more(element, points) — ¿hay cupo?
+func can_allocate_element_more(element: StringName, points: int) -> bool:
+	if points > skill_points:
+		return false
+	var current: int = int(element_allocations.get(element, 0))
+	return current + points <= Elements.MAX_ELEMENT_POINTS
+
+
+## get_element_attack_multiplier(element) — multiplicador de ataque del player.
+func get_element_attack_multiplier(element: StringName) -> float:
+	var pts: int = int(element_allocations.get(element, 0))
+	return Elements.get_attack_multiplier(pts)
+
+
+## get_element_resistance_multiplier(element) — multiplicador de resistencia.
+func get_element_resistance_multiplier(element: StringName) -> float:
+	var pts: int = int(element_allocations.get(element, 0))
+	return Elements.get_resistance_multiplier(pts)
+
+
+## _refresh_resistance_components() — llama a los ResistanceComponents
+## del player para que recarguen desde element_allocations.
+func _refresh_resistance_components() -> void:
+	var player: Node = Engine.get_main_loop().root.find_child("Player", true, false)
+	if player and player.has_node("ResistanceComponent"):
+		player.get_node("ResistanceComponent").call("_refresh_from_progression")
+
+
+# === ATTRIBUTE ALLOCATION (sistema de stats + resistencias) ===
+
+## grant_attribute_points(points) — añade puntos al bank de atributos.
+func grant_attribute_points(points: int) -> void:
+	if points <= 0:
+		return
+	attribute_points += points
+	attribute_points_changed.emit(attribute_points)
+	print("[Progression] +%d attribute_points (bank=%d)" % [points, attribute_points])
+
+
+## spend_attribute_points(points) — resta puntos del bank. Devuelve true si exitoso.
+func spend_attribute_points(points: int) -> bool:
+	if points > attribute_points:
+		return false
+	attribute_points -= points
+	attribute_points_changed.emit(attribute_points)
+	return true
+
+
+## allocate_attribute(attr_id, points) — asigna puntos a un atributo.
+## Devuelve true si exitoso.
+func allocate_attribute(attr_id: StringName, points: int) -> bool:
+	if points <= 0:
+		return false
+	if not can_allocate_attribute_more(attr_id, points):
+		return false
+	if not spend_attribute_points(points):
+		return false
+	var key: String = String(attr_id)
+	var current: int = int(attribute_allocations.get(key, 0))
+	attribute_allocations[key] = current + points
+	attribute_allocation_changed.emit(attr_id, attribute_allocations[key])
+	_refresh_attribute_components()
+	print("[Progression] attribute allocate %s +%d (total=%d)" % [attr_id, points, attribute_allocations[key]])
+	return true
+
+
+## deallocate_attribute(attr_id, points) — devuelve puntos al bank.
+func deallocate_attribute(attr_id: StringName, points: int) -> bool:
+	if points <= 0:
+		return false
+	var key: String = String(attr_id)
+	if not attribute_allocations.has(key):
+		return false
+	var current: int = int(attribute_allocations[key])
+	if points > current:
+		return false
+	attribute_allocations[key] = current - points
+	if attribute_allocations[key] == 0:
+		attribute_allocations.erase(key)
+	attribute_points += points
+	attribute_points_changed.emit(attribute_points)
+	attribute_allocation_changed.emit(attr_id, int(attribute_allocations.get(key, 0)))
+	_refresh_attribute_components()
+	return true
+
+
+## can_allocate_attribute_more(attr_id, points) — ¿hay cupo?
+## Máximo 5 puntos por atributo (igual que skill stats).
+func can_allocate_attribute_more(attr_id: StringName, points: int) -> bool:
+	if points > attribute_points:
+		return false
+	var current: int = int(attribute_allocations.get(String(attr_id), 0))
+	return current + points <= 5
+
+
+## get_attribute_points(attr_id) — puntos asignados a un atributo.
+func get_attribute_points(attr_id: StringName) -> int:
+	return int(attribute_allocations.get(String(attr_id), 0))
+
+
+## get_total_allocated_attribute_points() — total de puntos asignados.
+func get_total_allocated_attribute_points() -> int:
+	var total := 0
+	for v in attribute_allocations.values():
+		total += int(v)
+	return total
+
+
+## reset_attribute_allocations() — devuelve todos los puntos al bank.
+func reset_attribute_allocations() -> int:
+	var total: int = get_total_allocated_attribute_points()
+	if total == 0:
+		return 0
+	attribute_points += total
+	attribute_allocations.clear()
+	attribute_points_changed.emit(attribute_points)
+	_refresh_attribute_components()
+	return total
+
+
+## _refresh_attribute_components() — recarga AttributeComponents del player.
+func _refresh_attribute_components() -> void:
+	var player: Node = Engine.get_main_loop().root.find_child("Player", true, false)
+	if player and player.has_node("AttributeComponent"):
+		player.get_node("AttributeComponent").call("refresh_from_progression_state")
+		# Aplicar cambios de HP/Stamina max al player
+		if player.has_method("_apply_attribute_derived_stats"):
+			player.call("_apply_attribute_derived_stats")
+
+
+# ============================================================
+# === SISTEMA DE ARMAS (Post-MVP) ===
+# ============================================================
+
+## grant_weapon(weapon_id) — añade un arma al inventario del jugador.
+## El arma debe existir en el WeaponCatalog.
+func grant_weapon(weapon_id: StringName) -> bool:
+	if weapon_id in owned_weapons:
+		return false
+	owned_weapons.append(weapon_id)
+	weapon_owned.emit(weapon_id)
+	# Auto-equipa la primera arma si no hay nada equipado
+	if equipped_weapon == null:
+		equip_weapon(weapon_id)
+	return true
+
+
+## remove_weapon(weapon_id) — quita un arma del inventario.
+func remove_weapon(weapon_id: StringName) -> bool:
+	if weapon_id not in owned_weapons:
+		return false
+	owned_weapons.erase(weapon_id)
+	weapon_allocations.erase(weapon_id)
+	weapon_unowned.emit(weapon_id)
+	# Si era la equipada, desequipa
+	if equipped_weapon != null and String(equipped_weapon.id) == String(weapon_id):
+		unequip_weapon()
+	return true
+
+
+## equip_weapon(weapon_id) — marca un arma como equipada.
+## Carga el WeaponResource desde el catálogo y lo guarda en equipped_weapon.
+func equip_weapon(weapon_id: StringName) -> bool:
+	if weapon_id not in owned_weapons:
+		push_warning("[ProgressionState] equip_weapon: %s not owned" % weapon_id)
+		return false
+	var catalog := preload("res://scripts/skill/weapon_catalog.gd")
+	var wpn: Resource = catalog.get_weapon(weapon_id)
+	if wpn == null:
+		push_warning("[ProgressionState] equip_weapon: %s not in catalog" % weapon_id)
+		return false
+	equipped_weapon = wpn
+	weapon_equipped.emit(weapon_id)
+	print("[ProgressionState] equipped weapon: %s (%s, %dh)" % [String(weapon_id), wpn.display_name, wpn.hands])
+	# Notificar al player para que cambie el visual
+	var player: Node = Engine.get_main_loop().root.find_child("Player", true, false)
+	if player and player.has_method("set_equipped_weapon"):
+		player.call("set_equipped_weapon", wpn)
+	return true
+
+
+## unequip_weapon() — desequipa el arma actual. Pasa a "unarmed" implícito.
+func unequip_weapon() -> void:
+	if equipped_weapon == null:
+		return
+	equipped_weapon = null
+	weapon_unequipped.emit()
+	var player: Node = Engine.get_main_loop().root.find_child("Player", true, false)
+	if player and player.has_method("set_equipped_weapon"):
+		player.call("set_equipped_weapon", null)
+
+
+## can_allocate_weapon(weapon_id, stat, points) — ¿se pueden asignar N puntos más?
+func can_allocate_weapon(weapon_id: StringName, stat: StringName, points: int) -> bool:
+	if points <= 0:
+		return false
+	var current: int = get_weapon_points(weapon_id, stat)
+	if current + points > 5:
+		return false
+	return points <= skill_points
+
+
+## allocate_weapon(weapon_id, stat, points) — asigna puntos a un stat del arma.
+## Consume skill_points. Cap 5 puntos por stat. El efecto real se calcula en
+## WeaponResource.get_scaled_*() (str, dex, etc.) leyendo estos puntos.
+func allocate_weapon(weapon_id: StringName, stat: StringName, points: int) -> bool:
+	if not can_allocate_weapon(weapon_id, stat, points):
+		return false
+	skill_points -= points
+	if not weapon_allocations.has(weapon_id):
+		weapon_allocations[weapon_id] = {}
+	var alloc: Dictionary = weapon_allocations[weapon_id]
+	alloc[stat] = int(alloc.get(stat, 0)) + points
+	weapon_allocation_changed.emit(weapon_id, stat, int(alloc[stat]))
+	skill_points_changed.emit(skill_points)
+	return true
+
+
+## deallocate_weapon(weapon_id, stat, points) — devuelve puntos al bank.
+func deallocate_weapon(weapon_id: StringName, stat: StringName, points: int) -> bool:
+	if points <= 0:
+		return false
+	if not weapon_allocations.has(weapon_id):
+		return false
+	var alloc: Dictionary = weapon_allocations[weapon_id]
+	var current: int = int(alloc.get(stat, 0))
+	if current < points:
+		return false
+	alloc[stat] = current - points
+	if int(alloc[stat]) <= 0:
+		alloc.erase(stat)
+	skill_points += points
+	weapon_allocation_changed.emit(weapon_id, stat, int(alloc.get(stat, 0)))
+	skill_points_changed.emit(skill_points)
+	return true
+
+
+## get_weapon_points(weapon_id, stat) — puntos asignados a un stat de un arma.
+func get_weapon_points(weapon_id: StringName = &"", stat: StringName = &"") -> int:
+	if weapon_id == &"":
+		return skill_points
+	if not weapon_allocations.has(weapon_id):
+		return 0
+	return int((weapon_allocations[weapon_id] as Dictionary).get(stat, 0))
+
+
+## get_weapon(weapon_id) — devuelve el WeaponResource del catálogo, o null.
+func get_weapon(weapon_id: StringName) -> Resource:
+	if WeaponCatalogScript == null:
+		return null
+	return WeaponCatalogScript.get_weapon(weapon_id)
+
+
+## get_weapon_catalog(filter) — Array[StringName] de weapon_ids del catálogo.
+## filter: "all" (default), "owned", "unequipped".
+func get_weapon_catalog(filter: StringName = &"all") -> Array[StringName]:
+	if WeaponCatalogScript == null:
+		return []
+	var ids: Array[StringName] = WeaponCatalogScript.list_ids()
+	if filter == &"owned":
+		return ids.filter(func(wid): return wid in owned_weapons)
+	return ids

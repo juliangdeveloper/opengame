@@ -14,6 +14,7 @@ var _current_test: String = ""
 var _timeout_timer: Timer
 var _tests_to_run: Array = []
 var _test_idx: int = 0
+var _last_results: Dictionary = {}  # test_name -> {id, result, error}
 
 
 func _ready() -> void:
@@ -70,7 +71,11 @@ func _poll_connection() -> void:
 		"list_skills",
 		"create_skill",
 		"modify_skill",
-		"spawn_challenge",
+		"create_mission",
+		"set_mission_difficulty",
+		"start_mission",
+		"get_mission_state",
+		"list_missions",
 	]
 	_run_next_test()
 
@@ -121,14 +126,27 @@ func _run_next_test() -> void:
 				"id": "fireball_test_001",
 				"name": "Fireball (modified)",
 			})
-		"spawn_challenge":
-			req = _make_request("spawn_challenge", {
-				"enemy_count": 2,
-				"radius": 4.0,
-				"objective": "Defeat 2 test dummies to earn Fireball!",
-				"reward_skill": "fireball_test_001",
-				"reward_points": 2,
+		"create_mission":
+			req = _make_request("create_mission", {
+				"purpose": "teach_skill",
+				"target_id": "kamehameha_001",
+				"mission_type": "1v1",
+				"title": "Test mission (E2E)",
 			})
+		"set_mission_difficulty":
+			var list_resp: Dictionary = _last_result_for("create_mission")
+			var mid: String = String(list_resp.get("mission_id", ""))
+			req = _make_request("set_mission_difficulty", {"mission_id": mid, "difficulty": 1})
+		"start_mission":
+			var sd_resp: Dictionary = _last_result_for("set_mission_difficulty")
+			var mid2: String = String(sd_resp.get("mission_id", ""))
+			req = _make_request("start_mission", {"mission_id": mid2})
+		"get_mission_state":
+			var sm_resp: Dictionary = _last_result_for("start_mission")
+			var mid3: String = String(sm_resp.get("started", ""))
+			req = _make_request("get_mission_state", {"mission_id": mid3})
+		"list_missions":
+			req = _make_request("list_missions", {})
 	_send_request(req)
 
 
@@ -148,6 +166,17 @@ func _send_request(req: Dictionary) -> void:
 		print("[MCPTest] send error: %d" % err)
 		_results[_current_test] = false
 		_run_next_test()
+
+
+func _last_result_for(test_name: String) -> Dictionary:
+	var entry: Variant = _last_results.get(test_name, {})
+	if not entry is Dictionary:
+		return {}
+	var d: Dictionary = entry
+	var res: Variant = d.get("result", {})
+	if res is Dictionary:
+		return res
+	return {}
 
 
 func _process(_delta: float) -> void:
@@ -181,6 +210,9 @@ func _handle_response(line: String) -> void:
 	var test_name: String = _pending.get(id_v, _current_test)
 	_pending.erase(id_v)
 	print("[MCPTest] <- %s" % JSON.stringify(resp))
+	# Store for chained tests
+	var result_var: Variant = resp.get("result", {})
+	_last_results[test_name] = {"id": id_v, "result": result_var, "error": resp.get("error", null)}
 	# Validación
 	var ok := _validate(test_name, resp)
 	_results[test_name] = ok
@@ -219,8 +251,16 @@ func _validate(test_name: String, resp: Dictionary) -> bool:
 			return String(result.get("id", "")) == "fireball_test_001" and int(result.get("atoms_count", 0)) == 1
 		"modify_skill":
 			return String(result.get("id", "")) == "fireball_test_001"
-		"spawn_challenge":
-			return String(result.get("challenge_id", "")).begins_with("challenge_") and int(result.get("enemies_spawned", 0)) == 2
+		"create_mission":
+			return String(result.get("mission_id", "")).begins_with("mission_") and String(result.get("state", "")) == "AVAILABLE"
+		"set_mission_difficulty":
+			return int(result.get("difficulty", 0)) == 1 and String(result.get("state", "")) == "READY" and int(result.get("enemy_count", 0)) >= 1
+		"start_mission":
+			return String(result.get("started", "")).begins_with("mission_") and result.get("objective", "") != ""
+		"get_mission_state":
+			return String(result.get("id", "")).begins_with("mission_") and String(result.get("state", "")) in ["ACTIVE", "READY", "COMPLETED", "FAILED"]
+		"list_missions":
+			return int(result.get("count", 0)) >= 3 and result.get("missions", null) != null
 		_:
 			return false
 

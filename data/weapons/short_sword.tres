@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="WeaponResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/weapon_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"short_sword"
+display_name = "Espada corta"
+flavor_text = "Hoja recta de 70cm. Equilibrada y versátil, ideal para principiantes."
+family = 0
+hands = 1
+designed_stats = {
+"dmg": 15.0,
+"speed": 1.15,
+"reach": 0.9,
+"weight": 1.5,
+"parry_bonus": 0.10,
+"crit_chance": 0.08
+}
+stat_scaling = {
+"strength_to_dmg": 0.10,
+"dexterity_to_speed": 0.06,
+"dexterity_to_crit": 0.02,
+"faith_to_parry": 0.04
+}
+class_dmg_mult = {
+"dagger": 1.2,
+"unarmed": 1.1
+}
+compatible_skill_ids = []
+blocked_skill_ids = []
+mesh_hint = "sword_short"
+model_path = "res://assets/models/weapons/wpn_short_sword.glb"
+model_rotation = Vector3(0, 0, 0)
+grip_offset = 0.20
+model_scale = 1.0
+tint_color = Color(0.85, 0.85, 0.9, 1)
+blade_length = 0.7
+trail_color = Color(0.9, 0.95, 1.0, 0.7)
+hit_sound = "sword_hit"
+category = &"melee"
