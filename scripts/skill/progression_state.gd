@@ -36,6 +36,11 @@ signal weapon_equipped(weapon_id: StringName)
 signal weapon_unequipped()
 signal weapon_allocation_changed(weapon_id: StringName, stat: StringName, points: int)
 
+## Emitido en cada mutación del estado. SaveSystem escucha este signal
+## (junto a los de MissionManager y ObjectivesManager) y persiste tras
+## debounce. Es un signal "cualquier cambio", no un signal por campo.
+signal data_changed
+
 ## Puntos disponibles para gastar en skills específicos. Empieza en 0.
 @export var skill_points: int = 0
 
@@ -83,10 +88,113 @@ func _ready() -> void:
 	# Auto-otorgar armas básicas al jugador si no las tiene.
 	# unarmed siempre está en owned; short_sword se otorga al primer ready.
 	_starter_weapon_grant()
+	# Restaurar estado persistido (SaveSystem) ANTES de imprimir, para que
+	# el print refleje el bank real (no el de un fresh start).
+	_apply_saved_state()
 	print("[ProgressionState] ready (skill_points=%d, proficiency=%d, tier=%s)" % [
 		skill_points, proficiency, Balance.get_tier(proficiency).name
 	])
 	print("[ProgressionState] weapons in catalog: %d" % WeaponCatalogScript.list_ids().size())
+
+
+## Restaura el estado desde SaveSystem (si hay datos guardados).
+## Se llama en _ready() después de _starter_weapon_grant, así que el
+## auto-grant no doble-otorga las armas starter. Si no hay save, no-op.
+func _apply_saved_state() -> void:
+	var save_sys: Node = Engine.get_main_loop().root.get_node_or_null("SaveSystem")
+	if save_sys == null or not save_sys.has_method("consume"):
+		return
+	var data: Dictionary = save_sys.consume(&"progression")
+	if data.is_empty():
+		return
+	from_dict(data)
+
+
+## to_dict() — serializa el estado mutable del game master.
+## NO incluye skill_catalog (es derivada de los .tres files en boot).
+## NO incluye owned_skills (player.gd los carga en su propio _ready).
+func to_dict() -> Dictionary:
+	var equipped_id: String = ""
+	if equipped_weapon != null and "id" in equipped_weapon:
+		equipped_id = String(equipped_weapon.id)
+	return {
+		"skill_points": skill_points,
+		"attribute_points": attribute_points,
+		"proficiency": proficiency,
+		"allocations": _dict_to_str_keys(allocations),
+		"element_allocations": _dict_to_str_keys(element_allocations),
+		"attribute_allocations": _dict_to_str_keys(attribute_allocations),
+		"weapon_allocations": _dict_to_str_keys(weapon_allocations),
+		"owned_weapons": _stringname_array_to_strings(owned_weapons),
+		"equipped_weapon_id": equipped_id,
+	}
+
+
+## from_dict(data) — restaura el estado desde un dict producido por to_dict().
+## Idempotente: si se llama sin datos, no hace nada.
+func from_dict(data: Dictionary) -> void:
+	if data.is_empty():
+		return
+	skill_points = int(data.get("skill_points", 0))
+	attribute_points = int(data.get("attribute_points", 0))
+	proficiency = int(data.get("proficiency", 0))
+	allocations = _str_keys_to_dict_of_str_keys(data.get("allocations", {}))
+	element_allocations = _str_keys_to_dict_of_int(data.get("element_allocations", {}))
+	attribute_allocations = _str_keys_to_dict_of_int(data.get("attribute_allocations", {}))
+	weapon_allocations = _str_keys_to_dict_of_str_keys(data.get("weapon_allocations", {}))
+	# owned_weapons: merge con los ya otorgados por _starter_weapon_grant.
+	var saved_weapons: Array = data.get("owned_weapons", [])
+	for w in saved_weapons:
+		var ws: StringName = StringName(String(w))
+		if ws != &"" and ws not in owned_weapons:
+			owned_weapons.append(ws)
+	# equipped_weapon: re-load del WeaponResource desde el catálogo.
+	var eq_id: String = String(data.get("equipped_weapon_id", ""))
+	if eq_id != "":
+		var ws2: StringName = StringName(eq_id)
+		if ws2 in owned_weapons:
+			equip_weapon(ws2)
+	# Re-aplicar stats derivados (HP/Stamina/regen cambian con attribute_allocations).
+	var player: Node = Engine.get_main_loop().root.find_child("Player", true, false)
+	if player and player.has_method("_apply_attribute_derived_stats"):
+		player.call("_apply_attribute_derived_stats")
+
+
+# Helpers de serialización (StringName no es JSON-friendly)
+func _dict_to_str_keys(d: Dictionary) -> Dictionary:
+	var out := {}
+	for k in d.keys():
+		var v: Variant = d[k]
+		if v is Dictionary:
+			out[String(k)] = _dict_to_str_keys(v)
+		else:
+			out[String(k)] = v
+	return out
+
+
+func _str_keys_to_dict_of_str_keys(d: Dictionary) -> Dictionary:
+	var out := {}
+	for k in d.keys():
+		var v: Variant = d[k]
+		if v is Dictionary:
+			out[String(k)] = _str_keys_to_dict_of_str_keys(v)
+		else:
+			out[String(k)] = v
+	return out
+
+
+func _str_keys_to_dict_of_int(d: Dictionary) -> Dictionary:
+	var out := {}
+	for k in d.keys():
+		out[String(k)] = int(d[k])
+	return out
+
+
+func _stringname_array_to_strings(arr: Array) -> Array:
+	var out: Array = []
+	for v in arr:
+		out.append(String(v))
+	return out
 
 
 ## Otorga las armas starter al jugador. Idempotente.
@@ -116,6 +224,7 @@ func grant_skill_points(points: int) -> void:
 	print("[Progression] +%d skill_points (bank=%d, proficiency=%d, tier=%s)" % [
 		points, skill_points, proficiency, Balance.get_tier(proficiency).name
 	])
+	data_changed.emit()
 
 
 ## spend_points(points) — resta puntos del bank. Devuelve true si exitoso.
@@ -124,6 +233,7 @@ func spend_points(points: int) -> bool:
 		return false
 	skill_points -= points
 	skill_points_changed.emit(skill_points)
+	data_changed.emit()
 	return true
 
 
@@ -143,6 +253,7 @@ func allocate(skill_id: StringName, stat: StringName, points: int) -> bool:
 	allocations[sid][stat] = current + points
 	allocation_changed.emit(skill_id, stat, allocations[sid][stat])
 	print("[Progression] allocate skill=%s stat=%s +%d (total=%d)" % [skill_id, stat, points, allocations[sid][stat]])
+	data_changed.emit()
 	return true
 
 
@@ -162,6 +273,7 @@ func deallocate(skill_id: StringName, stat: StringName, points: int) -> bool:
 	skill_points += points
 	skill_points_changed.emit(skill_points)
 	allocation_changed.emit(skill_id, stat, allocations[sid].get(stat, 0))
+	data_changed.emit()
 	return true
 
 
@@ -185,6 +297,7 @@ func add_skill(skill) -> void:
 	skill_catalog[StringName(skill.id)] = skill
 	skill_owned.emit(skill.id)
 	print("[Progression] +skill %s (%s)" % [skill.id, skill.name])
+	data_changed.emit()
 
 
 func remove_skill(skill_id: StringName) -> void:
@@ -204,6 +317,7 @@ func remove_skill(skill_id: StringName) -> void:
 	skill_catalog.erase(skill_id)
 	skill_unowned.emit(skill_id)
 	print("[Progression] -skill %s (+%d points refunded)" % [skill_id, to_return])
+	data_changed.emit()
 
 
 ## get_skill(id) — devuelve el SkillResource por ID.
@@ -332,6 +446,7 @@ func allocate_element(element: StringName, points: int) -> bool:
 	print("[Progression] element allocate %s +%d (total=%d)" % [element, points, element_allocations[element]])
 	# Refrescar ResistanceComponent del player
 	_refresh_resistance_components()
+	data_changed.emit()
 	return true
 
 
@@ -349,6 +464,7 @@ func deallocate_element(element: StringName, points: int) -> bool:
 	skill_points_changed.emit(skill_points)
 	element_allocation_changed.emit(element, int(element_allocations.get(element, 0)))
 	_refresh_resistance_components()
+	data_changed.emit()
 	return true
 
 
@@ -389,6 +505,7 @@ func grant_attribute_points(points: int) -> void:
 	attribute_points += points
 	attribute_points_changed.emit(attribute_points)
 	print("[Progression] +%d attribute_points (bank=%d)" % [points, attribute_points])
+	data_changed.emit()
 
 
 ## spend_attribute_points(points) — resta puntos del bank. Devuelve true si exitoso.
@@ -397,6 +514,7 @@ func spend_attribute_points(points: int) -> bool:
 		return false
 	attribute_points -= points
 	attribute_points_changed.emit(attribute_points)
+	data_changed.emit()
 	return true
 
 
@@ -415,6 +533,7 @@ func allocate_attribute(attr_id: StringName, points: int) -> bool:
 	attribute_allocation_changed.emit(attr_id, attribute_allocations[key])
 	_refresh_attribute_components()
 	print("[Progression] attribute allocate %s +%d (total=%d)" % [attr_id, points, attribute_allocations[key]])
+	data_changed.emit()
 	return true
 
 
@@ -435,6 +554,7 @@ func deallocate_attribute(attr_id: StringName, points: int) -> bool:
 	attribute_points_changed.emit(attribute_points)
 	attribute_allocation_changed.emit(attr_id, int(attribute_allocations.get(key, 0)))
 	_refresh_attribute_components()
+	data_changed.emit()
 	return true
 
 
@@ -469,6 +589,7 @@ func reset_attribute_allocations() -> int:
 	attribute_allocations.clear()
 	attribute_points_changed.emit(attribute_points)
 	_refresh_attribute_components()
+	data_changed.emit()
 	return total
 
 
@@ -496,6 +617,7 @@ func grant_weapon(weapon_id: StringName) -> bool:
 	# Auto-equipa la primera arma si no hay nada equipado
 	if equipped_weapon == null:
 		equip_weapon(weapon_id)
+	data_changed.emit()
 	return true
 
 
@@ -509,6 +631,7 @@ func remove_weapon(weapon_id: StringName) -> bool:
 	# Si era la equipada, desequipa
 	if equipped_weapon != null and String(equipped_weapon.id) == String(weapon_id):
 		unequip_weapon()
+	data_changed.emit()
 	return true
 
 
@@ -530,6 +653,7 @@ func equip_weapon(weapon_id: StringName) -> bool:
 	var player: Node = Engine.get_main_loop().root.find_child("Player", true, false)
 	if player and player.has_method("set_equipped_weapon"):
 		player.call("set_equipped_weapon", wpn)
+	data_changed.emit()
 	return true
 
 
@@ -542,6 +666,7 @@ func unequip_weapon() -> void:
 	var player: Node = Engine.get_main_loop().root.find_child("Player", true, false)
 	if player and player.has_method("set_equipped_weapon"):
 		player.call("set_equipped_weapon", null)
+	data_changed.emit()
 
 
 ## can_allocate_weapon(weapon_id, stat, points) — ¿se pueden asignar N puntos más?
@@ -567,6 +692,7 @@ func allocate_weapon(weapon_id: StringName, stat: StringName, points: int) -> bo
 	alloc[stat] = int(alloc.get(stat, 0)) + points
 	weapon_allocation_changed.emit(weapon_id, stat, int(alloc[stat]))
 	skill_points_changed.emit(skill_points)
+	data_changed.emit()
 	return true
 
 
@@ -586,6 +712,7 @@ func deallocate_weapon(weapon_id: StringName, stat: StringName, points: int) -> 
 	skill_points += points
 	weapon_allocation_changed.emit(weapon_id, stat, int(alloc.get(stat, 0)))
 	skill_points_changed.emit(skill_points)
+	data_changed.emit()
 	return true
 
 
