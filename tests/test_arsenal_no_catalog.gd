@@ -42,8 +42,8 @@ func _initialize() -> void:
 	await process_frame
 	sb.open()
 	await process_frame
-	# Navigate to armas (idx 5: skills → mision → objetivos → elementos → atributos → armas)
-	for _i in 5:
+	# Navigate to armas (idx 4: skills → mision → objetivos → atributos → armas)
+	for _i in 4:
 		sb._on_next_tab()
 		await process_frame
 
@@ -69,10 +69,10 @@ func _initialize() -> void:
 	awaits_done()
 
 	# === TEST 2: Atributos focus chain — D-down from ResetButton → first row ===
-	# Reopen menu and go to atributos (idx 4)
+	# Reopen menu and go to atributos (idx 3)
 	sb.open()
 	await process_frame
-	for _i in 4:
+	for _i in 3:
 		sb._on_next_tab()
 		await process_frame
 

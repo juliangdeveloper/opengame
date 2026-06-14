@@ -7,8 +7,8 @@ extends SceneTree
 # R1/L1, and uses Viewport.push_input for D-pad so the GUI focus nav
 # engine receives the events.
 
-const TAB_NAMES: Array[StringName] = [&"skills", &"mision", &"objetivos", &"elementos", &"atributos", &"armas"]
-const SLAVE_NAMES: Array[StringName] = [&"ElementAllocator", &"AttributeAllocator", &"WeaponAllocator"]
+const TAB_NAMES: Array[StringName] = [&"skills", &"mision", &"objetivos", &"atributos", &"armas"]
+const SLAVE_NAMES: Array[StringName] = [&"AttributeAllocator", &"WeaponAllocator"]
 
 var _results: Array = []
 var _errors: Array = []
@@ -176,9 +176,9 @@ func _initialize() -> void:
 		_assert(left_scroll.follow_focus == true, "LeftPanel ScrollContainer follow_focus = true")
 		_assert(right_scroll.follow_focus == true, "RightPanel ScrollContainer follow_focus = true")
 
-	# --- 6. R1 cycle all 6 tabs forward ---
-	_log("\n--- 6. R1 cycle all 6 tabs forward ---")
-	for i in 6:
+	# --- 6. R1 cycle all 5 tabs forward ---
+	_log("\n--- 6. R1 cycle all 5 tabs forward ---")
+	for i in 5:
 		_send(player, 10, true)  # R1
 		await process_frame
 		await process_frame
@@ -189,25 +189,25 @@ func _initialize() -> void:
 
 	# --- 7. L1 cycle back to 'skills' ---
 	_log("\n--- 7. L1 cycle back to 'skills' ---")
-	for i in 6:
+	for i in 5:
 		_send(player, 9, true)  # L1
 		await process_frame
 		await process_frame
 		_log("   L1 x%d → tab %d = %s" % [i + 1, player._menu_instance._current_tab, str(TAB_NAMES[player._menu_instance._current_tab])])
-	_assert(player._menu_instance._current_tab == 0, "L1 6x returns to skills (idx 0)")
+	_assert(player._menu_instance._current_tab == 0, "L1 5x returns to skills (idx 0)")
 
-	# --- 8. Navigate to 'elementos' sub-tab ---
-	_log("\n--- 8. Navigate to 'elementos' sub-tab ---")
+	# --- 8. Navigate to 'atributos' sub-tab (unified: atributos+elementos) ---
+	_log("\n--- 8. Navigate to 'atributos' sub-tab ---")
 	for i in 3:
 		_send(player, 10, true)
 		await process_frame
 		await process_frame
-	_assert(player._menu_instance._current_tab == 3, "at elementos (idx 3)")
-	var ea: Control = _get_slave(&"ElementAllocator")
-	_assert(ea != null and ea.visible, "ElementAllocator slave is visible")
-	if ea:
-		_log("   ElementAllocator visible = %s" % ea.visible)
-		# D-pad down inside Elementos
+	_assert(player._menu_instance._current_tab == 3, "at atributos (idx 3)")
+	var aa: Control = _get_slave(&"AttributeAllocator")
+	_assert(aa != null and aa.visible, "AttributeAllocator slave is visible")
+	if aa:
+		_log("   AttributeAllocator visible = %s" % aa.visible)
+		# D-pad down inside Atributos
 		var prev_focus = root.get_viewport().gui_get_focus_owner()
 		_push_dpad(12, true)
 		await process_frame
@@ -216,19 +216,10 @@ func _initialize() -> void:
 			str(prev_focus.get_path()) if prev_focus else "<null>",
 			str(new_focus.get_path()) if new_focus else "<null>"
 		])
-		_assert(new_focus != prev_focus, "D-down inside Elementos moves focus")
+		_assert(new_focus != prev_focus, "D-down inside Atributos moves focus")
 
-	# --- 9. R1 from Elementos → atributos ---
-	_log("\n--- 9. R1 from Elementos → atributos ---")
-	_send(player, 10, true)
-	await process_frame
-	await process_frame
-	var aa: Control = _get_slave(&"AttributeAllocator")
-	_assert(aa != null and aa.visible, "AttributeAllocator visible")
-	_assert(ea != null and not ea.visible, "ElementAllocator closed after switching to atributos")
-
-	# --- 10. R1 from Atributos → armas ---
-	_log("\n--- 10. R1 from Atributos → armas ---")
+	# --- 9. R1 from Atributos → armas ---
+	_log("\n--- 9. R1 from Atributos → armas ---")
 	_send(player, 10, true)
 	await process_frame
 	await process_frame
@@ -288,13 +279,13 @@ func _initialize() -> void:
 
 	# --- 15. From a slave, pressing the X face button (slot 0) must NOT crash ---
 	_log("\n--- 15. X face button inside slave doesn't crash ---")
-	# Go to elementos
+	# Go to atributos
 	for i in 3:
 		_send(player, 10, true); await process_frame; await process_frame
 	_send(player, 0, true)  # X (Cross)
 	await process_frame
 	_log("   X inside slave: menu.visible = %s, slave.visible = %s, paused = %s" % [
-		player._menu_instance.visible, _get_slave(&"ElementAllocator").visible, self.paused
+		player._menu_instance.visible, _get_slave(&"AttributeAllocator").visible, self.paused
 	])
 
 	_log("\n--- 16. Final state ---")
@@ -380,9 +371,6 @@ func _tab_visible(menu: Control, tab_name: StringName) -> bool:
 	if tab_name == &"objetivos":
 		var op: Control = menu.get_node_or_null("Panel/Margin/VBox/ObjectivesPanel")
 		return menu.visible and op != null and op.visible
-	if tab_name == &"elementos":
-		var ea := _get_slave(&"ElementAllocator")
-		return ea != null and ea.visible
 	if tab_name == &"atributos":
 		var aa := _get_slave(&"AttributeAllocator")
 		return aa != null and aa.visible

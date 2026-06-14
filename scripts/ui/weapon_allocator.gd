@@ -94,8 +94,13 @@ func _on_equip_pressed() -> void:
 	var ps: Node = _get_progression_state()
 	if ps == null:
 		return
-	# Toggle equip/unequip
-	if str(ps.equipped_weapon.id) == str(_current_weapon_id):
+	# Toggle equip/unequip. BUGFIX 2026-06-14: ps.equipped_weapon puede ser
+	# null (al iniciar el juego no hay arma equipada), así que comprobamos
+	# antes de leer `.id`. Antes hacía "null instance" en el primer equip.
+	var currently_equipped: String = ""
+	if ps.equipped_weapon != null and "id" in ps.equipped_weapon:
+		currently_equipped = str(ps.equipped_weapon.id)
+	if currently_equipped == str(_current_weapon_id):
 		ps.call("unequip_weapon")
 	else:
 		ps.call("equip_weapon", _current_weapon_id)
@@ -215,7 +220,16 @@ func _wire_focus_paths() -> void:
 		# Right/Down from equip → first stat row (D-pad moves into the
 		# detail panel). Si no hay stat rows, el path queda vacío y
 		# Godot usa búsqueda geométrica.
-		if _stat_rows_list.size() > 0:
+		# BUGFIX 2026-06-14: rebuild _stat_rows_list ANTES de usarlo. Antes
+		# la lista tenía refs stale (los stat rows anteriores fueron freed en
+		# un _refresh() previo) y leer `_stat_rows_list[0]` lanzaba
+		# "Trying to assign invalid previously freed instance" en el cast
+		# a HBoxContainer. Ahora: clear + rebuild PRIMERO, después usar.
+		_stat_rows_list.clear()
+		for child in stat_rows.get_children():
+			if child is HBoxContainer and is_instance_valid(child):
+				_stat_rows_list.append(child)
+		if equip_button and not equip_button.disabled and _stat_rows_list.size() > 0:
 			var first_stat_row: HBoxContainer = _stat_rows_list[0]
 			if is_instance_valid(first_stat_row):
 				# Primer button focusable del primer stat row
@@ -225,11 +239,7 @@ func _wire_focus_paths() -> void:
 						equip_button.focus_neighbor_bottom = c.get_path()
 						break
 	# === Stat rows — same nav as menu.gd's atom_rows ===
-	# Build ordered list of stat row HBoxContainers
-	_stat_rows_list.clear()
-	for child in stat_rows.get_children():
-		if child is HBoxContainer:
-			_stat_rows_list.append(child)
+	# (Ya tenemos _stat_rows_list poblada arriba con stat rows frescos)
 	for i in _stat_rows_list.size():
 		MenuNavHelperScript.bind_row(
 			_stat_rows_list[i], _stat_rows_list, i,
