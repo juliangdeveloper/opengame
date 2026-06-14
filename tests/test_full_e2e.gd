@@ -1,8 +1,14 @@
 extends SceneTree
 
+func _find_master_menu() -> Node:
+	var n: Node = root.find_child("Menu", true, false)
+	if n == null:
+		n = _find_master_menu()
+	return n
+
 # Full E2E: cycle through all 4 tabs and verify each opens correctly.
 
-var SKILL_BOOK_SCENE: PackedScene = preload("res://scenes/ui/skill_book.tscn")
+var SKILL_BOOK_SCENE: PackedScene = preload("res://scenes/ui/menu.tscn")
 
 
 func _initialize() -> void:

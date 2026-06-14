@@ -1,4 +1,10 @@
 extends SceneTree
+
+func _find_master_menu() -> Node:
+	var n: Node = root.find_child("Menu", true, false)
+	if n == null:
+		n = _find_master_menu()
+	return n
 ## Test interactivo: simula presionar L1, L1+X, L1+△, □, etc. y verifica
 ## que el state machine se comporta como debe.
 
@@ -101,7 +107,7 @@ func _initialize() -> void:
 	# D-pad Left = button 13. En el master skill_book, btn 13 NO debe llamar _on_prev_tab.
 	# Como el skill book está cerrado, el _input del skill_book retorna early.
 	# Verificamos que no haya un tab cycling side-effect
-	var sb: Node = root.find_child("SkillBook", true, false)
+	var sb: Node = _find_master_menu()
 	# SkillBook puede no existir si nunca se abrió
 	# Simular D-pad Left
 	await _simulate_joypad_button(13, true)  # D-pad Left

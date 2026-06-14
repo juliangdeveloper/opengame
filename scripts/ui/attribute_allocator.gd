@@ -9,88 +9,89 @@ extends BookTabBase
 ##   - y (para status_res) la resistencia al status homónimo
 ## (regla del "doble efecto" tipo Pokémon/Path of Exile).
 ##
-## Navegación:
-##   - D-pad/stick se mueve entre filas y botones
-##   - Share/Back/Esc cierra
-##   - Cierra también con tecla Backspace o el botón "← Volver"
+## Puntos: consume del MISMO pool unificado que Skills/Elementos/Armas
+## (ProgressionState.skill_points, alias de attribute_points). Ver
+## MenuNavHelper.format_points() para el formato del display.
+##
+## Navegación: misma que el menu.gd (Skills), vía MenuNavHelper.bind_row.
+## Bugfix 2026-06-14: el selector desaparecía porque `rows_container`
+## no estaba declarado como @onready (el .tscn tiene `Rows`). Ahora se
+## cablea correctamente. Wrap-around, auto-repeat D-pad, focus chain
+## unificado con el resto de menús.
 
 const AttributeCompScript := preload("res://scripts/attribute_component.gd")
+const MenuNavHelperScript := preload("res://scripts/ui/menu_nav.gd")
+const MenuFocusableScript := preload("res://scripts/ui/menu_focusable.gd")
 
 @onready var back_button: Button = $Panel/Margin/VBox/TopBar/BackButton
 @onready var reset_button: Button = $Panel/Margin/VBox/TopBar/ResetButton
 @onready var header_label: Label = $Panel/Margin/VBox/TopBar/HeaderLabel
 @onready var points_label: Label = $Panel/Margin/VBox/TopBar/PointsLabel
+## BUGFIX: el .tscn define `Rows` (no `rows_container`). Antes el código
+## referenciaba `rows_container` sin declararlo → null → "selector
+## desaparece" en el menú de atributos.
 @onready var rows_container: VBoxContainer = $Panel/Margin/VBox/Scroll/Rows
 
+var _autorepeat: MenuFocusableScript = null  # D-pad auto-repeat driver
+var _attr_row_panels: Array = []  # HBoxContainers in display order, for MenuNavHelper.bind_row
 
 
 func _do_initialize() -> void:
 	tab_id = &"atributos"
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	if not back_button.pressed.is_connected(close):
 		back_button.pressed.connect(close)
 	if not reset_button.pressed.is_connected(_on_reset):
 		reset_button.pressed.connect(_on_reset)
+	# D-pad nav + Esc/Backspace/joy Back/Share cierra
+	set_process_unhandled_input(true)
+	_refresh()
 
 
-## Override del _input: cierre con Esc/Backspace/joy Back/Share + R1/L1 nav.
+## Override del _input: tab nav con R1/L1 + autorepeat D-pad.
 ## D-pad NO se intercepta (dejamos que Godot navegue focus).
-## El base ya hace scroll + L1/R1; aquí añadimos el cierre.
+## El base ya maneja L1/R1 si el slave es master_tab; acá llamamos
+## super para mantener el comportamiento consistente.
 func _input(event: InputEvent) -> void:
 	if not visible:
 		return
-	if not (event is InputEventKey or event is InputEventJoypadButton):
-		return
-	if event is InputEventKey and not event.pressed:
-		return
-	if event is InputEventJoypadButton and not event.pressed:
-		return
-	# Cerrar con Esc/Backspace/joy Back/Share
-	var is_close := false
-	if event is InputEventKey and (event.keycode == KEY_ESCAPE or event.keycode == KEY_BACKSPACE):
-		is_close = true
-	if event is InputEventJoypadButton and (event.button_index == 4 or event.button_index == 6):
-		is_close = true
-	if is_close:
-		close()
-		get_viewport().set_input_as_handled()
-		return
-	# R1/L1 → ciclar tabs (delegando al base). El base los maneja,
-	# pero necesitamos re-declarar la lógica aquí si el base no corre
-	# (porque attribute_allocator no es master_tab).
-	if event is InputEventJoypadButton:
-		var btn: int = event.button_index
-		if btn == 9:  # L1
-			_navigate_to_master_tab(-1)
-			get_viewport().set_input_as_handled()
-		elif btn == 10:  # R1
-			_navigate_to_master_tab(+1)
-			get_viewport().set_input_as_handled()
+	# El base maneja L1/R1 (delegando al master_menu) — siempre lo llamamos
+	super._input(event)
+	# Alimentar el driver de auto-repeat
+	if _autorepeat:
+		_autorepeat.feed_event(event)
 
 
-func _navigate_to_master_tab(delta: int) -> void:
-	super._navigate_to_master_tab(delta)
+## No-op: el primer step ya lo entrega Godot (focus moves);
+## los repeat steps no necesitan acción extra.
+func _on_repeat_step(_direction: String) -> void:
+	pass
 
 
 func open() -> void:
-	visible = true
-	_was_paused = get_tree().paused
-	get_tree().paused = true
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	super.open()
 	_refresh()
-	# Foco en el primer botón útil
-	if rows_container.get_child_count() > 0:
-		var first_row := rows_container.get_child(0)
-		if first_row is HBoxContainer:
-			for c in first_row.get_children():
-				if c is Button:
-					(c as Button).grab_focus()
-					return
+	# Auto-grab focus en el primer botón útil, con retries (como el arsenal)
+	for _i in 3:
+		call_deferred("_grab_initial_focus_attempt", _i)
+	get_tree().create_timer(0.1).timeout.connect(_re_grab_if_lost)
 
 
-func close() -> void:
-	visible = false
-	get_tree().paused = _was_paused
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+func _grab_initial_focus_attempt(_attempt: int) -> void:
+	if _attr_row_panels.is_empty():
+		return
+	var first_row: HBoxContainer = _attr_row_panels[0]
+	if first_row and is_instance_valid(first_row):
+		for c in first_row.get_children():
+			if c is Button and not (c as Button).disabled:
+				(c as Button).grab_focus()
+				return
+
+
+func _re_grab_if_lost() -> void:
+	if get_viewport().gui_get_focus_owner() != null:
+		return
+	_grab_initial_focus_attempt(-1)
 
 
 func _on_reset() -> void:
@@ -107,16 +108,29 @@ func _refresh() -> void:
 	var ps: Node = _get_progression_state()
 	if ps == null:
 		return
-	points_label.text = "Puntos: %d   (asignados: %d)" % [
-		int(ps.attribute_points), int(ps.call("get_total_allocated_attribute_points"))
-	]
-	# Limpiar rows
+	# Unified points display — misma fuente, mismo formato en todos los menús
+	# (pool unificado: skill_points == attribute_points via property alias)
+	points_label.text = MenuNavHelperScript.format_points(
+		ps,
+		int(ps.call("get_total_allocated_attribute_points")),
+		-1,
+		"Atributos"
+	)
+	# Limpiar rows INMEDIATAMENTE (no queue_free) para que _wire_focus no
+	# vea rows viejos. queue_free corre al final del frame y deja
+	# focus_neighbor paths apuntando a nodos stale → "selector desaparece".
 	for c in rows_container.get_children():
-		c.queue_free()
+		rows_container.remove_child(c)
+		c.free()
+	_attr_row_panels.clear()
 	# Crear un row por cada atributo
 	var attrs: Array = AttributeCompScript.ATTRIBUTES
 	for attr in attrs:
-		rows_container.add_child(_build_row(ps, attr))
+		var row := _build_row(ps, attr)
+		rows_container.add_child(row)
+		_attr_row_panels.append(row)
+	# Re-wire focus chain con MenuNavHelper (uniform con arsenal/elementos)
+	_wire_focus()
 
 
 func _build_row(ps: Node, attr: Dictionary) -> Control:
@@ -173,10 +187,11 @@ func _make_btn(text: String, delta: int, ps: Node, attr: Dictionary, current_pts
 	var btn := Button.new()
 	btn.text = text
 	btn.focus_mode = Control.FOCUS_ALL
-	# Habilitar/deshabilitar según disponibilidad
+	# Habilitar/deshabilitar según disponibilidad (pool unificado: ps.skill_points
+	# es el MISMO número que ps.attribute_points gracias al property alias)
 	var attr_id: StringName = attr["id"]
 	if delta > 0:
-		btn.disabled = int(ps.attribute_points) < delta or (int(current_pts) + delta) > 5
+		btn.disabled = int(ps.skill_points) < delta or (int(current_pts) + delta) > 5
 	else:
 		btn.disabled = int(current_pts) + delta < 0
 	# Capturar delta y attr_id en el callback
@@ -195,6 +210,51 @@ func _on_alloc_pressed(attr_id: StringName, delta: int) -> void:
 	else:
 		ps.call("deallocate_attribute", attr_id, -delta)
 	_refresh()
+
+
+## Re-wire focus chain usando MenuNavHelper (mismo sistema que menu.gd).
+## TopBar: BackButton ↔ ResetButton. Attribute rows: chain + wrap
+## + first row ↑ → ResetButton. Auto-repeat driver.
+func _wire_focus() -> void:
+	# TopBar: BackButton ↔ ResetButton
+	if back_button and reset_button:
+		back_button.focus_neighbor_right = reset_button.get_path()
+		reset_button.focus_neighbor_left = back_button.get_path()
+	# Rows: usa bind_row chain con wrap-around
+	for i in _attr_row_panels.size():
+		var row: HBoxContainer = _attr_row_panels[i]
+		if not is_instance_valid(row):
+			continue
+		MenuNavHelperScript.bind_row(
+			row, _attr_row_panels, i,
+			reset_button if i == 0 else null,
+			true  # wrap
+		)
+	# Scroll-follow safety net (por si headless test no renderiza follow)
+	var scroll: ScrollContainer = get_node_or_null("Panel/Margin/VBox/Scroll")
+	if scroll:
+		var rows_as_controls: Array = []
+		for r in _attr_row_panels:
+			if is_instance_valid(r):
+				rows_as_controls.append(r)
+		MenuNavHelperScript.bind_list(rows_as_controls, scroll, true)
+	# D-pad auto-repeat driver
+	if _autorepeat == null:
+		_autorepeat = MenuFocusableScript.new()
+		add_child(_autorepeat)
+		_autorepeat.repeat_step.connect(_on_repeat_step)
+
+
+## Esc / Backspace / joy Back/Share cierra este slave y vuelve al master.
+func _unhandled_input(event: InputEvent) -> void:
+	if not visible:
+		return
+	if event.is_action_pressed("ui_cancel") \
+			or (event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE) \
+			or (event is InputEventJoypadButton and event.pressed \
+					and (event.button_index == 4 or event.button_index == 6)):
+		close()
+		get_viewport().set_input_as_handled()
 
 
 func _get_progression_state() -> Node:

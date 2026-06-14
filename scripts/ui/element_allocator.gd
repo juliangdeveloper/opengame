@@ -13,15 +13,13 @@ extends BookTabBase
 ##   - Botón "Reset All" para devolver todos los puntos
 ##   - Botón Close
 ##
-## Acceso: Share (button 4) abre el skill_book, botón "Elementos" en
-## el skill_book abre este. O tecla "E" (ELEMENT_ALLOCATOR) — definir
-## en project.godot más adelante si se desea.
-##
-## Pause: pause el juego al abrirse, reanuda al cerrarse.
+## Navegación: misma que el menu.gd (Skills), vía MenuNavHelper.
 
 const ElementsScript := preload("res://scripts/skill/elements.gd")
 const SkillBookScene := preload("res://scenes/ui/menu.tscn")  # ahora "Menú"
 const SKILL_BOOK_NODE_NAME := "Menu"  # backwards compat: SkillBook
+const MenuNavHelperScript := preload("res://scripts/ui/menu_nav.gd")
+const MenuFocusableScript := preload("res://scripts/ui/menu_focusable.gd")
 
 @onready var header_label: Label = $Panel/Margin/VBox/TopBar/HeaderLabel
 @onready var points_label: Label = $Panel/Margin/VBox/PointsLabel
@@ -31,6 +29,8 @@ const SKILL_BOOK_NODE_NAME := "Menu"  # backwards compat: SkillBook
 @onready var reset_button: Button = $Panel/Margin/VBox/BottomBar/ResetButton
 
 var _element_rows: Dictionary = {}  # element_id -> {atk_label, def_label, btn_plus1, ...}
+var _element_row_panels: Array = []  # PanelContainer in display order
+var _autorepeat: MenuFocusableScript = null  # D-pad auto-repeat driver
 
 
 func _ready() -> void:
@@ -59,12 +59,18 @@ func _do_initialize() -> void:
 ## Construye una fila UI por cada elemento (8 + physical = 9).
 ## Cada fila: [icon][name] | ATK bar | DEF bar | +/- buttons
 func _build_element_rows() -> void:
+	# Free INMEDIATO (no queue_free) para que _wire_focus no vea rows viejos
 	for child in elements_container.get_children():
-		child.queue_free()
+		elements_container.remove_child(child)
+		child.free()
 	_element_rows.clear()
+	_element_row_panels.clear()
 	for e in ElementsScript.ELEMENTS:
 		var row := _build_row(e)
 		elements_container.add_child(row)
+		_element_row_panels.append(row)
+	# Wire focus chain (también se re-wirea en _refresh, pero aquí cubrimos el primer render)
+	_wire_focus()
 
 
 func _build_row(e: Dictionary) -> Control:
@@ -204,11 +210,12 @@ func _refresh() -> void:
 	var ps: Node = _get_progression_state()
 	if ps == null:
 		return
-	points_label.text = "Skill Points: %d  |  Allocated: %d / %d" % [
-		ps.skill_points,
-		_total_allocated(ps),
-		ElementsScript.MAX_ELEMENT_POINTS * (ElementsScript.ELEMENTS.size() - 1),  # -1 = sin physical
-	]
+	# Unified points display — misma fuente, mismo formato en todos los menús
+	points_label.text = MenuNavHelperScript.format_points(
+		ps, _total_allocated(ps),
+		ElementsScript.MAX_ELEMENT_POINTS * (ElementsScript.ELEMENTS.size() - 1),
+		"Elementos"
+	)
 	for elem_id in _element_rows.keys():
 		var pts: int = int(ps.element_allocations.get(elem_id, 0))
 		var atk_mult := ElementsScript.get_attack_multiplier(pts)
@@ -227,8 +234,8 @@ func _refresh() -> void:
 		r["btn_minus1"].disabled = not can_minus
 		var can_minus5: bool = pts >= 5
 		r["btn_minus5"].disabled = not can_minus5
-		# Set focus neighbors para D-pad: left→prev row, right→next row
-		# (manejado en _wire_focus después de crear todos los rows)
+	# Re-wire focus chain con MenuNavHelper
+	_wire_focus()
 
 
 func _total_allocated(ps: Node) -> int:
@@ -273,11 +280,83 @@ func _reset_all() -> void:
 func open() -> void:
 	super.open()
 	_refresh()
-	# Focus the first row's +1 button
-	if not _element_rows.is_empty():
-		var first_row: Dictionary = _element_rows.values()[0]
-		if not first_row.is_empty() and is_instance_valid(first_row.get("btn_plus1")):
-			first_row["btn_plus1"].grab_focus()
+	# Auto-grab focus on first row's +1 button (con retries como el arsenal)
+	for _i in 3:
+		call_deferred("_grab_initial_focus_attempt", _i)
+	get_tree().create_timer(0.1).timeout.connect(_re_grab_if_lost)
+
+
+func _grab_initial_focus_attempt(_attempt: int) -> void:
+	if _element_rows.is_empty():
+		return
+	var first_row: Dictionary = _element_rows.values()[0]
+	var btn: Button = first_row.get("btn_plus1")
+	if btn and is_instance_valid(btn):
+		btn.grab_focus()
+
+
+func _re_grab_if_lost() -> void:
+	if get_viewport().gui_get_focus_owner() != null:
+		return
+	_grab_initial_focus_attempt(-1)
+
+
+## Re-wire focus chain usando MenuNavHelper (mismo sistema que menu.gd).
+## TopBar: OpenSkillBookButton ↔ CloseButton. Element rows: chain + wrap
+## + first row ↑ → OpenSkillBookButton. Auto-repeat driver.
+func _wire_focus() -> void:
+	# TopBar
+	if open_skill_book_button and close_button:
+		open_skill_book_button.focus_neighbor_right = close_button.get_path()
+		close_button.focus_neighbor_left = open_skill_book_button.get_path()
+	# Element rows: usa el bind_row chain, con wrap-around
+	var rows_to_wire: Array = []
+	for panel in _element_row_panels:
+		if is_instance_valid(panel):
+			# El row tiene 2 HBoxContainers internos (btn_row1 con -1/+1,
+			# btn_row2 con -5/+5). Wireamos ambos como un solo "row group"
+			# buscando todos los HBox descendants.
+			var inner_rows: Array = []
+			_collect_hboxes(panel, inner_rows)
+			rows_to_wire.append_array(inner_rows)
+	# Bind rows
+	for i in rows_to_wire.size():
+		MenuNavHelperScript.bind_row(
+			rows_to_wire[i], rows_to_wire, i,
+			open_skill_book_button if i == 0 else null,
+			true  # wrap
+		)
+	# Scroll-follow
+	var scroll: ScrollContainer = get_node_or_null("Panel/Margin/VBox/Scroll")
+	if scroll:
+		MenuNavHelperScript.bind_list(rows_to_wire, scroll, true)
+	# D-pad auto-repeat
+	if _autorepeat == null:
+		_autorepeat = MenuFocusableScript.new()
+		add_child(_autorepeat)
+		_autorepeat.repeat_step.connect(_on_repeat_step)
+
+
+func _collect_hboxes(n: Node, out: Array) -> void:
+	if n is HBoxContainer:
+		out.append(n)
+		return
+	for c in n.get_children():
+		_collect_hboxes(c, out)
+
+
+func _input(event: InputEvent) -> void:
+	# Llamar al base primero (maneja L1/R1 para tab nav, cierre con Esc/Back)
+	super._input(event)
+	# Alimentar el driver de auto-repeat
+	if _autorepeat:
+		_autorepeat.feed_event(event)
+
+
+## No-op: el primer step ya lo entrega Godot (focus moves);
+## los repeat steps no necesitan acción extra.
+func _on_repeat_step(_direction: String) -> void:
+	pass
 
 
 func close() -> void:

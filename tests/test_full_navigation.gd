@@ -1,4 +1,10 @@
 extends SceneTree
+
+func _find_master_menu() -> Node:
+	var n: Node = root.find_child("Menu", true, false)
+	if n == null:
+		n = _find_master_menu()
+	return n
 ## Test de navegación end-to-end con la play scene cargada (carga el InputMap real).
 
 const ProgressionStateScript := preload("res://scripts/skill/progression_state.gd")
@@ -141,15 +147,15 @@ func _initialize() -> void:
 			_check("slot 4 = kamehameha_001", str(player.skill_bar[4]) == "kamehameha_001")
 
 	print("\n=== TEST 4: SkillBook ready in play scene ===")
-	var sb: Node = root.find_child("SkillBook", true, false)
+	var sb: Node = _find_master_menu()
 	# SkillBook solo existe si fue abierto. Esperar un frame más.
 	# Verificar el tab_id via la scene file
 	# (no se puede hasta que se abra)
 	# En su lugar, verificar que el script tiene tab_id = "skills" por default
-	var sb_src := FileAccess.get_file_as_string("res://scripts/ui/skill_book.gd")
-	_check("skill_book.gd is_master_tab in _initialize",
+	var sb_src := FileAccess.get_file_as_string("res://scripts/ui/menu.gd")
+	_check("menu.gd is_master_tab in _initialize",
 		"is_master_tab = true" in sb_src)
-	_check("skill_book.gd sets tab_id = &\"skills\"",
+	_check("menu.gd sets tab_id = &\"skills\"",
 		"tab_id = &\"skills\"" in sb_src)
 
 	print("\n=== TEST 5: HUD is smaller ===")
@@ -242,13 +248,15 @@ func _initialize() -> void:
 				absf(dmg_5str - 30.0) < 0.5,
 				"(got %.2f)" % dmg_5str)
 
-	print("\n=== TEST 9: 4 tabs in skill_book ===")
-	var sk_src_full := FileAccess.get_file_as_string("res://scripts/ui/skill_book.gd")
-	_check("skill_book.gd has 4 TABS",
-		'&"skills"' in sk_src_full
-		and '&"elementos"' in sk_src_full
-		and '&"atributos"' in sk_src_full
-		and '&"armas"' in sk_src_full)
+	print("\n=== TEST 9: 6 tabs in menu ===")
+	var menu_src := FileAccess.get_file_as_string("res://scripts/ui/menu.gd")
+	_check("menu.gd has 6 TABS (skills, mision, objetivos, elementos, atributos, armas)",
+		'&"skills"' in menu_src
+		and '&"mision"' in menu_src
+		and '&"objetivos"' in menu_src
+		and '&"elementos"' in menu_src
+		and '&"atributos"' in menu_src
+		and '&"armas"' in menu_src)
 
 	print("\n=== TOTAL: %d/%d passed ===" % [_passed, _passed + _failed])
 	if _failed > 0:

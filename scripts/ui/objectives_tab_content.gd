@@ -5,23 +5,32 @@
 ##
 ## Se attacha al menu.gd como un child del ObjectivesPanel (creado en .tscn).
 ## Sigue el mismo patrón que mission_tab_content.gd.
+##
+## Navegación: usa MenuNavHelper.bind_list() para wirear el focus chain
+## de los 20 botones RETAR (wrap-around, scroll-follow, mismo formato que
+## los otros menús). D-pad up/down navega entre bosses, X dispara RETAR.
 extends RefCounted
+
+const MenuNavHelperScript := preload("res://scripts/ui/menu_nav.gd")
 
 var _menu: Control = null
 var _list: VBoxContainer = null
+var _scroll: ScrollContainer = null
 var _back_button: Button = null
 var _active_objective_id: StringName = &""
+var _retar_buttons: Array = []  # Buttons "RETAR" en display order, para focus chain
 
 
 func attach(menu: Control) -> void:
 	_menu = menu
 	_list = menu.get_node_or_null("Panel/Margin/VBox/ObjectivesPanel/ObjectivesMargin/ObjectivesVBox/ObjScroll/ObjList")
+	_scroll = menu.get_node_or_null("Panel/Margin/VBox/ObjectivesPanel/ObjectivesMargin/ObjectivesVBox/ObjScroll")
 	_back_button = menu.get_node_or_null("Panel/Margin/VBox/ObjectivesPanel/ObjectivesMargin/ObjectivesVBox/ObjBackButton")
 	# Hide back button (we use R1/L1 to cycle tabs in the menu)
 	if _back_button:
 		_back_button.visible = false
 	_populate_list()
-	# Conectar signal del ObjectivesManager para refrescar cuando se complete
+	# Conectar signals del ObjectivesManager para refrescar cuando se complete
 	var om: Node = Engine.get_main_loop().root.get_node_or_null("ObjectivesManager")
 	if om and not om.objective_completed.is_connected(_on_objective_completed):
 		om.objective_completed.connect(_on_objective_completed)
@@ -32,9 +41,12 @@ func attach(menu: Control) -> void:
 func _populate_list() -> void:
 	if _list == null:
 		return
-	# Limpiar
+	# Limpiar INMEDIATAMENTE (no queue_free) para que _wire_focus no vea
+	# rows viejos con focus_neighbor paths stale.
 	for c in _list.get_children():
-		c.queue_free()
+		_list.remove_child(c)
+		c.free()
+	_retar_buttons.clear()
 	# Obtener lista
 	var om: Node = Engine.get_main_loop().root.get_node_or_null("ObjectivesManager")
 	if om == null:
@@ -73,6 +85,7 @@ func _populate_list() -> void:
 		row.add_child(info)
 		# Button: RETAR / ACTIVO / ✓
 		var btn: Button = Button.new()
+		btn.focus_mode = Control.FOCUS_ALL
 		var id_str: StringName = StringName(String(entry.get("id", "")))
 		if entry.get("completed", false):
 			btn.text = "✓"
@@ -87,8 +100,33 @@ func _populate_list() -> void:
 			btn.pressed.connect(_on_start_pressed.bind(id_str))
 		row.add_child(btn)
 		_list.add_child(row)
+		_retar_buttons.append(btn)
 		# Separator
 		_list.add_child(HSeparator.new())
+	# Wire focus chain con MenuNavHelper (mismo patrón que arsenal/elementos)
+	_wire_focus()
+
+
+## Wirea el focus chain de los 20 botones RETAR + wrap-around + scroll-follow.
+## Esto hace que D-pad up/down navegue entre los bosses, X dispare RETAR.
+func _wire_focus() -> void:
+	if _retar_buttons.is_empty():
+		return
+	# Filtrar solo los botones habilitados (focus nav). Pero los disabled
+	# también necesitan estar en la chain para que el D-pad no "salte"
+	# sobre ellos. MenuNavHelper._chain_items los incluye todos si tienen
+	# focus_mode != FOCUS_NONE. Como seteamos focus_mode = FOCUS_ALL arriba,
+	# quedan en la chain.
+	MenuNavHelperScript.bind_list(_retar_buttons, _scroll, true)
+
+
+## Llamado por el master menu cuando el tab objetivos se activa.
+## Foco en el primer botón RETAR habilitado.
+func focus_default() -> void:
+	for b in _retar_buttons:
+		if b and is_instance_valid(b) and not b.disabled:
+			b.grab_focus()
+			return
 
 
 func _on_start_pressed(id: StringName) -> void:

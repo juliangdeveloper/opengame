@@ -192,9 +192,15 @@ func _initialize() -> void:
 	_assert(scroll.follow_focus == true, "follow_focus = true (Godot default)")
 	_assert(int(scroll.get_v_scroll_bar().max_value) > 0, "content overflows viewport (max=%d > 0)" % int(scroll.get_v_scroll_bar().max_value))
 	# Verify our safety-net handler is connected (manual scroll on focus change)
-	var vp: Viewport = root.get_viewport()
-	var connected: bool = vp.gui_focus_changed.is_connected(menu._on_gui_focus_changed)
-	_assert(connected, "_on_gui_focus_changed connected to gui_focus_changed (safety net)")
+	# The new MenuNavHelper attaches to gui_focus_changed via metadata-tagged
+	# callback on the scroll, not directly to the menu. We verify that
+	# _scrolls_to_keep_visible contains the scroll (our safety net is set up).
+	var has_scroll_registered: bool = false
+	for s in menu._scrolls_to_keep_visible:
+		if s == scroll:
+			has_scroll_registered = true
+			break
+	_assert(has_scroll_registered, "right scroll registered for focus-follow safety net")
 
 	# ------------------------------------------------------------------------
 	# 7. Arsenal tab: navigate to it (R1 5x), then D-pad inside

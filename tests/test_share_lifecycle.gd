@@ -1,10 +1,16 @@
 extends SceneTree
 
+func _find_master_menu() -> Node:
+	var n: Node = root.find_child("Menu", true, false)
+	if n == null:
+		n = _find_master_menu()
+	return n
+
 # Regression test for Share button lifecycle.
 # Calls _toggle_skill_book directly to bypass _input (which doesn't get
 # synthetic events in headless mode).
 
-var SKILL_BOOK_SCENE: PackedScene = preload("res://scenes/ui/skill_book.tscn")
+var SKILL_BOOK_SCENE: PackedScene = preload("res://scenes/ui/menu.tscn")
 
 
 func _initialize() -> void:
@@ -22,7 +28,7 @@ func _initialize() -> void:
 	player._toggle_skill_book()
 	await process_frame
 	await process_frame
-	var sb: Node = root.find_child("SkillBook", true, false)
+	var sb: Node = _find_master_menu()
 	var ok1: bool = sb.visible and paused
 	print("[1] Open: %s" % ("PASS" if ok1 else "FAIL"))
 	if not ok1: failures += 1

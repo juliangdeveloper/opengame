@@ -3,7 +3,7 @@ extends SceneTree
 # Verify the close flow: open skill book → switch to elementos → press X
 # should go BACK to skill book (not leave game in paused-without-UI state).
 
-var SKILL_BOOK_SCENE: PackedScene = preload("res://scenes/ui/skill_book.tscn")
+var SKILL_BOOK_SCENE: PackedScene = preload("res://scenes/ui/menu.tscn")
 
 
 func _initialize() -> void:
@@ -16,7 +16,13 @@ func _initialize() -> void:
 
 	var sb := SKILL_BOOK_SCENE.instantiate()
 	sb.name = "SkillBook"
-	var layer: Node = root.find_child("SkillBookContainer", true, false)
+	var layer: Node = root.find_child("MenuContainer", true, false)
+	if layer == null:
+		layer = root.find_child("MenuLayer", true, false)
+	if layer == null:
+		layer = root.find_child("SkillBookContainer", true, false)
+	if layer == null:
+		layer = root
 	layer.add_child(sb)
 	await process_frame
 	sb.open()
@@ -25,7 +31,11 @@ func _initialize() -> void:
 	var ok1: bool = sb.visible and paused
 	print("[start] %s (sb.visible=%s, paused=%s)" % ["PASS" if ok1 else "FAIL", sb.visible, paused])
 
-	# Navigate to elementos (R1)
+	# Navigate to elementos (R1 ×3: skills → mision → objetivos → elementos)
+	sb._on_next_tab()
+	await process_frame
+	sb._on_next_tab()
+	await process_frame
 	sb._on_next_tab()
 	await process_frame
 	await process_frame
