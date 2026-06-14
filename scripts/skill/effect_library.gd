@@ -161,24 +161,23 @@ static func _compute_skill_power(
 	else:
 		notes.append("caster has no AttributeComponent (NPC? use defaults)")
 
-	# 2) WEAPON contribution (FASE 1 lo va a eliminar — solo temporal)
-	# Mantenemos la firma del weapon para no romper tests existentes.
+	## FASE 1 (2026-06-14): el weapon YA NO contribuye dmg/speed/crit
+	## directamente. En su lugar, al equiparse aplica `attribute_modifiers`
+	## como temp_offsets al caster, y `_compute_skill_power` los lee desde
+	## caster.AttributeComponent (lo cual ya hace arriba).
+	##
+	## Mantenemos `class_dmg_mult` por ahora — el bonus de "effective
+	## against X" sigue siendo un modificador contextual del arma contra
+	## el target, no del caster contra sí mismo. En Fase 3 esto se
+	## refactorizará como "skill matchup" si hace falta.
 	var weapon: Resource = _get_equipped_weapon_resource(caster)
 	if weapon != null and target != null and target.is_in_group("enemies"):
-		var wpn_dmg: float = float(weapon.designed_stats.get("dmg", 0.0))
-		if wpn_dmg > 0.0:
-			final_amount += wpn_dmg
-			notes.append("weapon.dmg=%.1f (FASE 1: remover)" % wpn_dmg)
-		var speed: float = float(weapon.designed_stats.get("speed", 1.0))
-		if speed != 1.0:
-			final_amount *= speed
-			notes.append("weapon.speed=%.2f (FASE 1: remover)" % speed)
 		if target.has_method("get_weapon_family_name"):
 			var target_family: String = String(target.call("get_weapon_family_name"))
 			var class_mult: float = float(weapon.class_dmg_mult.get(target_family, 1.0))
 			if class_mult != 1.0:
 				final_amount *= class_mult
-				notes.append("class_mult(%s)=%.2f" % [target_family, class_mult])
+				notes.append("weapon.class_mult(%s)=%.2f" % [target_family, class_mult])
 
 	# 3) APLICAR ATRIBUTOS DEL TARGET (defensivo)
 	var target_ac: Node = _get_attribute_component(target)

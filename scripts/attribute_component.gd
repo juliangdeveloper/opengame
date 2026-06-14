@@ -68,6 +68,14 @@ const ATTRIBUTES: Array = [
 	{"id": "strength",        "display": "Strength",        "group": "offense",  "base": 0.0,   "per_point": 1.0,   "unit": "flat", "linked_status": &"",        "description": "+10% dmg global como caster, +5% phys_res como target"},
 	# Dexterity = agilidad del caster (crit, dodge, attack_speed).
 	{"id": "dexterity",       "display": "Dexterity",       "group": "offense",  "base": 0.0,   "per_point": 1.0,   "unit": "flat", "linked_status": &"",        "description": "+2% crit, +2% dodge, +5% attack_speed"},
+	# FASE 1: derivados puros — NO crecen con puntos del jugador, solo con
+	# temp_offsets (los aplican los weapons al equiparse). per_point=0,
+	# base=1.0 (o 0.05 para crit) para que el sistema de cache los tenga.
+	# El caster nunca asigna puntos aquí; solo el weapon.
+	{"id": "attack_power",    "display": "Attack Power",    "group": "offense",  "base": 1.0,   "per_point": 0.0,   "unit": "x",    "linked_status": &"",        "description": "Multiplicador de dmg (1.0 base, +0.10 por strength pt, +0.05 por phys_dmg/ele_dmg pt, +offsets de weapon)"},
+	{"id": "crit_chance",     "display": "Crit Chance",     "group": "offense",  "base": 0.05,  "per_point": 0.0,   "unit": "x",    "linked_status": &"",        "description": "Probabilidad de crítico (base 0.05, +0.02 por dexterity pt, +offsets de weapon)"},
+	{"id": "attack_speed",    "display": "Attack Speed",    "group": "offense",  "base": 1.0,   "per_point": 0.0,   "unit": "x",    "linked_status": &"",        "description": "Multiplicador de velocidad de ataque (1.0 base, +0.05 por dexterity pt, +offsets de weapon)"},
+	{"id": "parry_bonus",     "display": "Parry Bonus",     "group": "defense",  "base": 0.0,   "per_point": 0.0,   "unit": "x",    "linked_status": &"",        "description": "Bonus al defender con éxito (0..1, +offsets de weapon)"},
 
 	# --- Defense (sin status link) ---
 	{"id": "phys_res",        "display": "Physical Res",    "group": "defense",  "base": 0.0,   "per_point": 0.05,  "unit": "x",    "linked_status": &"",        "description": "-5% daño físico recibido"},
@@ -234,6 +242,10 @@ func get_ele_res_multiplier() -> float:
 ## atributos básicos cuentan para el daño físico (el user lo confirmó:
 ## "Los elementos y atributos básicos solo se tienen en cuenta para el
 ## daño físico"). Strength (per-point +10%) suma siempre como fuerza bruta.
+##
+## FASE 1: además suma el temp_offset de "attack_power" (que los weapons
+## aplican al equiparse vía attribute_modifiers). Así, un arma que da
+## attack_power=+0.15 añade un +15% multiplicativo al dmg del caster.
 ## 1.0 = sin bonus, 1.5 = +50% dmg.
 ##
 ## dmg_type se ignora actualmente (siempre suma ambos); el parámetro
@@ -244,15 +256,19 @@ func get_attack_power(_dmg_type: String = "physical") -> float:
 	mult += 0.05 * float(get_points(&"phys_dmg") + _temp_offsets.get("phys_dmg", 0.0))
 	mult += 0.05 * float(get_points(&"ele_dmg") + _temp_offsets.get("ele_dmg", 0.0))
 	mult += 0.10 * float(get_points(&"strength") + _temp_offsets.get("strength", 0.0))
+	# FASE 1: offset del weapon (vía attribute_modifiers.attack_power)
+	mult += _temp_offsets.get("attack_power", 0.0)
 	return mult
 
 
 ## Probabilidad de crítico del caster. Base 5% + 2% por punto de dexterity.
-## El arma luego añade un offset vía temp_offset (Fase 1).
+## FASE 1: el arma añade un offset vía temp_offset (attribute_modifiers.crit_chance).
 func get_crit_chance() -> float:
 	var base: float = 0.05
 	var dex_bonus: float = 0.02 * float(get_points(&"dexterity") + _temp_offsets.get("dexterity", 0.0))
-	return clampf(base + dex_bonus, 0.0, 1.0)
+	# FASE 1: offset del weapon
+	var weapon_offset: float = _temp_offsets.get("crit_chance", 0.0)
+	return clampf(base + dex_bonus + weapon_offset, 0.0, 1.0)
 
 
 ## Probabilidad de esquivar un golpe. Base 5% + 2% por punto de dexterity
@@ -261,13 +277,26 @@ func get_crit_chance() -> float:
 func get_dodge_chance() -> float:
 	var base: float = 0.05
 	var dex_bonus: float = 0.02 * float(get_points(&"dexterity") + _temp_offsets.get("dexterity", 0.0))
-	return clampf(base + dex_bonus, 0.0, 1.0)
+	# FASE 1: offset del weapon (si tiene "dodge_chance" modifier)
+	var weapon_offset: float = _temp_offsets.get("dodge_chance", 0.0)
+	return clampf(base + dex_bonus + weapon_offset, 0.0, 1.0)
 
 
 ## Multiplicador de velocidad de ataque del caster. Base 1.0 = normal.
-## +5% por punto de dexterity. El weapon añade un offset (Fase 1).
+## +5% por punto de dexterity. FASE 1: el weapon añade un offset
+## (attribute_modifiers.attack_speed, e.g. dagger da +0.60 = 1.6x).
 func get_attack_speed() -> float:
-	return 1.0 + 0.05 * float(get_points(&"dexterity") + _temp_offsets.get("dexterity", 0.0))
+	var mult: float = 1.0
+	mult += 0.05 * float(get_points(&"dexterity") + _temp_offsets.get("dexterity", 0.0))
+	# FASE 1: offset del weapon
+	mult += _temp_offsets.get("attack_speed", 0.0)
+	return mult
+
+
+## Bonus al defender con éxito (0..1). FASE 1: offset del weapon
+## (attribute_modifiers.parry_bonus). Se usa en defenderse_001.
+func get_parry_bonus() -> float:
+	return clampf(_temp_offsets.get("parry_bonus", 0.0), 0.0, 1.0)
 
 
 # --- Internos ---

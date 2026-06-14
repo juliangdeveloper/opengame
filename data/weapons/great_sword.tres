@@ -28,6 +28,10 @@ class_dmg_mult = {
 "dagger": 1.5,
 "scimitar": 1.2
 }
+attribute_modifiers = {
+"attack_power": 0.42,
+"crit_chance": 0.05
+}
 compatible_skill_ids = [&"great_sword_slash"]
 blocked_skill_ids = [&"dual_strike", &"parry_riposte"]
 mesh_hint = "sword_great"

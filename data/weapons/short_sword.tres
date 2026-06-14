@@ -27,6 +27,11 @@ class_dmg_mult = {
 "dagger": 1.2,
 "unarmed": 1.1
 }
+attribute_modifiers = {
+"attack_power": 0.15,
+"crit_chance": 0.03,
+"parry_bonus": 0.10
+}
 compatible_skill_ids = []
 blocked_skill_ids = []
 mesh_hint = "sword_short"
