@@ -145,7 +145,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 focus_mode = 1
 focus_neighbor_top = NodePath("../../../../../TopBar/PrevTabButton")
-focus_neighbor_right = NodePath("../../../RightPanel/RightMargin/Scroll/DetailVBox/BindingRow/BindingButton")
+focus_neighbor_right = NodePath("../../../../RightPanel/RightMargin/Scroll/DetailVBox/BindingRow/BindingButton")
 
 [node name="VSeparator" type="VSeparator" parent="Panel/Margin/VBox/HBoxBody"]
 layout_mode = 2
@@ -210,7 +210,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 focus_mode = 1
 focus_neighbor_left = NodePath("../../../../../../LeftPanel/LeftMargin/Scroll/ItemList")
-focus_neighbor_top = NodePath("../../../../../../TopBar/NextTabButton")
+focus_neighbor_top = NodePath("../../../../../../../TopBar/NextTabButton")
 text = "— none —"
 clip_text = true
 

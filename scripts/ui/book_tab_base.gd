@@ -117,7 +117,9 @@ func _navigate_to_master_tab(delta: int) -> void:
 			call("_on_prev_tab")
 		return
 	# Slave: cerrar y pedir al master que navegue
-	var book: Control = get_tree().root.find_child("SkillBook", true, false)
+	var book: Control = get_tree().root.find_child("Menu", true, false)
+	if book == null:
+		book = get_tree().root.find_child("SkillBook", true, false)  # backwards compat
 	_close()
 	if book == null:
 		return
