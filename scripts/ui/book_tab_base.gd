@@ -10,7 +10,7 @@ extends Control
 ##     en una row/button
 ##   - Apertura/cierre uniforme: pausa, mouse mode, signal "tab_opened/closed"
 ##
-## Cada tab concreto (skill_book, element_allocator, etc.) hereda de este
+## Cada tab concreto (skill_book, attribute_allocator, etc.) hereda de este
 ## nodo y simplemente implementa open()/close() y referencia su contenido.
 ##
 ## Identificación: el nodo raíz debe tener `tab_id` (StringName) que

@@ -15,8 +15,8 @@ extends SceneTree
 #   12 = D-pad Down        13 = D-pad Left
 #   14 = D-pad Right
 
-const TAB_NAMES: Array[StringName] = [&"skills", &"mision", &"objetivos", &"elementos", &"atributos", &"armas"]
-const SLAVE_NAMES: Array[StringName] = [&"ElementAllocator", &"AttributeAllocator", &"WeaponAllocator"]
+const TAB_NAMES: Array[StringName] = [&"skills", &"mision", &"objetivos", &"atributos", &"armas"]
+const SLAVE_NAMES: Array[StringName] = [&"AttributeAllocator", &"WeaponAllocator"]
 
 var _results: Array = []
 var _errors: Array = []
@@ -213,12 +213,12 @@ func _initialize() -> void:
 	await process_frame
 	await process_frame
 	menu = player._menu_instance
-	# R1 5x: skills → mision → objetivos → elementos → atributos → armas
-	for i in 5:
+	# R1 4x: skills → mision → objetivos → atributos → armas
+	for i in 4:
 		_send(player, 10, true)  # R1
 		await process_frame
 		await process_frame
-	_assert(menu._current_tab == 5, "at armas tab (idx 5)")
+	_assert(menu._current_tab == 4, "at armas tab (idx 4)")
 	var wa: Control = _get_slave(&"WeaponAllocator")
 	_assert(wa != null and wa.visible, "WeaponAllocator visible")
 	# Try D-down inside arsenal

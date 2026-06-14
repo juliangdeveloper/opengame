@@ -4,8 +4,8 @@ extends BookTabBase
 ## Pestañas (5, navegación cíclica con L1/R1):
 ##   - Skills     (master, este nodo)         — skills owned + bindings
 ##   - Misión     (master, MissionPanel)      — quest actual
-##   - Elementos  (slave, scene instanced)    — element_allocator
-##   - Atributos  (slave)                     — attribute_allocator
+##   - Objetivos  (master, ObjectivesPanel)   — bosses disponibles
+##   - Atributos  (slave)                     — atributos + elementos unificados
 ##   - Armas      (slave)                     — weapon_allocator
 ##
 
@@ -37,8 +37,8 @@ const BINDINGS: Array = [
 
 const SWALLOW_WINDOW := 0.2
 
-# Tab order. 0=Skills, 1=Misión, 2=Objetivos, 3=Elementos, 4=Atributos, 5=Armas
-const TABS: Array = [&"skills", &"mision", &"objetivos", &"elementos", &"atributos", &"armas"]
+# Tab order. 0=Skills, 1=Misión, 2=Objetivos, 3=Atributos (atributos+elementos unificados), 4=Armas
+const TABS: Array = [&"skills", &"mision", &"objetivos", &"atributos", &"armas"]
 
 # --- Nodos (configurados en .tscn) ---
 @onready var skill_list: ItemList = $Panel/Margin/VBox/HBoxBody/LeftPanel/LeftMargin/Scroll/ItemList
@@ -63,7 +63,6 @@ var _objectives_tab: RefCounted = null  # control node that implements objective
 
 var _scroll_left: ScrollContainer = null
 var _scroll_right: ScrollContainer = null
-const ELEMENT_ALLOCATOR_SCENE := preload("res://scenes/ui/element_allocator.tscn")
 const ATTRIBUTE_ALLOCATOR_SCENE := preload("res://scenes/ui/attribute_allocator.tscn")
 const WEAPON_ALLOCATOR_SCENE := preload("res://scenes/ui/weapon_allocator.tscn")
 
@@ -207,15 +206,7 @@ func _switch_to_tab(idx: int) -> void:
 			# Foco en el primer botón RETAR habilitado
 			(_objectives_tab as Object).call("focus_default")
 		return
-	if tab_id_str == &"elementos":
-		var ea: Control = parent_layer.get_node_or_null("ElementAllocator") if parent_layer else null
-		if ea == null:
-			ea = ELEMENT_ALLOCATOR_SCENE.instantiate()
-			ea.name = "ElementAllocator"
-			parent_layer.add_child(ea)
-		if ea.has_method("open"):
-			ea.open()
-	elif tab_id_str == &"atributos":
+	if tab_id_str == &"atributos":
 		var aa: Control = parent_layer.get_node_or_null("AttributeAllocator") if parent_layer else null
 		if aa == null:
 			aa = ATTRIBUTE_ALLOCATOR_SCENE.instantiate()
@@ -241,7 +232,7 @@ func _close_all_slave_tabs() -> void:
 		parent_layer = get_tree().root.find_child("SkillBookContainer", true, false)  # backwards compat
 	if parent_layer == null:
 		return
-	for slave_name in ["ElementAllocator", "AttributeAllocator", "WeaponAllocator"]:
+	for slave_name in ["AttributeAllocator", "WeaponAllocator"]:
 		var slave: Node = parent_layer.get_node_or_null(slave_name)
 		if slave and slave.visible and slave.has_method("_close"):
 			slave._close()
@@ -262,7 +253,6 @@ func _tab_display_name(id: StringName) -> String:
 		&"skills":    return "Skills"
 		&"mision":    return "Misión"
 		&"objetivos": return "Objetivos"
-		&"elementos": return "Elementos"
 		&"atributos": return "Atributos"
 		&"armas":     return "Armas"
 	return "?"

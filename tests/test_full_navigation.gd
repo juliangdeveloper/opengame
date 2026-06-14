@@ -248,15 +248,16 @@ func _initialize() -> void:
 				absf(dmg_5str - 30.0) < 0.5,
 				"(got %.2f)" % dmg_5str)
 
-	print("\n=== TEST 9: 6 tabs in menu ===")
+	print("\n=== TEST 9: 5 tabs in menu (elementos merged into atributos) ===")
 	var menu_src := FileAccess.get_file_as_string("res://scripts/ui/menu.gd")
-	_check("menu.gd has 6 TABS (skills, mision, objetivos, elementos, atributos, armas)",
+	_check("menu.gd has 5 TABS (skills, mision, objetivos, atributos, armas)",
 		'&"skills"' in menu_src
 		and '&"mision"' in menu_src
 		and '&"objetivos"' in menu_src
-		and '&"elementos"' in menu_src
 		and '&"atributos"' in menu_src
 		and '&"armas"' in menu_src)
+	_check("menu.gd no longer has &\"elementos\" tab",
+		not ('&"elementos"' in menu_src))
 
 	print("\n=== TOTAL: %d/%d passed ===" % [_passed, _passed + _failed])
 	if _failed > 0:
