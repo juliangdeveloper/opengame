@@ -165,6 +165,12 @@ const BODY_PARRY_FLASH := Color(1.2, 1.2, 0.6)  # warm yellow flash
 
 
 func _ready() -> void:
+	# BUGFIX 2026-06-14: el player debe seguir procesando input incluso
+	# cuando el menú pausa el juego, si no la 2da pulsación de Share nunca
+	# llega a `_input` y el menú no cierra. PROCESS_MODE_ALWAYS = el nodo
+	# sigue vivo durante pause (necesario para que el player pueda togglear
+	# el menú abierto/cerrado desde el gamepad).
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	stamina = max_stamina
 	hp = max_hp
