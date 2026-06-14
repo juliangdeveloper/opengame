@@ -82,16 +82,34 @@ static func apply_atom(
 
 # === damage ===
 
-# === _compute_skill_power (arma + stats del caster + resistencia del target) ===
-## Calcula la "potencia" efectiva de un skill considerando:
-##   - Los stats del caster (attribute_component, progression_state)
-##   - El arma equipada (si la hay) — class_dmg_mult, stat_scaling
-##   - El target (NPC: phys_res, ele_res; env_object: weight, material_resistance)
+# === _compute_skill_power (ATRIBUTOS bilaterales: caster + target) ===
+## Calcula la "potencia" efectiva de un skill considerando los ATRIBUTOS de
+## AMBAS instancias (caster y target), NO el weapon directamente.
+##
+## FASE 0 (2026-06-14): refactor del sistema viejo. Antes:
+##   final = base + weapon.dmg × (1 + str*scale) × weapon.speed × crit × class
+##
+## Ahora:
+##   final = base
+##         × caster.attack_power          # phys_dmg + ele_dmg + strength
+##         × crit multiplier (2x si crit) # caster.crit_chance
+##         × (1 si el target falla dodge)  # target.dodge_chance
+##         × (1 - target.phys_res)        # ya existente (lo aplica _apply_hit)
+##         × elemental_matrix             # ya existente
+##
+## El weapon se mantiene como contribuidor ADITIVO en dmg (lo eliminaremos
+## en Fase 1 cuando refactoremos weapons a "temp_offsets puros"). También
+## añade crit/speed/class_dmg_mult vía offsets.
+##
+## El resultado es SIMÉTRICO: el mismo código sirve para player→NPC,
+## NPC→player, NPC→NPC, etc. La clave es que ambos lados tienen
+## AttributeComponent (player y NPC pueden tenerlo).
 ##
 ## Devuelve un Dictionary con:
 ##   - final_amount: dmg base escalado (antes de resistencias del target)
 ##   - final_knockback: knockback escalado
-##   - crit: bool — si el golpe es crítico (dmg x2)
+##   - crit: bool — si el golpe es crítico
+##   - dodged: bool — si el target esquivó (final_amount=0 si true)
 ##   - notes: Array[String] — para debug/log
 static func _compute_skill_power(
 	executor: Node,
@@ -107,45 +125,54 @@ static func _compute_skill_power(
 		caster = executor.caster
 	elif executor:
 		caster = executor  # El test pasa el player directo
-	var weapon: Resource = _get_equipped_weapon_resource(caster)
+
+	# Determinar tipo de daño (del atom o de la última acción del caster)
+	var dmg_type: String = "physical"
+	if "last_damage_type" in executor and executor.last_damage_type != null:
+		dmg_type = String(executor.last_damage_type)
+	elif "dmg_type" in atom:
+		dmg_type = String(atom["dmg_type"])
+
 	var crit: bool = false
+	var dodged: bool = false
 	var final_amount: float = amount
 	var final_knockback: float = knockback
 
-	# 1) Escalar por el arma equipada (si el target es un NPC)
-	if weapon != null and target != null and target.is_in_group("enemies"):
-		var wpn_dmg: float = float(weapon.designed_stats.get("dmg", 0.0))
-		var wpn_str_mult: float = float(weapon.stat_scaling.get("strength_to_dmg", 0.0))
-		# 1a) Sumar dmg del arma al dmg del skill
-		final_amount += wpn_dmg
-		notes.append("weapon_dmg=%.1f" % wpn_dmg)
-		# 1b) Aplicar scaling por stats del jugador
-		var str_pts: float = 0.0
-		if caster and caster.has_node("AttributeComponent"):
-			var ac: Node = caster.get_node("AttributeComponent")
-			if ac.has_method("get_points"):
-				str_pts = float(ac.call("get_points", "strength"))
-		var stat_mult: float = 1.0 + wpn_str_mult * str_pts
-		final_amount *= stat_mult
-		notes.append("str_pts=%.0f mult=%.2f" % [str_pts, stat_mult])
-		# 1c) Velocidad del arma (afecta al escalado, no al dmg directo aquí)
-		var speed: float = float(weapon.designed_stats.get("speed", 1.0))
-		final_amount *= speed
-		notes.append("weapon_speed=%.2f" % speed)
-		# 1d) Crit del arma
-		var crit_chance: float = float(weapon.designed_stats.get("crit_chance", 0.05))
-		var dex_pts: float = 0.0
-		if caster and caster.has_node("AttributeComponent"):
-			var ac2: Node = caster.get_node("AttributeComponent")
-			if ac2.has_method("get_points"):
-				dex_pts = float(ac2.call("get_points", "dexterity"))
-		var dex_crit_bonus: float = float(weapon.stat_scaling.get("dexterity_to_crit", 0.0)) * dex_pts
-		var total_crit: float = clampf(crit_chance + dex_crit_bonus, 0.0, 1.0)
-		if randf() < total_crit:
+	# 1) APLICAR ATRIBUTOS DEL CASTER (ofensivo)
+	var caster_ac: Node = _get_attribute_component(caster)
+	if caster_ac != null and is_instance_valid(caster_ac):
+		# 1a) Attack power (fuerza del caster para este dmg_type)
+		var attack_power: float = float(caster_ac.call("get_attack_power", dmg_type))
+		final_amount *= attack_power
+		notes.append("caster.attack_power(%s)=%.2f" % [dmg_type, attack_power])
+
+		# 1b) Crit del caster
+		var crit_chance: float = float(caster_ac.call("get_crit_chance"))
+		if randf() < crit_chance:
 			crit = true
 			final_amount *= 2.0
-			notes.append("CRIT! (chance=%.2f)" % total_crit)
-		# 1e) Multiplicador de clase del target
+			notes.append("CRIT! (chance=%.2f)" % crit_chance)
+
+		# 1c) Attack speed del caster (afecta el escalado de dmg, no el
+		# "cooldown" del skill — eso lo controla el sistema de cooldowns)
+		var atk_speed: float = float(caster_ac.call("get_attack_speed"))
+		final_amount *= atk_speed
+		notes.append("caster.attack_speed=%.2f" % atk_speed)
+	else:
+		notes.append("caster has no AttributeComponent (NPC? use defaults)")
+
+	# 2) WEAPON contribution (FASE 1 lo va a eliminar — solo temporal)
+	# Mantenemos la firma del weapon para no romper tests existentes.
+	var weapon: Resource = _get_equipped_weapon_resource(caster)
+	if weapon != null and target != null and target.is_in_group("enemies"):
+		var wpn_dmg: float = float(weapon.designed_stats.get("dmg", 0.0))
+		if wpn_dmg > 0.0:
+			final_amount += wpn_dmg
+			notes.append("weapon.dmg=%.1f (FASE 1: remover)" % wpn_dmg)
+		var speed: float = float(weapon.designed_stats.get("speed", 1.0))
+		if speed != 1.0:
+			final_amount *= speed
+			notes.append("weapon.speed=%.2f (FASE 1: remover)" % speed)
 		if target.has_method("get_weapon_family_name"):
 			var target_family: String = String(target.call("get_weapon_family_name"))
 			var class_mult: float = float(weapon.class_dmg_mult.get(target_family, 1.0))
@@ -153,7 +180,22 @@ static func _compute_skill_power(
 				final_amount *= class_mult
 				notes.append("class_mult(%s)=%.2f" % [target_family, class_mult])
 
-	# 2) Si el target es un EnvironmentObject, su "resist" puede reducir el efecto
+	# 3) APLICAR ATRIBUTOS DEL TARGET (defensivo)
+	var target_ac: Node = _get_attribute_component(target)
+	if target_ac != null and is_instance_valid(target_ac):
+		# 3a) Dodge del target (probabilidad de esquivar)
+		var dodge_chance: float = float(target_ac.call("get_dodge_chance"))
+		if randf() < dodge_chance:
+			dodged = true
+			final_amount = 0.0
+			notes.append("DODGED (chance=%.2f)" % dodge_chance)
+		# NOTA: phys_res y ele_res los aplica _apply_hit por separado
+		# (vía get_phys_res_multiplier / get_ele_res_multiplier) — no
+		# duplicar aquí.
+	else:
+		notes.append("target has no AttributeComponent (env_object?)")
+
+	# 4) Si el target es un EnvironmentObject, su "resist" puede reducir el efecto
 	if target != null and target.has_method("resist"):
 		var resist: Dictionary = target.resist(final_amount)
 		var resisted_by: float = float(resist.get("resisted_by", 0.0))
@@ -164,8 +206,20 @@ static func _compute_skill_power(
 		"final_amount": final_amount,
 		"final_knockback": final_knockback,
 		"crit": crit,
+		"dodged": dodged,
 		"notes": notes,
 	}
+
+
+## Helper: busca el AttributeComponent en un nodo (caster o target).
+## Devuelve null si no lo tiene (NPCs/objetos sin atributos se tratan como
+## "neutrales" — sin bonus ni penalty).
+static func _get_attribute_component(node: Node) -> Node:
+	if node == null or not is_instance_valid(node):
+		return null
+	if node.has_node("AttributeComponent"):
+		return node.get_node("AttributeComponent")
+	return null
 
 
 ## Devuelve el WeaponResource actualmente equipado del caster, o null.
@@ -227,6 +281,26 @@ static func _apply_hit(executor: Node, atom: Dictionary, targets: Array[Node]) -
 		# Total: elemental * resistance
 		var final_mult := elemental_mult * res_mult
 		_deal_damage_to(t, dmg, dmg_type, executor.caster, knockback, final_mult)
+		# Log: skill_hit (after damage is dealt so final amount is correct)
+		var cl: Node = Engine.get_main_loop().root.get_node_or_null("CombatLog")
+		if cl and cl.has_method("log_event"):
+			var caster_id2: String = String(executor.caster.name) if executor.caster and is_instance_valid(executor.caster) else "?"
+			var target_id: String = String(t.name) if t and is_instance_valid(t) else "?"
+			var hit_data: Dictionary = {
+				"caster": caster_id2,
+				"target": target_id,
+				"skill_id": String(executor.skill.id) if executor.skill and "id" in executor.skill else "",
+				"amount": dmg,
+				"final_mult": final_mult,
+				"element": String(element),
+				"dmg_type": dmg_type,
+				"target_hp": float(t.hp) if t and "hp" in t else 0.0,
+			}
+			if executor.caster and "boss_data" in executor.caster and executor.caster.boss_data != null:
+				hit_data["caster_boss_id"] = String(executor.caster.boss_data.id)
+			if t and "boss_data" in t and t.boss_data != null:
+				hit_data["target_boss_id"] = String(t.boss_data.id)
+			cl.log_event("skill_hit", hit_data)
 		# Aplicar status elemental al target
 		if status_to_apply != "" and status_duration > 0.0:
 			if status_chance <= 0.0 or randf() < status_chance:

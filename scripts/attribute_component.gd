@@ -58,9 +58,16 @@ const ATTRIBUTES: Array = [
 	{"id": "stamina_max",     "display": "Stamina Max",     "group": "vital",    "base": 50.0,  "per_point": 5.0,   "unit": "flat", "linked_status": &"",        "description": "+5 max Stamina por punto"},
 	{"id": "stamina_regen",   "display": "Stamina Regen",   "group": "vital",    "base": 5.0,   "per_point": 0.5,   "unit": "flat", "linked_status": &"",        "description": "+0.5 regen/s por punto"},
 
-	# --- Offense (sin status link, escalan daño) ---
+	# --- Offense (escalan daño) ---
 	{"id": "phys_dmg",        "display": "Physical Dmg",    "group": "offense",  "base": 1.0,   "per_point": 0.05,  "unit": "%",    "linked_status": &"",        "description": "+5% daño físico"},
 	{"id": "ele_dmg",         "display": "Elemental Dmg",   "group": "offense",  "base": 1.0,   "per_point": 0.05,  "unit": "%",    "linked_status": &"",        "description": "+5% daño elemental"},
+	# FASE 0: stats "primarios" para el sistema bilateral caster/target.
+	# Strength = fuerza bruta del caster (+10% dmg global) y aporta algo de
+	# defensa (mantiene la simetría con dexterous = "agilidad" puramente
+	# ofensiva/defensiva, no defensiva pura).
+	{"id": "strength",        "display": "Strength",        "group": "offense",  "base": 0.0,   "per_point": 1.0,   "unit": "flat", "linked_status": &"",        "description": "+10% dmg global como caster, +5% phys_res como target"},
+	# Dexterity = agilidad del caster (crit, dodge, attack_speed).
+	{"id": "dexterity",       "display": "Dexterity",       "group": "offense",  "base": 0.0,   "per_point": 1.0,   "unit": "flat", "linked_status": &"",        "description": "+2% crit, +2% dodge, +5% attack_speed"},
 
 	# --- Defense (sin status link) ---
 	{"id": "phys_res",        "display": "Physical Res",    "group": "defense",  "base": 0.0,   "per_point": 0.05,  "unit": "x",    "linked_status": &"",        "description": "-5% daño físico recibido"},
@@ -208,6 +215,59 @@ func get_phys_res_multiplier() -> float:
 func get_ele_res_multiplier() -> float:
 	var res: float = 0.05 * float(get_points(&"ele_res") + _temp_offsets.get("ele_res", 0.0))
 	return clampf(1.0 - res, 0.0, 1.0)
+
+
+# ============================================================================
+# FASE 0 (2026-06-14): Derivados bilaterales para el nuevo _compute_skill_power
+#
+# Antes: el "poder" de un skill dependía del weapon.dmg y stats hardcoded.
+# Ahora: depende de los ATRIBUTOS de ambas instancias (caster + target).
+#   - Caster: attack_power (fuerza total), crit_chance, attack_speed
+#   - Target: dodge (probabilidad de esquivar), phys_res, ele_res
+#
+# Los derivados se computan desde los puntos del componente + temp_offsets
+# (los temp_offsets son los que aplican los weapons al equiparse — Fase 1).
+# ============================================================================
+
+## Multiplicador total de ataque del caster, para un tipo de daño dado.
+## Combina phys_dmg (per-point +5%) y ele_dmg (per-point +5%) — los DOS
+## atributos básicos cuentan para el daño físico (el user lo confirmó:
+## "Los elementos y atributos básicos solo se tienen en cuenta para el
+## daño físico"). Strength (per-point +10%) suma siempre como fuerza bruta.
+## 1.0 = sin bonus, 1.5 = +50% dmg.
+##
+## dmg_type se ignora actualmente (siempre suma ambos); el parámetro
+## se mantiene para que el caller pueda pasar "physical" o "elemental"
+## y se anticipe a futuras especializaciones (e.g. +X% solo a fire skills).
+func get_attack_power(_dmg_type: String = "physical") -> float:
+	var mult: float = 1.0
+	mult += 0.05 * float(get_points(&"phys_dmg") + _temp_offsets.get("phys_dmg", 0.0))
+	mult += 0.05 * float(get_points(&"ele_dmg") + _temp_offsets.get("ele_dmg", 0.0))
+	mult += 0.10 * float(get_points(&"strength") + _temp_offsets.get("strength", 0.0))
+	return mult
+
+
+## Probabilidad de crítico del caster. Base 5% + 2% por punto de dexterity.
+## El arma luego añade un offset vía temp_offset (Fase 1).
+func get_crit_chance() -> float:
+	var base: float = 0.05
+	var dex_bonus: float = 0.02 * float(get_points(&"dexterity") + _temp_offsets.get("dexterity", 0.0))
+	return clampf(base + dex_bonus, 0.0, 1.0)
+
+
+## Probabilidad de esquivar un golpe. Base 5% + 2% por punto de dexterity
+## (se acumula con crit del caster: dexterity es un stat ofensivo Y defensivo).
+## También afectado por el stat dedicado "dodge" si existe (futuro).
+func get_dodge_chance() -> float:
+	var base: float = 0.05
+	var dex_bonus: float = 0.02 * float(get_points(&"dexterity") + _temp_offsets.get("dexterity", 0.0))
+	return clampf(base + dex_bonus, 0.0, 1.0)
+
+
+## Multiplicador de velocidad de ataque del caster. Base 1.0 = normal.
+## +5% por punto de dexterity. El weapon añade un offset (Fase 1).
+func get_attack_speed() -> float:
+	return 1.0 + 0.05 * float(get_points(&"dexterity") + _temp_offsets.get("dexterity", 0.0))
 
 
 # --- Internos ---
