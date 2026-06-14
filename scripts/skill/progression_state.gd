@@ -44,8 +44,14 @@ signal data_changed
 ## Puntos disponibles para gastar en skills específicos. Empieza en 0.
 @export var skill_points: int = 0
 
-## Puntos disponibles para gastar en Atributos (HP, Stamina, Resistencias).
-@export var attribute_points: int = 0
+## Alias de skill_points. Mantenido por compatibilidad con código que
+## lee/escribe este campo. Los Atributos, Elementos, Skills, y Armas
+## ahora comparten el MISMO pool ("Skill Points") — un solo número,
+## un solo budget. Ver MenuNavHelper.format_points() para el formato
+## unificado del display.
+var attribute_points: int:
+	get: return skill_points
+	set(value): skill_points = value
 
 ## Proficiency total ganado en challenges.
 @export var proficiency: int = 0
@@ -118,8 +124,9 @@ func to_dict() -> Dictionary:
 	if equipped_weapon != null and "id" in equipped_weapon:
 		equipped_id = String(equipped_weapon.id)
 	return {
+		# attribute_points removed from save — it's an alias of skill_points.
+		# Old saves will be migrated in from_dict() (see above).
 		"skill_points": skill_points,
-		"attribute_points": attribute_points,
 		"proficiency": proficiency,
 		"allocations": _dict_to_str_keys(allocations),
 		"element_allocations": _dict_to_str_keys(element_allocations),
@@ -136,7 +143,12 @@ func from_dict(data: Dictionary) -> void:
 	if data.is_empty():
 		return
 	skill_points = int(data.get("skill_points", 0))
-	attribute_points = int(data.get("attribute_points", 0))
+	# Migración: saves viejos con attribute_points separado → añadir al pool unificado
+	# (solo si skill_points estaba vacío, para no duplicar)
+	var old_attr_pts: int = int(data.get("attribute_points", 0))
+	if old_attr_pts > 0 and skill_points == 0:
+		skill_points = old_attr_pts
+		attribute_allocations = _str_keys_to_dict_of_int(data.get("attribute_allocations", {}))
 	proficiency = int(data.get("proficiency", 0))
 	allocations = _str_keys_to_dict_of_str_keys(data.get("allocations", {}))
 	element_allocations = _str_keys_to_dict_of_int(data.get("element_allocations", {}))
@@ -497,25 +509,23 @@ func _refresh_resistance_components() -> void:
 
 
 # === ATTRIBUTE ALLOCATION (sistema de stats + resistencias) ===
+# Ahora consume del MISMO pool que skill_points. Ver alias arriba.
 
-## grant_attribute_points(points) — añade puntos al bank de atributos.
+## grant_attribute_points(points) — añade puntos al bank compartido.
+## Por compatibilidad, sigue emitiendo attribute_points_changed.
 func grant_attribute_points(points: int) -> void:
 	if points <= 0:
 		return
-	attribute_points += points
-	attribute_points_changed.emit(attribute_points)
-	print("[Progression] +%d attribute_points (bank=%d)" % [points, attribute_points])
+	skill_points += points
+	skill_points_changed.emit(skill_points)
+	attribute_points_changed.emit(skill_points)  # compat
+	print("[Progression] +%d attribute_points → skill_points (bank=%d)" % [points, skill_points])
 	data_changed.emit()
 
 
-## spend_attribute_points(points) — resta puntos del bank. Devuelve true si exitoso.
+## spend_attribute_points(points) — alias de spend_points (mismo pool).
 func spend_attribute_points(points: int) -> bool:
-	if points > attribute_points:
-		return false
-	attribute_points -= points
-	attribute_points_changed.emit(attribute_points)
-	data_changed.emit()
-	return true
+	return spend_points(points)
 
 
 ## allocate_attribute(attr_id, points) — asigna puntos a un atributo.
@@ -550,8 +560,9 @@ func deallocate_attribute(attr_id: StringName, points: int) -> bool:
 	attribute_allocations[key] = current - points
 	if attribute_allocations[key] == 0:
 		attribute_allocations.erase(key)
-	attribute_points += points
-	attribute_points_changed.emit(attribute_points)
+	skill_points += points
+	skill_points_changed.emit(skill_points)
+	attribute_points_changed.emit(skill_points)  # compat
 	attribute_allocation_changed.emit(attr_id, int(attribute_allocations.get(key, 0)))
 	_refresh_attribute_components()
 	data_changed.emit()
@@ -561,7 +572,7 @@ func deallocate_attribute(attr_id: StringName, points: int) -> bool:
 ## can_allocate_attribute_more(attr_id, points) — ¿hay cupo?
 ## Máximo 5 puntos por atributo (igual que skill stats).
 func can_allocate_attribute_more(attr_id: StringName, points: int) -> bool:
-	if points > attribute_points:
+	if points > skill_points:
 		return false
 	var current: int = int(attribute_allocations.get(String(attr_id), 0))
 	return current + points <= 5

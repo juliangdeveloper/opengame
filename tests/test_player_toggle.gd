@@ -1,8 +1,22 @@
 extends SceneTree
 
+func _find_master_menu() -> Node:
+	var n: Node = root.find_child("Menu", true, false)
+	if n == null:
+		n = root.find_child("SkillBook", true, false)
+	return n
+
+func _find_menu_container() -> Node:
+	var n: Node = root.find_child("MenuContainer", true, false)
+	if n == null:
+		n = root.find_child("MenuLayer", true, false)
+	if n == null:
+		n = root.find_child("SkillBookContainer", true, false)
+	return n
+
 # Test: toggle from player (Share button) — the full Share-button lifecycle.
 
-var SKILL_BOOK_SCENE: PackedScene = preload("res://scenes/ui/skill_book.tscn")
+var SKILL_BOOK_SCENE: PackedScene = preload("res://scenes/ui/menu.tscn")
 
 
 func _initialize() -> void:
@@ -24,7 +38,7 @@ func _initialize() -> void:
 	player._toggle_skill_book()
 	await process_frame
 	await process_frame
-	var sb: Node = root.find_child("SkillBook", true, false)
+	var sb: Node = _find_master_menu()
 	var ok1: bool = sb != null and sb.visible and paused
 	print("[1st toggle - open] %s (sb.visible=%s, paused=%s)" % ["PASS" if ok1 else "FAIL", sb.visible, paused])
 
@@ -42,10 +56,17 @@ func _initialize() -> void:
 	print("[3rd toggle - reopen] %s (sb.visible=%s, paused=%s)" % ["PASS" if ok3 else "FAIL", sb.visible, paused])
 
 	# Now navigate to elementos and toggle from there (should close everything)
+	# Tab order: skills(0) → mision(1) → objetivos(2) → elementos(3)
 	sb._on_next_tab()
 	await process_frame
 	await process_frame
-	var ea: Node = root.find_child("SkillBookContainer", true, false).get_node_or_null("ElementAllocator")
+	sb._on_next_tab()
+	await process_frame
+	await process_frame
+	sb._on_next_tab()
+	await process_frame
+	await process_frame
+	var ea: Node = _find_menu_container().get_node_or_null("ElementAllocator")
 	var ok4: bool = not sb.visible and ea.visible and paused
 	print("[to-elementos] %s (sb=%s, ea=%s, paused=%s)" % ["PASS" if ok4 else "FAIL", sb.visible, ea.visible, paused])
 

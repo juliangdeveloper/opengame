@@ -1,9 +1,15 @@
 extends SceneTree
 
+func _find_master_menu() -> Node:
+	var n: Node = root.find_child("Menu", true, false)
+	if n == null:
+		n = _find_master_menu()
+	return n
+
 # Final regression test for the user-reported bug:
 # "Abrir la tabla de elementos en el Skill Book mata el juego"
 
-var SKILL_BOOK_SCENE: PackedScene = preload("res://scenes/ui/skill_book.tscn")
+var SKILL_BOOK_SCENE: PackedScene = preload("res://scenes/ui/menu.tscn")
 
 
 func _initialize() -> void:
@@ -21,14 +27,26 @@ func _initialize() -> void:
 	# Scenario 1: open skill book → press R1 → reach Elementos → verify it's visible and stays visible
 	var sb := SKILL_BOOK_SCENE.instantiate()
 	sb.name = "SkillBook"
-	var layer: Node = root.find_child("SkillBookContainer", true, false)
+	var layer: Node = root.find_child("MenuContainer", true, false)
+	if layer == null:
+		layer = root.find_child("MenuLayer", true, false)
+	if layer == null:
+		layer = root.find_child("SkillBookContainer", true, false)
+	if layer == null:
+		layer = root
 	layer.add_child(sb)
 	await process_frame
 	sb.open()
 	await process_frame
 
-	# Press R1 to go to elementos
+	# Press R1 three times to reach elementos
+	# Tab order: skills(0) → mision(1) → objetivos(2) → elementos(3)
 	sb._on_next_tab()
+	await process_frame
+	sb._on_next_tab()
+	await process_frame
+	sb._on_next_tab()
+	await process_frame
 	# Wait enough frames for the buggy lazy-init race to surface (1+ frame)
 	for i in 3:
 		await process_frame
@@ -59,7 +77,8 @@ func _initialize() -> void:
 
 	# Scenario 3: cycle further: R1 to atributos, R1 to armas, then back to elementos
 	if ea:
-		sb._on_next_tab()  # elementos → atributos
+		# elementos(3) → atributos(4)
+		sb._on_next_tab()
 		await process_frame
 		await process_frame
 		var aa: Node = layer.get_node_or_null("AttributeAllocator")
@@ -68,8 +87,8 @@ func _initialize() -> void:
 		else:
 			print("  [3] FAIL: Atributos not visible after R1 from elementos")
 			failures += 1
-		# Cycle back
-		sb._on_next_tab()  # atributos → armas
+		# atributos(4) → armas(5)
+		sb._on_next_tab()
 		await process_frame
 		await process_frame
 		var wa: Node = layer.get_node_or_null("WeaponAllocator")
@@ -78,10 +97,10 @@ func _initialize() -> void:
 		else:
 			print("  [4] FAIL: Armas not visible")
 			failures += 1
-		# Cycle back to elementos
-		sb._on_next_tab()  # armas → skills
-		sb._on_next_tab()  # skills → elementos
-		await process_frame
+		# armas(5) → skills(0) → mision(1) → objetivos(2) → elementos(3)
+		for _i in 4:
+			sb._on_next_tab()
+			await process_frame
 		await process_frame
 		if ea and ea.visible:
 			print("  [5] PASS: Cycled back to elementos (still visible, not stuck)")

@@ -2,7 +2,7 @@ extends SceneTree
 
 # Comprehensive test: D-pad navigation, L1/R1 tab change, Share toggle.
 
-var SKILL_BOOK_SCENE: PackedScene = preload("res://scenes/ui/skill_book.tscn")
+var SKILL_BOOK_SCENE: PackedScene = preload("res://scenes/ui/menu.tscn")
 
 
 func _simulate_joy(btn: int, pressed: bool = true) -> void:

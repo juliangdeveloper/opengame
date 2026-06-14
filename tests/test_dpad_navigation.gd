@@ -1,9 +1,15 @@
 extends SceneTree
 
+func _find_master_menu() -> Node:
+	var n: Node = root.find_child("Menu", true, false)
+	if n == null:
+		n = _find_master_menu()
+	return n
+
 # Test: D-pad navigation in skill book.
 # Verifies that pressing D-pad up/down/left/right moves focus to the right controls.
 
-var SKILL_BOOK_SCENE: PackedScene = preload("res://scenes/ui/skill_book.tscn")
+var SKILL_BOOK_SCENE: PackedScene = preload("res://scenes/ui/menu.tscn")
 
 
 func _simulate_joy_button(btn: int) -> void:
@@ -29,7 +35,13 @@ func _initialize() -> void:
 	# Open skill book
 	var sb: Node = SKILL_BOOK_SCENE.instantiate()
 	sb.name = "SkillBook"
-	var layer: Node = root.find_child("SkillBookContainer", true, false)
+	var layer: Node = root.find_child("MenuContainer", true, false)
+	if layer == null:
+		layer = root.find_child("MenuLayer", true, false)
+	if layer == null:
+		layer = root.find_child("SkillBookContainer", true, false)
+	if layer == null:
+		layer = root
 	layer.add_child(sb)
 	await process_frame
 	sb.open()

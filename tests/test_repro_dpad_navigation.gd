@@ -1,9 +1,15 @@
 extends SceneTree
 
+func _find_master_menu() -> Node:
+	var n: Node = root.find_child("Menu", true, false)
+	if n == null:
+		n = _find_master_menu()
+	return n
+
 # Reproduce: user opens skill book with Share, presses D-pad, presses Share again.
 # Also tests: does pressing Share while book is open close it?
 
-var SKILL_BOOK_SCENE: PackedScene = preload("res://scenes/ui/skill_book.tscn")
+var SKILL_BOOK_SCENE: PackedScene = preload("res://scenes/ui/menu.tscn")
 
 
 func _initialize() -> void:
@@ -25,7 +31,7 @@ func _initialize() -> void:
 	player._toggle_skill_book()
 	await process_frame
 	await process_frame
-	var sb: Node = root.find_child("SkillBook", true, false)
+	var sb: Node = _find_master_menu()
 	print("[1] After 1st Share: sb.visible=%s, paused=%s" % [sb != null and sb.visible, paused])
 
 	# 2) Check what has focus
