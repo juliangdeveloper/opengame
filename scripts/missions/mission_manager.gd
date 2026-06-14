@@ -28,6 +28,10 @@ signal mission_failed(mission_id: StringName, reason: String)
 signal mission_abandoned(mission_id: StringName)
 signal active_mission_changed(mission_id: StringName)
 
+## Emitido en cada mutación del estado. SaveSystem escucha este signal
+## y persiste tras debounce.
+signal data_changed
+
 # === Storage ===
 var _missions: Dictionary = {}  # {StringName: MissionResource}
 var _active_mission_id: StringName = &""
@@ -45,9 +49,94 @@ func _ready() -> void:
 	add_child(_monitor_timer)
 	# Hook player skill cast signal (for cast_skill_n missions)
 	call_deferred("_connect_player_signals")
+	# Restaurar estado persistido ANTES del seed (si hay save, no se seedea).
+	_apply_saved_state()
 	# Seed: 3 misiones de ejemplo si no hay ninguna
 	call_deferred("_seed_default_missions")
 	print("[MissionManager] ready")
+
+
+## Restaura misiones/active del SaveSystem (si hay datos guardados).
+## Llamado en _ready() ANTES de _seed_default_missions, así que si hay save
+## no se sobreescribe con el seed.
+func _apply_saved_state() -> void:
+	var save_sys: Node = Engine.get_main_loop().root.get_node_or_null("SaveSystem")
+	if save_sys == null or not save_sys.has_method("consume"):
+		return
+	var data: Dictionary = save_sys.consume(&"missions")
+	if data.is_empty():
+		return
+	from_dict(data)
+
+
+## to_dict() — serializa todas las misiones + el active_mission_id.
+func to_dict() -> Dictionary:
+	var missions_arr: Array = []
+	for id_v in _missions.keys():
+		var m: MissionResource = _missions[id_v]
+		missions_arr.append({
+			"id": String(m.id),
+			"title": m.title,
+			"purpose": String(m.purpose),
+			"target_id": String(m.target_id),
+			"target_kind": String(m.target_kind),
+			"mission_type": String(m.mission_type),
+			"state": String(m.state),
+			"difficulty": m.difficulty,
+			"enemy_type": String(m.enemy_type),
+			"enemy_count": m.enemy_count,
+			"enemy_hp_mult": m.enemy_hp_mult,
+			"time_limit_sec": m.time_limit_sec,
+			"damage_modifiers": m.damage_modifiers.duplicate(true),
+			"rewards": m.rewards.duplicate(true),
+			"kills": m.kills,
+			"casts": m.casts,
+			"elapsed_sec": m.elapsed_sec,
+			"reached_destination": m.reached_destination,
+			"survived": m.survived,
+			"created_at": m.created_at,
+			"started_at": m.started_at,
+			"completed_at": m.completed_at,
+		})
+	return {
+		"active_mission_id": String(_active_mission_id),
+		"missions": missions_arr,
+	}
+
+
+## from_dict(data) — restaura misiones y active_mission_id.
+## Idempotente: si data está vacío, no-op.
+func from_dict(data: Dictionary) -> void:
+	if data.is_empty():
+		return
+	_missions.clear()
+	var arr: Array = data.get("missions", [])
+	for entry in arr:
+		var m: MissionResource = MissionResourceScript.new()
+		m.id = StringName(String(entry.get("id", "")))
+		m.title = String(entry.get("title", ""))
+		m.purpose = StringName(String(entry.get("purpose", "")))
+		m.target_id = StringName(String(entry.get("target_id", "")))
+		m.target_kind = StringName(String(entry.get("target_kind", "")))
+		m.mission_type = StringName(String(entry.get("mission_type", "defeat_enemies")))
+		m.state = StringName(String(entry.get("state", "AVAILABLE")))
+		m.difficulty = int(entry.get("difficulty", 0))
+		m.enemy_type = StringName(String(entry.get("enemy_type", "saibaman")))
+		m.enemy_count = int(entry.get("enemy_count", 0))
+		m.enemy_hp_mult = float(entry.get("enemy_hp_mult", 1.0))
+		m.time_limit_sec = float(entry.get("time_limit_sec", 0.0))
+		m.damage_modifiers = (entry.get("damage_modifiers", {}) as Dictionary).duplicate(true)
+		m.rewards = (entry.get("rewards", {}) as Dictionary).duplicate(true)
+		m.kills = int(entry.get("kills", 0))
+		m.casts = int(entry.get("casts", 0))
+		m.elapsed_sec = float(entry.get("elapsed_sec", 0.0))
+		m.reached_destination = bool(entry.get("reached_destination", false))
+		m.survived = bool(entry.get("survived", false))
+		m.created_at = int(entry.get("created_at", 0))
+		m.started_at = int(entry.get("started_at", 0))
+		m.completed_at = int(entry.get("completed_at", 0))
+		_missions[m.id] = m
+	_active_mission_id = StringName(String(data.get("active_mission_id", "")))
 
 
 func _connect_player_signals() -> void:
@@ -89,6 +178,7 @@ func create_mission(purpose: StringName, target_id: StringName, mission_type: St
 	_missions[id] = m
 	mission_created.emit(id)
 	print("[MissionManager] created %s purpose=%s target=%s type=%s" % [id, purpose, target_id, mission_type])
+	data_changed.emit()
 	return m
 
 
@@ -113,6 +203,7 @@ func set_difficulty(mission_id: StringName, difficulty: int) -> MissionResource:
 	m.damage_modifiers = cfg.get("damage_modifiers", {})
 	m.rewards = cfg.get("rewards", {})
 	_set_state(m, &"READY")
+	data_changed.emit()
 	return m
 
 
@@ -142,6 +233,7 @@ func start_mission(mission_id: StringName) -> Dictionary:
 	_active_mission_id = mission_id
 	_set_state(m, &"ACTIVE")
 	active_mission_changed.emit(mission_id)
+	data_changed.emit()
 	return {"started": mission_id, "enemies_spawned": _spawned_enemies.size(), "objective": m.get_objective_text()}
 
 
@@ -157,6 +249,7 @@ func abandon_mission(mission_id: StringName) -> Dictionary:
 		_active_mission_id = &""
 		active_mission_changed.emit(&"")
 	mission_abandoned.emit(mission_id)
+	data_changed.emit()
 	return {"abandoned": mission_id}
 
 
@@ -185,6 +278,7 @@ func edit_mission(mission_id: StringName, new_difficulty: int) -> Dictionary:
 	m.reached_destination = false
 	m.survived = false
 	_set_state(m, &"AVAILABLE")
+	data_changed.emit()
 	return {"edit_ok": true, "mission_id": mission_id, "now": set_difficulty(mission_id, new_difficulty) != null}
 
 
@@ -312,6 +406,7 @@ func _complete_mission(m: MissionResource, success: bool, reason: String) -> voi
 	if _active_mission_id == m.id:
 		_active_mission_id = &""
 		active_mission_changed.emit(&"")
+	data_changed.emit()
 
 
 func _grant_rewards(m: MissionResource) -> void:

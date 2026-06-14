@@ -23,11 +23,17 @@ const BossResource := preload("res://scripts/objectives/boss_resource.gd")
 const BossEnemyScript := preload("res://scripts/objectives/boss_enemy.gd")
 
 const BOSS_DATA_PATH := "res://data/contracts/bosses.json"
-const SAVE_PATH := "user://objectives_save.json"
+# Save path: ahora unificado en SaveSystem (user://menu_state.json).
+# Este constant se mantiene por backwards-compat pero ya no se usa para
+# escribir/ leer objetivos — todo fluye via SaveSystem.
 
 signal objective_completed(id: StringName, reward: int)
 signal objective_started(id: StringName, boss_path: String)
 signal objective_failed(id: StringName, reason: String)
+
+## Emitido en cada mutación del estado. SaveSystem escucha este signal
+## y persiste tras debounce.
+signal data_changed
 
 ## Cache de los BossResource parseados al boot.
 var _bosses: Dictionary = {}  ## id (StringName) -> BossResource
@@ -39,13 +45,7 @@ var _active_boss: Node3D = null
 var _active_boss_id: StringName = &""
 
 
-func _ready() -> void:
-	_load_bosses()
-	_load_save()
-	print("[ObjectivesManager] ready (bosses=%d, completed=%d)" % [_bosses.size(), _completed.size()])
-
-
-# === Load / save ===
+# === Load / save (via SaveSystem) ===
 
 func _load_bosses() -> void:
 	var f: FileAccess = FileAccess.open(BOSS_DATA_PATH, FileAccess.READ)
@@ -97,33 +97,43 @@ func _parse_boss_entry(e: Dictionary) -> Resource:
 	return b
 
 
-func _load_save() -> void:
-	if not FileAccess.file_exists(SAVE_PATH):
-		return
-	var f: FileAccess = FileAccess.open(SAVE_PATH, FileAccess.READ)
-	if f == null:
-		return
-	var json_text: String = f.get_as_text()
-	f.close()
-	var parsed: Variant = JSON.parse_string(json_text)
-	if typeof(parsed) != TYPE_DICTIONARY:
-		return
-	var arr: Array = parsed.get("completed", [])
-	for id_str in arr:
-		_completed[StringName(String(id_str))] = true
+func _ready() -> void:
+	_load_bosses()
+	_apply_saved_state()
+	print("[ObjectivesManager] ready (bosses=%d, completed=%d)" % [_bosses.size(), _completed.size()])
 
 
-func _save() -> void:
+# === Load / save (via SaveSystem) ===
+
+## Restaura el set de completados desde SaveSystem (si hay datos guardados).
+## Llamado en _ready() después de _load_bosses.
+func _apply_saved_state() -> void:
+	var save_sys: Node = Engine.get_main_loop().root.get_node_or_null("SaveSystem")
+	if save_sys == null or not save_sys.has_method("consume"):
+		return
+	var data: Dictionary = save_sys.consume(&"objectives")
+	if data.is_empty():
+		return
+	from_dict(data)
+
+
+## to_dict() — serializa solo el set de completados.
+## Los bosses en sí vienen de bosses.json (datos estáticos del juego).
+func to_dict() -> Dictionary:
 	var arr: Array = []
 	for k in _completed.keys():
 		arr.append(String(k))
-	var data: Dictionary = {"completed": arr}
-	var f: FileAccess = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
-	if f == null:
-		push_warning("[ObjectivesManager] cannot save to %s" % SAVE_PATH)
+	return {"completed": arr}
+
+
+## from_dict(data) — restaura el set de completados.
+func from_dict(data: Dictionary) -> void:
+	if data.is_empty():
 		return
-	f.store_string(JSON.stringify(data))
-	f.close()
+	_completed.clear()
+	var arr: Array = data.get("completed", [])
+	for id_str in arr:
+		_completed[StringName(String(id_str))] = true
 
 
 # === Public API ===
@@ -235,13 +245,13 @@ func complete_objective(id: StringName) -> Dictionary:
 		# Already complete — no re-grant
 		return {"already_completed": true, "id": String(id)}
 	_completed[id] = true
-	_save()
 	# Grant reward
 	var ps: Node = Engine.get_main_loop().root.get_node_or_null("ProgressionState")
 	if ps and "skill_points" in ps:
 		ps.skill_points = int(ps.skill_points) + boss.reward_skill_points
 		print("[ObjectivesManager] granted %d skill_points (total now %d)" % [boss.reward_skill_points, int(ps.skill_points)])
 	objective_completed.emit(id, boss.reward_skill_points)
+	data_changed.emit()
 	return {
 		"ok": true,
 		"id": String(id),
@@ -283,4 +293,4 @@ func reset_for_testing() -> void:
 	_completed.clear()
 	_active_boss = null
 	_active_boss_id = &""
-	_save()
+	data_changed.emit()
