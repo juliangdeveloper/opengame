@@ -526,6 +526,22 @@ static func _apply_motion(
 	if kind == "launch":
 		var tween := node.create_tween()
 		tween.tween_property(node, "global_position", node.global_position + dir * distance, duration)
+	# FASE 2: "jump" — salto vertical. distance = velocidad hacia arriba.
+	# Se respeta velocity horizontal existente (el jugador puede saltar
+	# en movimiento).
+	if kind == "jump":
+		if node is CharacterBody3D:
+			var v: Vector3 = (node as CharacterBody3D).velocity
+			v.y = maxf(v.y, distance)  # NO decrementar si ya iba hacia arriba
+			(node as CharacterBody3D).velocity = v
+		return
+	# FASE 2: "speed_boost" — buff de velocidad. distance = multiplicador
+	# adicional (e.g., 0.5 = +50% velocidad). El efecto buff atom hace
+	# la mayor parte del trabajo vía temp_offset en move_speed.
+	if kind == "speed_boost":
+		# (no-op here — el buff atom aplica el offset al AttributeComponent
+		# del target, y el player lee move_speed de ahí en _physics_process)
+		return
 	# (knockback en CharacterBody3D se completa naturalmente en physics frames)
 
 

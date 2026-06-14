@@ -333,32 +333,27 @@ func _physics_process(delta: float) -> void:
 				_cast_basic_skill(&"parry_riposte_001")
 				break
 
-	# Block (held) — atajo legacy con L2 (joy button 7) o RMB.
-	var is_block_held := false
-	if can_act and stamina > 0 and not is_parrying:
-		if Input.is_action_pressed("block"):
-			is_block_held = true
-		elif Input.is_action_pressed("modifier_l2") and stamina > 0:
-			is_block_held = true
-	if is_block_held:
-		is_blocking = true
-		stamina -= stamina_drain_block * delta
-		last_stamina_use = now
-		if stamina <= 0:
-			stamina = 0
-			is_blocking = false
-	else:
-		is_blocking = false
-	# Visual: block shield visible while blocking
-	block_shield.visible = is_blocking
-	if is_blocking:
-		_weapon_mat.albedo_color = WEAPON_BLOCK
-	else:
-		_weapon_mat.albedo_color = WEAPON_BASE
+	# Block (held) — DEPRECATED en Fase 2. El defenderse_001 es la skill
+	# canónica de defender (parry window). El legacy held block ya no se
+	# ejecuta; el RMB / L2 (joy button 7) ahora castea defenderse_001.
+	# is_blocking y block_shield se mantienen solo para retrocompat de
+	# visuals — pero el drain NO ocurre aquí.
+	is_blocking = false
+	block_shield.visible = false
+	_weapon_mat.albedo_color = WEAPON_BASE
 
-	# Jump
+	# Saltar (FASE 2) — castea la skill saltar_001 que aplica move atom
+	# con kind: "jump" (velocity.y = jump_velocity). El check is_on_floor
+	# lo hace la skill vía cooldown, no el player.
 	if can_act and is_on_floor() and Input.is_action_just_pressed("jump"):
-		velocity.y = jump_velocity
+		_cast_basic_skill(&"saltar_001")
+
+	# Correr (FASE 2) — castea la skill correr_001 al presionar sprint.
+	# La skill aplica un buff de move_speed (1.5x) que dura 1.0s. Mientras
+	# el botón siga presionado, se re-castea (cooldown=0.1s). Soltar
+	# el botón deja que la buff expire naturalmente.
+	if can_act and stamina > 0 and Input.is_action_just_pressed("sprint"):
+		_cast_basic_skill(&"correr_001")
 
 	# Movement
 	if is_dodging:
@@ -381,7 +376,7 @@ func _physics_process(delta: float) -> void:
 		if is_blocking:
 			dir = Vector3.ZERO
 
-		var can_sprint := Input.is_action_pressed("sprint") and stamina > 0
+		var can_sprint := false  # FASE 2: sprint es skill (correr_001), no hardcoded
 		var target_speed := sprint_speed if can_sprint else move_speed
 		var target_vel := Vector3(dir.x * target_speed, velocity.y, dir.z * target_speed)
 		velocity.x = lerp(velocity.x, target_vel.x, clamp(acceleration * delta, 0.0, 1.0))

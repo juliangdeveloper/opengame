@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"saltar_001"
+name = "Saltar"
+description = "Salto vertical. Velocidad fija (no escalable por weapon — es movimiento puro). Stamina: 5. Cooldown: 0.3s para no spamear."
+flavor_text = "Up we go."
+category = &"control_movement"
+type = &"control"
+target_resolver = {
+"kind": "self",
+"params": {}
+}
+designed_max = {
+"jump_velocity": 6.5,
+"stamina": 5.0,
+"cooldown": 0.3
+}
+atoms = [{
+"type": "move",
+"params": {
+"kind": "jump",
+"target_relative": "self",
+"distance": 6.5,
+"duration": 0.05,
+"stamina_drain": 5.0
+},
+"hitbox": {
+"shape": "sphere",
+"size": [0.3, 0.3, 0.3],
+"position": "at_caster",
+"color": [0.7, 0.9, 1.0, 0.6],
+"emission": 2.0,
+"blend_mode": 1,
+"duration": 0.15,
+"fade_out": true
+},
+"applies_to_target": "self"
+}]
+combo_triggers = []
+costs = {
+"stamina": 5.0,
+"cooldown": 0.3
+}
+vfx = {
+"cast_sound": "whoosh"
+}
+icon_hint = "arrow_up"

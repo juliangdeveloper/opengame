@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"correr_001"
+name = "Correr"
+description = "Sprint sostenido. Buff de velocidad de movimiento (+1.5x) y consume 8 stamina/seg. Dura 1.0s, re-castea mientras el botón siga presionado. Cancelar soltando el botón."
+flavor_text = "Speed never kills anyone. The sudden absence of it does."
+category = &"control_movement"
+type = &"control"
+target_resolver = {
+"kind": "self",
+"params": {}
+}
+designed_max = {
+"speed_mult": 1.5,
+"stamina_per_sec": 8.0,
+"duration": 1.0,
+"stamina": 8.0,
+"cooldown": 0.1
+}
+atoms = [{
+"type": "buff",
+"params": {
+"stat": "move_speed",
+"value": 0.5,
+"kind": "add",
+"duration": 1.0,
+"stamina_per_sec": 8.0
+},
+"hitbox": {
+"shape": "sphere",
+"size": [0.4, 0.4, 0.4],
+"position": "at_caster",
+"color": [0.5, 1.0, 0.7, 0.7],
+"emission": 3.0,
+"blend_mode": 1,
+"duration": 1.0,
+"fade_out": true
+},
+"applies_to_target": "self"
+}]
+combo_triggers = []
+costs = {
+"stamina": 8.0,
+"cooldown": 0.1
+}
+vfx = {
+"cast_sound": "whoosh"
+}
+icon_hint = "arrow_right"
