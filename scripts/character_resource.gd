@@ -24,6 +24,7 @@ extends Resource
 # === Identidad ===
 @export var id: StringName = &""
 @export var display_name: String = ""
+@export var title: String = ""                    # "El Tirano del Espacio" — epíteto
 @export_multiline var description: String = ""     # estrategia hint
 @export var inspiration: String = ""               # "Dragon Ball Z", "LOTR", etc.
 
