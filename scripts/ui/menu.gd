@@ -143,9 +143,11 @@ func _switch_to_tab(idx: int) -> void:
 	if obj_panel != null:
 		obj_panel.visible = false
 	var tab_id_str: StringName = TABS[idx]
-	var parent_layer: Node = get_tree().root.find_child("SkillBookContainer", true, false)
+	var parent_layer: Node = get_tree().root.find_child("MenuContainer", true, false)
 	if parent_layer == null:
 		parent_layer = get_tree().root.find_child("MenuLayer", true, false)
+	if parent_layer == null:
+		parent_layer = get_tree().root.find_child("SkillBookContainer", true, false)  # backwards compat
 	if parent_layer == null:
 		parent_layer = get_tree().root
 	if tab_id_str == &"skills":
@@ -207,7 +209,11 @@ func _switch_to_tab(idx: int) -> void:
 
 
 func _close_all_slave_tabs() -> void:
-	var parent_layer: Node = get_tree().root.find_child("SkillBookContainer", true, false)
+	var parent_layer: Node = get_tree().root.find_child("MenuContainer", true, false)
+	if parent_layer == null:
+		parent_layer = get_tree().root.find_child("MenuLayer", true, false)
+	if parent_layer == null:
+		parent_layer = get_tree().root.find_child("SkillBookContainer", true, false)  # backwards compat
 	if parent_layer == null:
 		return
 	for slave_name in ["ElementAllocator", "AttributeAllocator", "WeaponAllocator"]:
