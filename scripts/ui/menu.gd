@@ -83,7 +83,6 @@ func _do_initialize() -> void:
 	# Init mission tab
 	if mission_panel != null:
 		_mission_tab = MISSION_TAB_SCENE.new()
-		_mission_tab.name = "MissionTabContent"
 		# Apply the script to the MissionPanel by attaching manually
 		# (mission_panel is built in .tscn with UI nodes; we connect to its children by name)
 		_mission_tab.bind_nodes(mission_panel)
@@ -153,14 +152,14 @@ func _switch_to_tab(idx: int) -> void:
 		visible = true
 		if mission_panel != null:
 			mission_panel.visible = false
-		$HBoxBody.visible = true
+		$Panel/Margin/VBox/HBoxBody.visible = true
 		_refresh()
 		if skill_list and skill_list.item_count > 0:
 			focus_skill_list()
 		return
 	if tab_id_str == &"mision":
 		visible = true
-		$HBoxBody.visible = false
+		$Panel/Margin/VBox/HBoxBody.visible = false
 		if mission_panel != null:
 			mission_panel.visible = true
 			if _mission_tab != null:
@@ -169,7 +168,7 @@ func _switch_to_tab(idx: int) -> void:
 		return
 	if tab_id_str == &"objetivos":
 		visible = true
-		$HBoxBody.visible = false
+		$Panel/Margin/VBox/HBoxBody.visible = false
 		if mission_panel != null:
 			mission_panel.visible = false
 		var objectives_panel_node: Control = get_node_or_null("Panel/Margin/VBox/ObjectivesPanel")
