@@ -13,7 +13,7 @@ extends SceneTree
 #    quemado en el código."
 
 const CharacterResourceScript := preload("res://scripts/character_resource.gd")
-const CharacterScript := preload("res://scripts/character.gd")
+const EntityCharacterScript := preload("res://scripts/character.gd")
 const SkillResourceScript := preload("res://scripts/skill/skill_resource.gd")
 const WeaponResourceScript := preload("res://scripts/skill/weapon_resource.gd")
 const WeaponCatalogScript := preload("res://scripts/skill/weapon_catalog.gd")
@@ -118,7 +118,7 @@ func _run() -> void:
 	await process_frame
 
 	# 8) Boss = Character con frieza
-	var boss_char: Node = CharacterScript.new()
+	var boss_char: Node = EntityCharacterScript.new()
 	boss_char.name = "TestBoss"
 	boss_char.data = frieza
 	root.add_child(boss_char)
@@ -143,7 +143,7 @@ func _run() -> void:
 		"8h. boss.skill_weights viene de data")
 
 	# 9) Player = Character con player_data
-	var player_char: Node = CharacterScript.new()
+	var player_char: Node = EntityCharacterScript.new()
 	player_char.name = "TestPlayer"
 	player_char.data = player_data
 	root.add_child(player_char)
@@ -240,7 +240,7 @@ func _run() -> void:
 	_assert(sauron_res.weapon_id == &"mace_dark", "18f. Sauron weapon=mace_dark")
 
 	# Crear un Character con Sauron data
-	var sauron_char: Node = CharacterScript.new()
+	var sauron_char: Node = EntityCharacterScript.new()
 	sauron_char.name = "TestSauron"
 	sauron_char.data = sauron_res
 	root.add_child(sauron_char)

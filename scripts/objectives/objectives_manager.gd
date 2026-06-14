@@ -207,17 +207,13 @@ func _spawn_boss(boss_res: Resource) -> Node3D:
 	var player: Node3D = get_tree().root.find_child("Player", true, false)
 	if player and player is Node3D:
 		spawn_pos = (player as Node3D).global_position + Vector3(0, 0, 5)
-	# Crear la instancia del BossEnemy (a partir de enemy.tscn, swap script)
-	var scene_path: String = "res://scenes/enemy.tscn"
-	var scene: PackedScene = load(scene_path)
-	if scene == null:
-		push_error("[ObjectivesManager] cannot load %s" % scene_path)
-		return null
-	var inst: Node = scene.instantiate()
-	if inst == null:
-		return null
-	# Cambiar el script del root a BossEnemy
-	inst.set_script(BossEnemyScript)
+	# Crear la instancia del BossEnemy directamente (no swapping scripts).
+	# FASE 4: BossEnemy extends EntityCharacter. Antes cargábamos enemy.tscn
+	# (CharacterBody3D) y hacíamos set_script(BossEnemyScript) — eso rompía
+	# porque BossEnemy ya no es CharacterBody3D nativo. Ahora instanciamos
+	# el script directamente y le copiamos las children de enemy.tscn
+	# (Model, AttackArea, etc).
+	var inst: Node = BossEnemyScript.new()
 	inst.boss_data = boss_res
 	inst.name = "Boss_%s" % String(boss_res.id)
 	(inst as Node3D).global_position = spawn_pos

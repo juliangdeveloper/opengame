@@ -20,7 +20,7 @@
 ##   - WINDUP/ACTIVE/RECOVER usan los timings de data (no hardcoded)
 ##   - DEAD respawna si data.can_respawn()
 extends CharacterBody3D
-class_name Character
+class_name EntityCharacter
 
 ## Resource .tres con todos los datos del personaje
 @export var data: Resource = null
@@ -40,7 +40,7 @@ class_name Character
 
 
 # === State machine ===
-enum State { IDLE, CHASE, WINDUP, ACTIVE, RECOVER, STAGGER, DEAD }
+enum State { IDLE, CHASE, CHOOSE_SKILL, WINDUP, ACTIVE, RECOVER, STAGGER, DEAD }
 var state: State = State.IDLE
 var state_timer: float = 0.0
 var current_skill_id: StringName = &""
@@ -72,6 +72,10 @@ var damage_modifiers: Dictionary = {}
 
 # === Visual ===
 var base_color: Color = Color(0.8, 0.15, 0.2)
+var flash_color: Color = Color(1.0, 0.5, 0.2)
+
+# === Spawn position (para respawn) ===
+var spawn_position: Vector3 = Vector3.ZERO
 
 # === Cooldowns defensivos (segundos) ===
 var parry_cooldown: float = 0.0
@@ -130,6 +134,9 @@ func _ready() -> void:
 	# Inicializar controller apropiado si no se asignó uno externamente
 	if controller == null:
 		_install_default_controller()
+	# Conectar attack_area signal — subclases override _on_attack_body
+	if attack_area and not attack_area.body_entered.is_connected(_on_attack_body):
+		attack_area.body_entered.connect(_on_attack_body)
 
 
 ## Aplica el CharacterResource al cuerpo. Cero hardcoded — todo viene de data.
@@ -158,6 +165,8 @@ func _apply_data() -> void:
 	element_allocations = (data.element_allocations as Dictionary).duplicate(true)
 	damage_modifiers = (data.damage_modifiers as Dictionary).duplicate(true)
 	base_color = data.base_color
+	flash_color = data.flash_color
+	spawn_position = global_position
 	# Sincronizar con ProgressionState si los allocations están poblados
 	# (para que AttributeComponent y ResistanceComponent se actualicen).
 	_sync_progression_state()
@@ -340,7 +349,7 @@ func _enter_chase() -> void:
 
 
 func _enter_choose_skill() -> void:
-	state = State.WINDUP
+	state = State.CHOOSE_SKILL
 	state_timer = 0.0
 	_state_choose_skill()
 
@@ -396,6 +405,7 @@ func _physics_process(delta: float) -> void:
 	match state:
 		State.IDLE: _state_idle()
 		State.CHASE: _state_chase(delta)
+		State.CHOOSE_SKILL: _state_choose_skill()
 		State.WINDUP: _state_windup()
 		State.ACTIVE: _state_active()
 		State.RECOVER: _state_recover()
@@ -472,3 +482,9 @@ func _dist_to_target() -> float:
 	if target == null or not is_instance_valid(target):
 		return INF
 	return global_position.distance_to(target.global_position)
+
+
+## Override en subclase. Default: no-op (enemigos con skill manejan el
+## daño vía SkillExecutor; enemigos con attack_damage lo overrideen).
+func _on_attack_body(_body: Node) -> void:
+	pass

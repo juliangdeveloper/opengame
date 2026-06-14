@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="CharacterResource" format=3]
+
+[ext_resource type="Script" path="res://scripts/character_resource.gd" id="1_goblin"]
+
+[resource]
+script = ExtResource("1_goblin")
+id = &"enemy_goblin"
+display_name = "Goblin"
+description = "Enemigo básico cuerpo a cuerpo. Sin skills — usa attack_damage."
+max_hp = 100.0
+max_stamina = 50.0
+move_speed = 2.6
+turn_speed = 6.0
+detection_range = 12.0
+attack_range = 2.6
+lose_range = 18.0
+windup_duration = 0.55
+active_duration = 0.18
+recover_duration = 0.75
+stagger_duration = 1.30
+respawn_delay = 2.0
+ai_controlled = true
+skill_ids = Array[StringName]([])
+attack_damage = 22.0
+base_color = Color(0.4, 0.7, 0.3, 1)
+flash_color = Color(1, 0.5, 0.2, 1)
+model_hint = "goblin"
+behavior = "aggressive"
+aggression = 0.7
+preferred_range = &"melee"
+reaction_time_sec = 0.5
