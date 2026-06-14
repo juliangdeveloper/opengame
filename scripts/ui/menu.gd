@@ -69,6 +69,7 @@ var _binding_capture_mode: bool = false
 var _original_binding_text: String = ""
 var _last_close_time: float = 0.0
 var _pending_focus_rows: Array = []
+var _scrolls_to_keep_visible: Array = []  # ScrollContainers que siguen el foco
 var _current_tab: int = 0
 var _last_l1: bool = false
 var _last_r1: bool = false
@@ -344,8 +345,125 @@ func _show_skill_detail(skill_id: StringName) -> void:
 		var designed: float = float(skill.designed_max[stat_name_v])
 		if designed <= 0.0:
 			continue
-		atom_rows.add_child(_build_stat_row(ps, skill_id, stat_name, designed))
+		var row: Control = _build_stat_row(ps, skill_id, stat_name, designed)
+		atom_rows.add_child(row)
+		# Track first button of each row for focus navigation wiring.
+		_pending_focus_rows.append(row)
 	_set_binding_button(ps, skill_id)
+	_wire_focus_paths()
+
+
+## Conecta focus_neighbor_* entre las filas de stats generadas dinámicamente
+## y las fija al BindingButton (arriba) y al siguiente row (abajo).
+## IMPORTANTE: TODOS los botones de una fila necesitan focus_neighbor_top y
+## focus_neighbor_bottom, no solo el primero. Si solo el primero lo tiene,
+## D-pad ↑ desde -1/+5/-5 cae en geometric search y el selector se queda
+## atrapado en la sección de stats (no sube a BindingButton).
+## Llamado desde _refresh() después de poblar atom_rows.
+## ADEMÁS conecta focus_changed → ensure_control_visible, para que el
+## ScrollContainer SIEMPRE mueva el viewport al botón focusado (incluso si
+## `follow_focus` no se triggerea por quirks del input en headless).
+func _wire_focus_paths() -> void:
+	if _pending_focus_rows.is_empty():
+		return
+	# Recolectar todos los botones de cada row (no solo el primero/último).
+	var all_row_btns: Array = []  # Array[Array[Button]] por row
+	for row in _pending_focus_rows:
+		var btns_in_row: Array = []
+		_collect_buttons(row, btns_in_row)
+		all_row_btns.append(btns_in_row)
+	# First row: todos los botones ↑ → BindingButton; BindingButton ↓ → primer botón
+	var first_row_btns: Array = all_row_btns[0] if all_row_btns.size() > 0 else []
+	if first_row_btns.size() > 0 and binding_button:
+		for b: Button in first_row_btns:
+			b.focus_neighbor_top = binding_button.get_path()
+		binding_button.focus_neighbor_bottom = first_row_btns[0].get_path()
+	# Chain rows: todos los botones de row N ↓ → primer botón de row N+1
+	#              todos los botones de row N+1 ↑ → último botón de row N
+	for i in range(all_row_btns.size() - 1):
+		var prev_btns: Array = all_row_btns[i]
+		var next_btns: Array = all_row_btns[i + 1]
+		if prev_btns.is_empty() or next_btns.is_empty():
+			continue
+		for b: Button in prev_btns:
+			b.focus_neighbor_bottom = next_btns[0].get_path()
+		for b: Button in next_btns:
+			b.focus_neighbor_top = prev_btns[prev_btns.size() - 1].get_path()
+	# Connectar focus_changed del Viewport → ensure_control_visible
+	# (safety net para follow_focus). Buscamos todos los ScrollContainer
+	# bajo DetailVBox y los conectamos.
+	var viewport: Viewport = get_viewport()
+	if viewport and not viewport.gui_focus_changed.is_connected(_on_gui_focus_changed):
+		viewport.gui_focus_changed.connect(_on_gui_focus_changed)
+	# Tambien conectar el scroll vertical manualmente si ya existe
+	var scroll: ScrollContainer = get_node_or_null("Panel/Margin/VBox/HBoxBody/RightPanel/RightMargin/Scroll")
+	if scroll:
+		_scrolls_to_keep_visible.append(scroll)
+
+
+## Llamado cuando el foco del GUI cambia. Hace ensure_control_visible en
+## los ScrollContainer registrados, SOLO si el control focusado es un
+## descendiente del scroll (si no, no es nuestro scroll y lo dejamos).
+func _on_gui_focus_changed(control: Control) -> void:
+	if control == null:
+		return
+	for scroll: ScrollContainer in _scrolls_to_keep_visible:
+		if not is_instance_valid(scroll):
+			continue
+		# Solo actuar si el control es descendiente del scroll
+		if not _is_descendant_of(control, scroll):
+			continue
+		# Si el centro del control no está dentro del rect visible del scroll, scrollear
+		var ctrl_rect: Rect2 = control.get_global_rect()
+		var scroll_rect: Rect2 = scroll.get_global_rect()
+		if not scroll_rect.has_point(ctrl_rect.get_center()):
+			scroll.ensure_control_visible(control)
+
+
+## Devuelve true si `node` es `ancestor` o un descendiente de `ancestor`.
+func _is_descendant_of(node: Node, ancestor: Node) -> bool:
+	if node == ancestor:
+		return true
+	var p: Node = node.get_parent()
+	while p != null:
+		if p == ancestor:
+			return true
+		p = p.get_parent()
+	return false
+
+
+## Recolecta todos los Buttons focusables dentro de un nodo (recursivo).
+func _collect_buttons(n: Node, out: Array) -> void:
+	if n is Button and not (n as Button).disabled:
+		out.append(n)
+		return
+	for c in n.get_children():
+		_collect_buttons(c, out)
+
+
+## Devuelve el primer Button focusable de una fila (los stat rows tienen
+## varios botones +1/-1/+5/-5; el primero es +1).
+func _first_button_of_row(row: Control) -> Button:
+	for c in row.get_children():
+		if c is Button and not c.disabled:
+			return c
+		if c is Container:
+			for cc in c.get_children():
+				if cc is Button and not cc.disabled:
+					return cc
+	return null
+
+
+func _last_button_of_row(row: Control) -> Button:
+	var found: Button = null
+	for c in row.get_children():
+		if c is Button and not c.disabled:
+			found = c
+		if c is Container:
+			for cc in c.get_children():
+				if cc is Button and not cc.disabled:
+					found = cc
+	return found
 
 
 func _set_binding_button(ps: Node, skill_id: StringName) -> void:

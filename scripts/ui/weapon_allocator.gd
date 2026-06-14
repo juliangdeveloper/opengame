@@ -124,6 +124,111 @@ func _refresh() -> void:
 		elif not owned.is_empty():
 			_current_weapon_id = owned[0]
 	_show_weapon_detail(ps, _current_weapon_id, equipped_id)
+	_wire_focus_paths()
+	# Auto-grab focus. Need multiple attempts because Godot's GUI
+	# sometimes clears focus again on the same frame the slave becomes
+	# visible (the master's hidden focusable nodes can still steal it).
+	# call_deferred fires at end of current frame, and a timer catches
+	# any race we missed.
+	for _i in 3:
+		call_deferred("_grab_initial_focus_attempt", _i)
+	get_tree().create_timer(0.1).timeout.connect(_re_grab_if_lost)
+
+
+func _grab_initial_focus_attempt(_attempt: int) -> void:
+	print("[WA-DBG] _grab_initial_focus_attempt fire, weapons_container=%d, owner_before=%s" % [weapons_container.get_child_count(), str(get_viewport().gui_get_focus_owner())])
+	for child in weapons_container.get_children():
+		var b: Button = _first_button_in_node(child)
+		if b:
+			b.grab_focus()
+			print("[WA-DBG] grab ok, owner_after=%s" % str(get_viewport().gui_get_focus_owner()))
+			return
+	if open_skill_book_button:
+		open_skill_book_button.grab_focus()
+		print("[WA-DBG] grab ok on TopBar, owner_after=%s" % str(get_viewport().gui_get_focus_owner()))
+
+
+func _re_grab_if_lost() -> void:
+	if not visible:
+		return
+	var o = get_viewport().gui_get_focus_owner()
+	print("[WA-DBG] _re_grab_if_lost timer fire, owner=%s" % str(o))
+	if o == null:
+		_grab_initial_focus_attempt(-1)
+
+
+## Conecta focus_neighbor_* para que la tab arsenal sea navegable con control:
+##   TopBar (OpenSkillBookButton ↔ CloseButton)
+##     ↕
+##   weapon list rows (chain)
+##     ↕
+##   EquipButton (right detail)
+##     ↕
+##   stat rows (chain)
+func _wire_focus_paths() -> void:
+	# TopBar buttons: horizontal chain (OpenSkillBook ←→ CloseButton).
+	if open_skill_book_button and close_button:
+		open_skill_book_button.focus_neighbor_right = close_button.get_path()
+		close_button.focus_neighbor_left = open_skill_book_button.get_path()
+	# Weapon rows (left list): chain top→bottom + first row ↑ → OpenSkillBookButton
+	var weapon_rows: Array = []
+	for child in weapons_container.get_children():
+		var btn: Button = _first_button_in_node(child)
+		if btn:
+			weapon_rows.append(btn)
+	for i in range(weapon_rows.size()):
+		var btn: Button = weapon_rows[i]
+		if i == 0 and open_skill_book_button:
+			btn.focus_neighbor_top = open_skill_book_button.get_path()
+			open_skill_book_button.focus_neighbor_bottom = btn.get_path()
+		if i > 0:
+			btn.focus_neighbor_top = weapon_rows[i - 1].get_path()
+			weapon_rows[i - 1].focus_neighbor_bottom = btn.get_path()
+		# Right → EquipButton (or first stat row if EquipButton not focusable)
+		if equip_button and not equip_button.disabled:
+			btn.focus_neighbor_right = equip_button.get_path()
+		elif _stat_row_buttons.size() > 0:
+			var first_stat_plus: Button = _stat_row_buttons.values()[0].get("plus")
+			if first_stat_plus:
+				btn.focus_neighbor_right = first_stat_plus.get_path()
+	# EquipButton: left → first weapon row, down → first stat row
+	if equip_button and not equip_button.disabled:
+		if weapon_rows.size() > 0:
+			equip_button.focus_neighbor_left = weapon_rows[0].get_path()
+		if _stat_row_buttons.size() > 0:
+			var first_stat_plus: Button = _stat_row_buttons.values()[0].get("plus")
+			if first_stat_plus:
+				equip_button.focus_neighbor_bottom = first_stat_plus.get_path()
+				first_stat_plus.focus_neighbor_top = equip_button.get_path()
+	# Stat rows: chain (plus → next row's minus or plus)
+	var stat_keys: Array = _stat_row_buttons.keys()
+	for i in range(stat_keys.size()):
+		var entry: Dictionary = _stat_row_buttons[stat_keys[i]]
+		var minus: Button = entry.get("minus")
+		var plus: Button = entry.get("plus")
+		if i == 0 and equip_button and not equip_button.disabled:
+			# Already wired in EquipButton section above
+			pass
+		elif i == 0:
+			minus.focus_neighbor_top = equip_button.get_path() if equip_button else null
+		if i > 0:
+			var prev_entry: Dictionary = _stat_row_buttons[stat_keys[i - 1]]
+			var prev_plus: Button = prev_entry.get("plus")
+			if prev_plus and minus:
+				prev_plus.focus_neighbor_bottom = minus.get_path()
+				minus.focus_neighbor_top = prev_plus.get_path()
+
+
+## Encuentra el primer Button focusable dentro de un nodo (recursivo en Containers).
+func _first_button_in_node(n: Node) -> Button:
+	if n is Button and not (n as Button).disabled:
+		return n
+	if n is Container:
+		for c in n.get_children():
+			var b: Button = _first_button_in_node(c)
+			if b:
+				return b
+	return null
 
 
 func _build_weapon_row(ps: Node, weapon_id: StringName, equipped_id: String) -> Control:
@@ -317,3 +422,39 @@ func _on_stat_minus(weapon_id: StringName, stat: StringName) -> void:
 
 func _get_progression_state() -> Node:
 	return Engine.get_main_loop().root.get_node_or_null("ProgressionState")
+
+
+## Fallback para focus navigation cross-ScrollContainer. Godot 4 a veces no
+## navega focus entre dos ScrollContainers distintos (p. ej. EquipButton en
+## DetailScroll → weapon row en LeftPanel/Scroll), así que interceptamos
+## el D-pad cuando el evento queda unhandled y movemos focus manualmente
+## al focus_neighbor_* configurado.
+func _unhandled_input(event: InputEvent) -> void:
+	if not visible:
+		return
+	var direction: StringName = &""
+	if event.is_action_pressed("ui_left"):
+		direction = &"left"
+	elif event.is_action_pressed("ui_right"):
+		direction = &"right"
+	elif event.is_action_pressed("ui_up"):
+		direction = &"up"
+	elif event.is_action_pressed("ui_down"):
+		direction = &"down"
+	else:
+		return
+	var owner: Control = get_viewport().gui_get_focus_owner()
+	if owner == null:
+		return
+	var path: NodePath = NodePath()
+	match direction:
+		&"left":  path = owner.focus_neighbor_left
+		&"right": path = owner.focus_neighbor_right
+		&"up":    path = owner.focus_neighbor_top
+		&"down":  path = owner.focus_neighbor_bottom
+	if path.is_empty():
+		return
+	var target: Node = get_node_or_null(path)
+	if target and target is Control and (target as Control).focus_mode != 0:
+		(target as Control).grab_focus()
+		get_viewport().set_input_as_handled()
