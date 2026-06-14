@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="CharacterResource" format=3]
+
+[ext_resource type="Script" path="res://scripts/character_resource.gd" id="1_ndxmf"]
+
+[resource]
+script = ExtResource("1_ndxmf")
+id = &"boss_ganondorf"
+display_name = "Ganondorf"
+description = "Warrior-mage. triforce_buff le da escudo + damage 8s. Esperar a que se le caiga, luego burst. triangle_blast es AOE en cono."
+inspiration = "The Legend of Zelda"
+max_hp = 1200.0
+max_stamina = 100.0
+move_speed = 2.6
+attack_range = 8.0
+recover_duration = 1.5
+weapon_id = &"sword_dark"
+skill_ids = Array[StringName]([&"dark_bolt_001", &"light_attack_001", &"battle_cry_001", &"triangle_blast_001"])
+skill_weights = Array[float]([0.8, 0.7, 0.5, 1.2])
+damage_modifiers = {
+&"dark": 0.5,
+&"light": 1.5
+}
+behavior = "tactical"
+aggression = 0.7
+reward_skill_points = 20

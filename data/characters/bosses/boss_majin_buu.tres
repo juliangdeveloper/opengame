@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="CharacterResource" format=3]
+
+[ext_resource type="Script" path="res://scripts/character_resource.gd" id="1_0grv2"]
+
+[resource]
+script = ExtResource("1_0grv2")
+id = &"boss_majin_buu"
+display_name = "Majin Buu"
+description = "Regenera 3% HP/segundo. candy_beam: STUN + teleport. absorption: si lo matás con su misma HP exactamente, revive con full. lightning ANULA la regen."
+inspiration = "Dragon Ball Z"
+max_hp = 1150.0
+max_stamina = 100.0
+move_speed = 2.6
+attack_range = 8.0
+recover_duration = 1.5
+skill_ids = Array[StringName]([&"candy_beam_001", &"regeneration_001", &"light_attack_001", &"absorption_001"])
+skill_weights = Array[float]([0.5, 0.3, 1.2, 0.2])
+damage_modifiers = {
+&"dark": 0.6,
+&"lightning": 1.5
+}
+behavior = "berserker"
+aggression = 0.6
+preferred_range = &"melee"
+reaction_time_sec = 0.4
+reward_skill_points = 20

@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="CharacterResource" format=3]
+
+[ext_resource type="Script" path="res://scripts/character_resource.gd" id="1_n4g5t"]
+
+[resource]
+script = ExtResource("1_n4g5t")
+id = &"boss_voldemort"
+display_name = "Voldemort"
+description = "Caster puro SIN MELEE. avada_kedavra: si no lo interrumpís, hace 250 damage. crucio es DoT. water element = debilidad (Harry usó una estatua de agua)."
+inspiration = "Harry Potter"
+max_hp = 1250.0
+max_stamina = 100.0
+move_speed = 2.6
+attack_range = 8.0
+recover_duration = 1.5
+weapon_id = &"staff_dark"
+skill_ids = Array[StringName]([&"avada_kedavra_001", &"crucio_001", &"flight_001", &"dark_bolt_001"])
+skill_weights = Array[float]([1.0, 0.8, 0.3, 1.2])
+damage_modifiers = {
+&"dark": 0.4,
+&"water": 1.5
+}
+behavior = "caster"
+aggression = 0.4
+preferred_range = &"ranged"
+reaction_time_sec = 0.7
+reward_skill_points = 15

@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="CharacterResource" format=3]
+
+[ext_resource type="Script" path="res://scripts/character_resource.gd" id="1_4vaww"]
+
+[resource]
+script = ExtResource("1_4vaww")
+id = &"boss_meruem"
+display_name = "Meruem"
+description = "Tactical adaptive. nen_pulse: si vos usás el mismo skill 2 veces, lo COUNTERA y devuelve 150% daño. photon_sterilizer es beam. fire = su Némesis (Netero)."
+inspiration = "Hunter x Hunter"
+max_hp = 1100.0
+max_stamina = 100.0
+move_speed = 2.6
+attack_range = 8.0
+recover_duration = 1.5
+skill_ids = Array[StringName]([&"light_attack_001", &"photon_sterilizer_001", &"tail_lash_001", &"nen_pulse_001"])
+skill_weights = Array[float]([0.8, 0.7, 1.0, 0.5])
+damage_modifiers = {
+&"fire": 1.5,
+&"physical": 0.5
+}
+behavior = "tactical"
+aggression = 0.7
+reaction_time_sec = 0.55
+reward_skill_points = 15

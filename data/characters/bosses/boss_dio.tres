@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="CharacterResource" format=3]
+
+[ext_resource type="Script" path="res://scripts/character_resource.gd" id="1_li1bm"]
+
+[resource]
+script = ExtResource("1_li1bm")
+id = &"boss_dio"
+display_name = "DIO"
+description = "za_warudo: 3s TIME STOP — durante esos 3s DIO golpea FREE. road_roller = MASSIVE single hit. light element = SOL (lo daña crítico). No atacar durante stop."
+inspiration = "JoJo's Bizarre Adventure"
+max_hp = 1150.0
+max_stamina = 100.0
+move_speed = 2.6
+attack_range = 8.0
+recover_duration = 1.5
+weapon_id = &"dagger_knife"
+skill_ids = Array[StringName]([&"za_warudo_001", &"light_attack_001", &"knives_throw_001", &"vaporizing_eye_001"])
+skill_weights = Array[float]([0.5, 0.8, 1.0, 0.4])
+damage_modifiers = {
+&"dark": 0.5,
+&"light": 1.6
+}
+behavior = "tactical"
+aggression = 0.8
+reward_skill_points = 15

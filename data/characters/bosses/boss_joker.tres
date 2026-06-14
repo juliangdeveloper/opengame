@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="CharacterResource" format=3]
+
+[ext_resource type="Script" path="res://scripts/character_resource.gd" id="1_ur3io"]
+
+[resource]
+script = ExtResource("1_ur3io")
+id = &"boss_joker"
+display_name = "The Joker"
+description = "Cazador impredecible. poisoned_dart, smoke_bomb (invisibilidad), exploding_card. BAJA HP, no confiar en patrón: random skill cada vez. Atacar sin pausa."
+inspiration = "DC Comics"
+max_hp = 1150.0
+max_stamina = 100.0
+move_speed = 2.6
+attack_range = 8.0
+recover_duration = 1.5
+weapon_id = &"dagger_poison"
+skill_ids = Array[StringName]([&"poison_dart_001", &"smoke_bomb_001", &"exploding_card_001", &"light_attack_001"])
+skill_weights = Array[float]([1.0, 0.8, 0.8, 0.4])
+damage_modifiers = {
+&"dark": 0.7,
+&"light": 1.5
+}
+behavior = "trickster"
+reaction_time_sec = 0.35
+reward_skill_points = 10

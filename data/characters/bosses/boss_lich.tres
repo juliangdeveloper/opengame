@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="CharacterResource" format=3]
+
+[ext_resource type="Script" path="res://scripts/character_resource.gd" id="1_ubjgu"]
+
+[resource]
+script = ExtResource("1_ubjgu")
+id = &"boss_lich"
+display_name = "The Lich"
+description = "Mago oscuro supremo. lich_bolt rápido, necromancy revive adds. lich_form: al <30% HP, se vuelve INMORTAL 5s (curar DoT = daño). Interrumpir casts."
+inspiration = "Adventure Time"
+max_hp = 1400.0
+max_stamina = 100.0
+move_speed = 2.6
+attack_range = 8.0
+recover_duration = 1.5
+weapon_id = &"staff_dark"
+skill_ids = Array[StringName]([&"dark_bolt_001", &"summon_minion_001", &"lich_form_001", &"soul_drain_001"])
+skill_weights = Array[float]([1.2, 1.0, 0.3, 0.8])
+damage_modifiers = {
+&"dark": 0.4,
+&"light": 1.7
+}
+behavior = "caster"
+aggression = 0.4
+preferred_range = &"ranged"
+reaction_time_sec = 0.65
+reward_skill_points = 25

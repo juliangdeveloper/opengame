@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="CharacterResource" format=3]
+
+[ext_resource type="Script" path="res://scripts/character_resource.gd" id="1_w68oo"]
+
+[resource]
+script = ExtResource("1_w68oo")
+id = &"boss_kratos"
+display_name = "Kratos"
+description = "Berserker absoluto. spartan_rage: BUFF x3 dmg + lifesteal 10s. rage_of_titans: AOE. water element = Kryptonita (recuerdo: se ahogó)."
+inspiration = "God of War"
+max_hp = 1100.0
+max_stamina = 100.0
+move_speed = 2.6
+attack_range = 8.0
+recover_duration = 1.5
+weapon_id = &"axe_fire"
+skill_ids = Array[StringName]([&"blades_of_chaos_001", &"battle_cry_001", &"ground_pound_001", &"helm_splitter_001"])
+skill_weights = Array[float]([1.4, 0.5, 0.6, 1.0])
+damage_modifiers = {
+&"fire": 0.5,
+&"water": 1.6
+}
+behavior = "berserker"
+aggression = 1.0
+preferred_range = &"melee"
+reaction_time_sec = 0.4
+reward_skill_points = 20

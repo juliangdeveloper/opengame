@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="CharacterResource" format=3]
+
+[ext_resource type="Script" path="res://scripts/character_resource.gd" id="1_jq6ir"]
+
+[resource]
+script = ExtResource("1_jq6ir")
+id = &"boss_guts"
+display_name = "Guts"
+description = "drag_slayer es MASSIVE cleave 360°. behelit_howl invoca sombras (doom). cannon_arm = ranged. arcane = su debilidad (Brand of Sacrifice)."
+inspiration = "Berserk"
+max_hp = 1100.0
+max_stamina = 100.0
+move_speed = 2.6
+attack_range = 8.0
+recover_duration = 1.5
+weapon_id = &"sword_great"
+skill_ids = Array[StringName]([&"massive_cleave_001", &"cannon_arm_001", &"summon_minion_001", &"battle_cry_001"])
+skill_weights = Array[float]([1.4, 0.6, 0.4, 0.5])
+damage_modifiers = {
+&"arcane": 1.5,
+&"physical": 0.6
+}
+behavior = "berserker"
+aggression = 0.9
+preferred_range = &"melee"
+reaction_time_sec = 0.5
+reward_skill_points = 15

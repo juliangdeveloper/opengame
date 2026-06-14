@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="CharacterResource" format=3]
+
+[ext_resource type="Script" path="res://scripts/character_resource.gd" id="1_h3ld3"]
+
+[resource]
+script = ExtResource("1_h3ld3")
+id = &"boss_bane"
+display_name = "Bane"
+description = "Brute con venom. venom_pump BUFFEA su damage x2.5 cada 30s. Si no lo matás en el primer ciclo, se vuelve imparable. STUN > buff removible."
+inspiration = "DC Comics"
+max_hp = 1200.0
+max_stamina = 100.0
+move_speed = 2.6
+attack_range = 8.0
+recover_duration = 1.5
+skill_ids = Array[StringName]([&"charging_tackle_001", &"ground_pound_001", &"venom_pump_001", &"break_defense_001"])
+skill_weights = Array[float]([1.0, 0.7, 0.6, 0.4])
+damage_modifiers = {
+&"physical": 0.7,
+&"water": 1.5
+}
+aggression = 0.9
+preferred_range = &"melee"
+reaction_time_sec = 0.45
+reward_skill_points = 15

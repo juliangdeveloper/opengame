@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="CharacterResource" format=3]
+
+[ext_resource type="Script" path="res://scripts/character_resource.gd" id="1_0wybk"]
+
+[resource]
+script = ExtResource("1_0wybk")
+id = &"boss_frieza"
+display_name = "Frieza"
+description = "Forma final. Castea a distancia; arrogant_dodge le hace contraataques a quien se acerque. Usa death_beam rápido. AGUANTAR el burst inicial y counter con physical."
+inspiration = "Dragon Ball Z"
+max_hp = 1350.0
+max_stamina = 100.0
+move_speed = 2.6
+attack_range = 8.0
+recover_duration = 1.5
+weapon_id = &"staff_arcane"
+skill_ids = Array[StringName]([&"kamehameha_001", &"lightning_bolt_001", &"stone_skin_001", &"arrogant_dodge_001"])
+skill_weights = Array[float]([1.0, 1.2, 0.4, 0.6])
+damage_modifiers = {
+&"arcane": 0.6,
+&"physical": 1.4
+}
+behavior = "caster"
+aggression = 0.7
+preferred_range = &"ranged"
+reaction_time_sec = 0.5
+reward_skill_points = 20

@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="CharacterResource" format=3]
+
+[ext_resource type="Script" path="res://scripts/character_resource.gd" id="1_7sc8y"]
+
+[resource]
+script = ExtResource("1_7sc8y")
+id = &"boss_hades"
+display_name = "Hades"
+description = "soul_drain: LIFESTEAL puro. Si lo peleás lento, se cura más de lo que le hacés. BURST o morís. bident_thrust es melee rapidísimo."
+inspiration = "Mitología Griega"
+max_hp = 1200.0
+max_stamina = 100.0
+move_speed = 2.6
+attack_range = 8.0
+recover_duration = 1.5
+weapon_id = &"spear_dark"
+skill_ids = Array[StringName]([&"soul_drain_001", &"light_attack_001", &"firebreath_001", &"death_call_001"])
+skill_weights = Array[float]([1.4, 0.6, 0.5, 0.3])
+damage_modifiers = {
+&"dark": 0.5,
+&"light": 1.5
+}
+behavior = "tactical"
+aggression = 0.7
+reaction_time_sec = 0.5
+reward_skill_points = 15
