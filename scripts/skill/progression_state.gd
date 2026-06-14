@@ -647,7 +647,9 @@ func remove_weapon(weapon_id: StringName) -> bool:
 
 
 ## equip_weapon(weapon_id) — marca un arma como equipada.
-## Carga el WeaponResource desde el catálogo y lo guarda en equipped_weapon.
+## Carga el WeaponResource desde el catálogo, lo guarda en equipped_weapon,
+## y FASE 1: aplica sus `attribute_modifiers` como temp_offsets al caster
+## (player o NPC).
 func equip_weapon(weapon_id: StringName) -> bool:
 	if weapon_id not in owned_weapons:
 		push_warning("[ProgressionState] equip_weapon: %s not owned" % weapon_id)
@@ -657,6 +659,10 @@ func equip_weapon(weapon_id: StringName) -> bool:
 	if wpn == null:
 		push_warning("[ProgressionState] equip_weapon: %s not in catalog" % weapon_id)
 		return false
+	# FASE 1: si ya había un arma equipada, remover sus modifiers primero
+	if equipped_weapon != null and equipped_weapon.has_method("remove_from_caster"):
+		var old_caster: Node = Engine.get_main_loop().root.find_child("Player", true, false)
+		equipped_weapon.remove_from_caster(old_caster)
 	equipped_weapon = wpn
 	weapon_equipped.emit(weapon_id)
 	print("[ProgressionState] equipped weapon: %s (%s, %dh)" % [String(weapon_id), wpn.display_name, wpn.hands])
@@ -664,14 +670,22 @@ func equip_weapon(weapon_id: StringName) -> bool:
 	var player: Node = Engine.get_main_loop().root.find_child("Player", true, false)
 	if player and player.has_method("set_equipped_weapon"):
 		player.call("set_equipped_weapon", wpn)
+	# FASE 1: aplicar los attribute_modifiers del nuevo weapon al caster
+	if wpn.has_method("apply_to_caster"):
+		wpn.apply_to_caster(player)
 	data_changed.emit()
 	return true
 
 
 ## unequip_weapon() — desequipa el arma actual. Pasa a "unarmed" implícito.
+## FASE 1: remueve los attribute_modifiers del arma antes de desequipar.
 func unequip_weapon() -> void:
 	if equipped_weapon == null:
 		return
+	# FASE 1: remover los attribute_modifiers del arma actual del caster
+	if equipped_weapon.has_method("remove_from_caster"):
+		var caster: Node = Engine.get_main_loop().root.find_child("Player", true, false)
+		equipped_weapon.remove_from_caster(caster)
 	equipped_weapon = null
 	weapon_unequipped.emit()
 	var player: Node = Engine.get_main_loop().root.find_child("Player", true, false)

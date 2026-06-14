@@ -45,7 +45,9 @@ enum Family { SWORD, SCIMITAR, DAGGER, SCYTHE, BOW, SPEAR, AXE, MACE, STAFF, UNA
 @export var family: Family = Family.UNARMED
 @export var hands: int = 1  # 1 = one-handed, 2 = two-handed
 
-## Stats base (diseñados). Se usan como techo de balance.
+## Stats base (diseñados). DEPRECATED en Fase 1 — usar `attribute_modifiers`.
+## Se mantiene para retrocompatibilidad con .tres existentes y para los
+## helpers visuales (weapon_allocator UI, get_scaled_dmg, etc.).
 ## dmg:        daño base por hit (escalado por strength del caster)
 ## speed:      multiplicador de velocidad de swing (0.5 = lento, 1.5 = rápido)
 ## reach:      multiplicador de hitbox radius (0.8 = corto, 1.5 = largo)
@@ -60,6 +62,58 @@ enum Family { SWORD, SCIMITAR, DAGGER, SCYTHE, BOW, SPEAR, AXE, MACE, STAFF, UNA
 	"parry_bonus": 0.0,
 	"crit_chance": 0.05,
 }
+
+
+## FASE 1 (2026-06-14): Modificadores de atributos aplicados al equiparse.
+## Cada clave = StringName de un attribute_id (ver AttributeComponent.ATTRIBUTES).
+## Cada valor = float que se SUMA al temp_offset del caster al equipar y se
+## RESTA al desequipar.
+##
+## Ejemplo para una short_sword:
+##   attribute_modifiers = {
+##     "attack_power": 0.15,    # +15% dmg al caster
+##     "attack_speed": 0.10,    # +10% attack_speed
+##     "crit_chance": 0.05,    # +5% crit chance
+##   }
+##
+## Esto cumple la directiva del user: "Las armas actúan solo modificando
+## los atributos, de esta manera potencian los skills". El weapon ya no
+## aporta daño directamente — solo boost a los stats del caster, y el
+## skill damage formula lee esos stats.
+@export var attribute_modifiers: Dictionary = {}
+
+
+## FASE 1: Aplica los `attribute_modifiers` como temp_offsets al caster.
+## Llamar desde ps.equip_weapon(id) cuando el arma se equipa.
+## caster: un Node3D (player o NPC) con un AttributeComponent hijo.
+func apply_to_caster(caster: Node) -> bool:
+	if caster == null or attribute_modifiers.is_empty():
+		return false
+	if not caster.has_node("AttributeComponent"):
+		return false
+	var ac: Node = caster.get_node("AttributeComponent")
+	if not ac.has_method("apply_temp_offset"):
+		return false
+	for attr_id in attribute_modifiers:
+		var amt: float = float(attribute_modifiers[attr_id])
+		ac.call("apply_temp_offset", StringName(attr_id), amt)
+	return true
+
+
+## FASE 1: Remueve los `attribute_modifiers` del caster (inverso de apply).
+## Llamar desde ps.unequip_weapon() cuando se desequipa.
+func remove_from_caster(caster: Node) -> bool:
+	if caster == null or attribute_modifiers.is_empty():
+		return false
+	if not caster.has_node("AttributeComponent"):
+		return false
+	var ac: Node = caster.get_node("AttributeComponent")
+	if not ac.has_method("remove_temp_offset"):
+		return false
+	for attr_id in attribute_modifiers:
+		var amt: float = float(attribute_modifiers[attr_id])
+		ac.call("remove_temp_offset", StringName(attr_id), amt)
+	return true
 
 ## Multiplicadores por stat del jugador (cuánto suma cada punto del stat).
 ## skill_point en el stat → +dmg_mult * dmg_base por punto (cap 5).

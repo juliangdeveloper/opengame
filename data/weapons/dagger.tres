@@ -28,6 +28,12 @@ class_dmg_mult = {
 "axe": 1.3,
 "unarmed": 1.5
 }
+attribute_modifiers = {
+"attack_power": 0.10,
+"crit_chance": 0.25,
+"attack_speed": 0.60,
+"parry_bonus": 0.20
+}
 compatible_skill_ids = [&"backstab", &"dagger_flurry"]
 blocked_skill_ids = []
 mesh_hint = "dagger"
