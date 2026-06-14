@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="CharacterResource" format=3]
+
+[ext_resource type="Script" path="res://scripts/character_resource.gd" id="1_g0osj"]
+
+[resource]
+script = ExtResource("1_g0osj")
+id = &"boss_storm"
+display_name = "Storm"
+description = "Zoner puro. Nunca melee. hurricane: BLOQUEA melee (aura). chain_lightning salta. Físico pasa por la tormenta? HURT 2x. Cerrar distancia es la clave."
+inspiration = "X-Men"
+max_hp = 1400.0
+max_stamina = 100.0
+move_speed = 2.6
+attack_range = 8.0
+recover_duration = 1.5
+weapon_id = &"staff_lightning"
+skill_ids = Array[StringName]([&"lightning_bolt_001", &"tornado_001", &"hurricane_001", &"chain_lightning_001"])
+skill_weights = Array[float]([1.0, 0.7, 0.5, 1.3])
+damage_modifiers = {
+&"lightning": 0.5,
+&"physical": 1.4
+}
+behavior = "caster"
+preferred_range = &"ranged"
+reward_skill_points = 10

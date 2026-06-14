@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="CharacterResource" format=3]
+
+[ext_resource type="Script" path="res://scripts/character_resource.gd" id="1_nwwcs"]
+
+[resource]
+script = ExtResource("1_nwwcs")
+id = &"boss_pennywise"
+display_name = "Pennywise"
+description = "Ilusionista. shapeshift le hace cambiar de elemento débil momentáneamente. dead_lights es UN INSTAKILL si HP<10%. light element = único counter."
+inspiration = "Stephen King"
+max_hp = 1400.0
+max_stamina = 100.0
+move_speed = 2.6
+attack_range = 8.0
+recover_duration = 1.5
+skill_ids = Array[StringName]([&"fear_aura_001", &"smoke_bomb_001", &"dead_lights_001", &"mind_break_001"])
+skill_weights = Array[float]([1.0, 0.8, 0.2, 1.0])
+damage_modifiers = {
+&"dark": 0.4,
+&"light": 1.8
+}
+behavior = "trickster"
+aggression = 0.4
+reaction_time_sec = 0.4
+reward_skill_points = 10

@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="CharacterResource" format=3]
+
+[ext_resource type="Script" path="res://scripts/character_resource.gd" id="1_qchl5"]
+
+[resource]
+script = ExtResource("1_qchl5")
+id = &"boss_maleficent"
+display_name = "Maleficent"
+description = "Zoner caster. dragon_breath: cono de fuego amplio. thorny_vine: AOE en zona fija. fae_mirage: DECOY (golpear al real, no al dummy). earth la destruye."
+inspiration = "Disney — La Bella Durmiente"
+max_hp = 1300.0
+max_stamina = 100.0
+move_speed = 2.6
+attack_range = 8.0
+recover_duration = 1.5
+weapon_id = &"staff_dark"
+skill_ids = Array[StringName]([&"firebreath_001", &"dark_spike_001", &"thorny_vine_001", &"mirror_image_001"])
+skill_weights = Array[float]([0.9, 0.7, 1.0, 0.4])
+damage_modifiers = {
+&"earth": 1.5,
+&"fire": 0.5
+}
+behavior = "caster"
+preferred_range = &"ranged"
+reaction_time_sec = 0.55
+reward_skill_points = 15

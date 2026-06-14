@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="CharacterResource" format=3]
+
+[ext_resource type="Script" path="res://scripts/character_resource.gd" id="1_iq05i"]
+
+[resource]
+script = ExtResource("1_iq05i")
+id = &"boss_yhwach"
+display_name = "Yhwach"
+description = "almighty: REWIND tu último ataque (te lo roba). auswählen: mata adds pero también mata a Yhwach. still_zombie: no muere hasta HP<-200%. dark = counter."
+inspiration = "Bleach"
+max_hp = 1200.0
+max_stamina = 100.0
+move_speed = 2.6
+attack_range = 8.0
+recover_duration = 1.5
+weapon_id = &"sword_soul"
+skill_ids = Array[StringName]([&"light_attack_001", &"soul_drain_001", &"battle_cry_001", &"dark_pact_001"])
+skill_weights = Array[float]([0.8, 1.0, 0.4, 0.6])
+damage_modifiers = {
+&"dark": 1.5,
+&"light": 0.4
+}
+behavior = "tactical"
+reaction_time_sec = 0.7
+reward_skill_points = 25

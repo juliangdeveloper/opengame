@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="CharacterResource" format=3]
+
+[ext_resource type="Script" path="res://scripts/character_resource.gd" id="1_fpsvm"]
+
+[resource]
+script = ExtResource("1_fpsvm")
+id = &"boss_medusa"
+display_name = "Medusa"
+description = "petrify_gaze: si la miras, STUN 2s. Atacar siempre por DETRÁS o por la espalda. snake_strike y venomous_bite son melee, sword_slash es wide."
+inspiration = "Mitología Griega"
+max_hp = 1150.0
+max_stamina = 100.0
+move_speed = 2.6
+attack_range = 8.0
+recover_duration = 1.5
+weapon_id = &"sword_stone"
+skill_ids = Array[StringName]([&"petrify_gaze_001", &"light_attack_001", &"venomous_bite_001", &"poison_dart_001"])
+skill_weights = Array[float]([0.7, 0.8, 1.0, 0.6])
+damage_modifiers = {
+&"dark": 1.5,
+&"light": 0.4
+}
+behavior = "evasive"
+aggression = 0.6
+preferred_range = &"melee"
+reaction_time_sec = 0.5
+reward_skill_points = 10

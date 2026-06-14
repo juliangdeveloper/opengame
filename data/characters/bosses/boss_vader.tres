@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="CharacterResource" format=3]
+
+[ext_resource type="Script" path="res://scripts/character_resource.gd" id="1_juclh"]
+
+[resource]
+script = ExtResource("1_juclh")
+id = &"boss_vader"
+display_name = "Darth Vader"
+description = "Espadachín con force powers. Parry_riposte: NO atacar durante su windup de sable. Force_choke es ranged. Esquivar y castigar después del swing."
+inspiration = "Star Wars"
+max_hp = 1100.0
+max_stamina = 100.0
+move_speed = 2.6
+attack_range = 8.0
+recover_duration = 1.5
+weapon_id = &"scimitar_red"
+skill_ids = Array[StringName]([&"light_attack_001", &"force_choke_001", &"parry_riposte_001", &"gomu_gomu_pistol_001"])
+skill_weights = Array[float]([0.6, 1.0, 1.4, 0.8])
+damage_modifiers = {
+&"dark": 0.5,
+&"lightning": 1.4
+}
+behavior = "defensive"
+aggression = 0.6
+preferred_range = &"melee"
+reaction_time_sec = 0.55
+reward_skill_points = 15
