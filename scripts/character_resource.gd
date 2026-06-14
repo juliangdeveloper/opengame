@@ -88,7 +88,16 @@ var behavior: String = "aggressive"
 
 # === Visual ===
 @export var base_color: Color = Color(0.8, 0.15, 0.2)
+@export var flash_color: Color = Color(1.0, 0.5, 0.2)
 @export var model_hint: String = ""                # "goblin", "humanoid", "boss_frieza", etc.
+
+
+# === Daño de ataque básico ===
+## Si data.skill_ids está vacío, el enemy usa su attack_damage hardcoded
+## como daño del ataque cuerpo a cuerpo. Si data.skill_ids tiene skills,
+## el enemy castea skills y este campo se ignora (el daño viene de la skill).
+## Por defecto 0 — el sistema data-driven prefiere skills sobre attack_damage.
+@export var attack_damage: float = 0.0
 
 
 # === Recompensa (player/enemy = 0, boss = >0) ===
