@@ -215,6 +215,10 @@ func _on_alloc_pressed(attr_id: StringName, delta: int) -> void:
 ## Re-wire focus chain usando MenuNavHelper (mismo sistema que menu.gd).
 ## TopBar: BackButton ↔ ResetButton. Attribute rows: chain + wrap
 ## + first row ↑ → ResetButton. Auto-repeat driver.
+## BUGFIX 2026-06-14: el foco se perdía al hacer D-down desde ResetButton
+## porque reset_button.focus_neighbor_bottom no estaba seteado. Ahora
+## apunta al primer botón del primer row (la cadena inversa: del row
+## al reset button ya la hacía bind_row con top_neighbor=reset_button).
 func _wire_focus() -> void:
 	# TopBar: BackButton ↔ ResetButton
 	if back_button and reset_button:
@@ -230,6 +234,30 @@ func _wire_focus() -> void:
 			reset_button if i == 0 else null,
 			true  # wrap
 		)
+	# Inverso: el primer botón del primer row debe recibir foco desde
+	# el ResetButton al hacer D-down (sino, el foco se pierde).
+	if reset_button and not _attr_row_panels.is_empty():
+		var first_row: HBoxContainer = _attr_row_panels[0]
+		var first_btn: Button = null
+		if is_instance_valid(first_row):
+			for c in first_row.get_children():
+				if c is Button and not (c as Button).disabled:
+					first_btn = c
+					break
+		# Si todos los botones del primer row están disabled, busca el
+		# primer button no-disabled de CUALQUIER row.
+		if first_btn == null:
+			for r in _attr_row_panels:
+				if not is_instance_valid(r):
+					continue
+				for c in r.get_children():
+					if c is Button and not (c as Button).disabled:
+						first_btn = c
+						break
+				if first_btn != null:
+					break
+		if first_btn != null:
+			reset_button.focus_neighbor_bottom = first_btn.get_path()
 	# Scroll-follow safety net (por si headless test no renderiza follow)
 	var scroll: ScrollContainer = get_node_or_null("Panel/Margin/VBox/Scroll")
 	if scroll:

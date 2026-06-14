@@ -106,46 +106,36 @@ func _refresh() -> void:
 	var ps: Node = _get_progression_state()
 	if ps == null:
 		return
-	# Reconstruir lista de armas (catálogo: owned primero, luego resto)
+	# Reconstruir lista de armas: SOLO owned (como Skills muestra solo
+	# owned_skills). El catálogo se quita — el arsenal debe funcionar
+	# igual que el menú de skills: solo lo que tienes.
 	_weapon_row_buttons.clear()
+	# Free INMEDIATO (no queue_free) para que _wire_focus_paths no vea
+	# rows viejos con focus_neighbor paths stale.
 	for child in weapons_container.get_children():
-		child.queue_free()
-	var catalog: Array = ps.call("get_weapon_catalog", "all")
+		weapons_container.remove_child(child)
+		child.free()
 	var equipped_id: String = str(ps.equipped_weapon.id) if ps.equipped_weapon != null else ""
-	# Separar owned vs no-owned
-	var owned: Array = []
-	var other: Array = []
-	for wid in catalog:
-		if wid in ps.owned_weapons:
-			owned.append(wid)
-		else:
-			other.append(wid)
-	for wid in owned:
+	# Iterar owned_weapons (mismo patrón que skill_list con owned_skills)
+	for wid in ps.owned_weapons:
 		var row := _build_weapon_row(ps, wid, equipped_id)
 		weapons_container.add_child(row)
-	# Separator
-	if not other.is_empty():
-		var sep := HSeparator.new()
-		weapons_container.add_child(sep)
-		var label := Label.new()
-		label.text = "  (catálogo — no en inventario)"
-		label.modulate = Color(0.7, 0.7, 0.7)
-		label.add_theme_font_size_override("font_size", 11)
-		weapons_container.add_child(label)
-		for wid in other:
-			var row := _build_weapon_row(ps, wid, equipped_id)
-			weapons_container.add_child(row)
 	# Header points
-	points_label.text = "Armas en inventario: %d   |   Puntos de arma: %d" % [
-		ps.owned_weapons.size(),
-		int(ps.call("get_weapon_points"))
-	]
+	points_label.text = MenuNavHelperScript.format_points(
+		ps,
+		int(ps.call("get_weapon_points")),
+		-1,
+		"Armas"
+	)
 	# Detail: si hay current_weapon_id válido, refrescar; si no, seleccionar la equipada
-	if _current_weapon_id == &"" or str(_current_weapon_id) not in catalog:
-		if equipped_id != "":
+	var owned_ids: Array = []
+	for wid in ps.owned_weapons:
+		owned_ids.append(str(wid))
+	if _current_weapon_id == &"" or str(_current_weapon_id) not in owned_ids:
+		if equipped_id != "" and equipped_id in owned_ids:
 			_current_weapon_id = StringName(equipped_id)
-		elif not owned.is_empty():
-			_current_weapon_id = owned[0]
+		elif not ps.owned_weapons.is_empty():
+			_current_weapon_id = ps.owned_weapons[0]
 	_show_weapon_detail(ps, _current_weapon_id, equipped_id)
 	_wire_focus_paths()
 	# Auto-grab focus. Need multiple attempts because Godot's GUI
@@ -207,15 +197,33 @@ func _wire_focus_paths() -> void:
 	if weapon_focusables.size() > 0 and open_skill_book_button:
 		weapon_focusables[0].focus_neighbor_top = open_skill_book_button.get_path()
 		open_skill_book_button.focus_neighbor_bottom = weapon_focusables[0].get_path()
+	# D-right from each weapon row → equip button (move into detail panel).
+	# Esto es lo mismo que hace skills: desde ItemList → DetailPanel.
+	if equip_button and not equip_button.disabled and weapon_focusables.size() > 0:
+		var equip_path: NodePath = equip_button.get_path()
+		for b: Button in weapon_focusables:
+			b.focus_neighbor_right = equip_path
 	# Last weapon row ↓ → wrap to first (if no override) or first stat row
 	# (we set this explicitly: ↓ from last weapon row → first stat row)
-	# === EquipButton: left → first weapon row, right → first stat row ===
+	# === EquipButton: left → first weapon row, right/down → first stat row ===
 	if equip_button and not equip_button.disabled:
 		if weapon_focusables.size() > 0:
 			equip_button.focus_neighbor_left = weapon_focusables[0].get_path()
 			# Up from equip → also first weapon row (so D-up from stat rows
 			# goes equip → first weapon row → OpenSkillBookButton)
 			equip_button.focus_neighbor_top = weapon_focusables[0].get_path()
+		# Right/Down from equip → first stat row (D-pad moves into the
+		# detail panel). Si no hay stat rows, el path queda vacío y
+		# Godot usa búsqueda geométrica.
+		if _stat_rows_list.size() > 0:
+			var first_stat_row: HBoxContainer = _stat_rows_list[0]
+			if is_instance_valid(first_stat_row):
+				# Primer button focusable del primer stat row
+				for c in first_stat_row.get_children():
+					if c is Button and not (c as Button).disabled:
+						equip_button.focus_neighbor_right = c.get_path()
+						equip_button.focus_neighbor_bottom = c.get_path()
+						break
 	# === Stat rows — same nav as menu.gd's atom_rows ===
 	# Build ordered list of stat row HBoxContainers
 	_stat_rows_list.clear()
@@ -441,39 +449,3 @@ func _on_stat_minus(weapon_id: StringName, stat: StringName) -> void:
 
 func _get_progression_state() -> Node:
 	return Engine.get_main_loop().root.get_node_or_null("ProgressionState")
-
-
-## Fallback para focus navigation cross-ScrollContainer. Godot 4 a veces no
-## navega focus entre dos ScrollContainers distintos (p. ej. EquipButton en
-## DetailScroll → weapon row en LeftPanel/Scroll), así que interceptamos
-## el D-pad cuando el evento queda unhandled y movemos focus manualmente
-## al focus_neighbor_* configurado.
-func _unhandled_input(event: InputEvent) -> void:
-	if not visible:
-		return
-	var direction: StringName = &""
-	if event.is_action_pressed("ui_left"):
-		direction = &"left"
-	elif event.is_action_pressed("ui_right"):
-		direction = &"right"
-	elif event.is_action_pressed("ui_up"):
-		direction = &"up"
-	elif event.is_action_pressed("ui_down"):
-		direction = &"down"
-	else:
-		return
-	var owner: Control = get_viewport().gui_get_focus_owner()
-	if owner == null:
-		return
-	var path: NodePath = NodePath()
-	match direction:
-		&"left":  path = owner.focus_neighbor_left
-		&"right": path = owner.focus_neighbor_right
-		&"up":    path = owner.focus_neighbor_top
-		&"down":  path = owner.focus_neighbor_bottom
-	if path.is_empty():
-		return
-	var target: Node = get_node_or_null(path)
-	if target and target is Control and (target as Control).focus_mode != 0:
-		(target as Control).grab_focus()
-		get_viewport().set_input_as_handled()
