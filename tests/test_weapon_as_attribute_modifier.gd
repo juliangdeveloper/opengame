@@ -190,6 +190,8 @@ func _run() -> void:
 	_assert(with_weapon_dmg > no_weapon_dmg,
 		"10. great_sword aumenta dmg vía attack_power+0.42 (%.1f > %.1f)" % [
 			with_weapon_dmg, no_weapon_dmg])
+	_assert(no_weapon_dmg < 60.0,
+		"10b. sin weapon: dmg bajo (%.1f < 60)" % no_weapon_dmg)
 
 	# 11) Simetría: NPC también puede equiparse un weapon
 	var npc: Node3D = Node3D.new()
