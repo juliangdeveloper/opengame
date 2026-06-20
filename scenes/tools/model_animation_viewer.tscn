@@ -1,0 +1,135 @@
+[gd_scene load_steps=8 format=3 uid="uid://viewer_mav001"]
+
+[ext_resource type="Script" path="res://scripts/tools/model_animation_viewer.gd" id="1_viewer"]
+[ext_resource type="Script" path="res://scripts/tools/camera_orbit.gd" id="2_orbit"]
+
+[sub_resource type="ProceduralSkyMaterial" id="SkyMaterial_1"]
+sky_horizon_color = Color(0.65, 0.65, 0.7, 1)
+ground_horizon_color = Color(0.65, 0.65, 0.7, 1)
+
+[sub_resource type="Sky" id="Sky_1"]
+sky_material = SubResource("SkyMaterial_1")
+
+[sub_resource type="Environment" id="Env_1"]
+background_mode = 2
+sky = SubResource("Sky_1")
+ambient_light_source = 3
+ambient_light_color = Color(0.85, 0.85, 0.9, 1)
+ambient_light_energy = 0.6
+tonemap_mode = 2
+
+[sub_resource type="PlaneMesh" id="GroundMesh_1"]
+size = Vector2(20, 20)
+
+[sub_resource type="StandardMaterial3D" id="GroundMat_1"]
+albedo_color = Color(0.35, 0.4, 0.45, 1)
+roughness = 0.9
+
+[sub_resource type="StyleBoxFlat" id="PanelStyle_1"]
+bg_color = Color(0.1, 0.1, 0.12, 0.85)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[node name="ModelAnimationViewer" type="Node3D"]
+script = ExtResource("1_viewer")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Env_1")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866, -0.25, 0.433, 0, 0.866, 0.5, -0.5, -0.433, 0.75, 0, 5, 0)
+shadow_enabled = true
+
+[node name="Ground" type="MeshInstance3D" parent="."]
+mesh = SubResource("GroundMesh_1")
+surface_material_override/0 = SubResource("GroundMat_1")
+
+[node name="CharacterPivot" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.866, 0.5, 0, -0.5, 0.866, 0, 2.5, 5)
+current = true
+fov = 50.0
+script = ExtResource("2_orbit")
+target_path = NodePath("../CharacterPivot")
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="Panel" type="PanelContainer" parent="UI"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -560.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = 170.0
+grow_horizontal = 0
+theme_override_styles/panel = SubResource("PanelStyle_1")
+
+[node name="VBox" type="VBoxContainer" parent="UI/Panel"]
+theme_override_constants/separation = 6
+
+[node name="TopRow" type="HBoxContainer" parent="UI/Panel/VBox"]
+theme_override_constants/separation = 8
+
+[node name="CharBox" type="VBoxContainer" parent="UI/Panel/VBox/TopRow"]
+custom_minimum_size = Vector2(140, 0)
+theme_override_constants/separation = 2
+
+[node name="CharLabel" type="Label" parent="UI/Panel/VBox/TopRow/CharBox"]
+text = "Character"
+
+[node name="CharOption" type="OptionButton" parent="UI/Panel/VBox/TopRow/CharBox"]
+
+[node name="AnimBox" type="VBoxContainer" parent="UI/Panel/VBox/TopRow"]
+custom_minimum_size = Vector2(180, 0)
+theme_override_constants/separation = 2
+
+[node name="AnimLabel" type="Label" parent="UI/Panel/VBox/TopRow/AnimBox"]
+text = "Animation (loop)"
+
+[node name="AnimOption" type="OptionButton" parent="UI/Panel/VBox/TopRow/AnimBox"]
+
+[node name="LoopBox" type="VBoxContainer" parent="UI/Panel/VBox/TopRow"]
+custom_minimum_size = Vector2(70, 0)
+theme_override_constants/separation = 2
+
+[node name="LoopLabel" type="Label" parent="UI/Panel/VBox/TopRow/LoopBox"]
+text = "Loop"
+
+[node name="LoopCheck" type="CheckButton" parent="UI/Panel/VBox/TopRow/LoopBox"]
+button_pressed = true
+
+[node name="WeaponBox" type="VBoxContainer" parent="UI/Panel/VBox/TopRow"]
+custom_minimum_size = Vector2(140, 0)
+theme_override_constants/separation = 2
+
+[node name="WeaponLabel" type="Label" parent="UI/Panel/VBox/TopRow/WeaponBox"]
+text = "Weapon"
+
+[node name="WeaponOption" type="OptionButton" parent="UI/Panel/VBox/TopRow/WeaponBox"]
+
+[node name="EquipBox" type="VBoxContainer" parent="UI/Panel/VBox/TopRow"]
+custom_minimum_size = Vector2(80, 0)
+theme_override_constants/separation = 2
+
+[node name="BtnLabel" type="Label" parent="UI/Panel/VBox/TopRow/EquipBox"]
+text = "Equip"
+
+[node name="HBox" type="HBoxContainer" parent="UI/Panel/VBox/TopRow/EquipBox"]
+
+[node name="EquipBtn" type="Button" parent="UI/Panel/VBox/TopRow/EquipBox/HBox"]
+text = "✓"
+
+[node name="UnequipBtn" type="Button" parent="UI/Panel/VBox/TopRow/EquipBox/HBox"]
+text = "✗"
+
+[node name="InfoRow" type="HBoxContainer" parent="UI/Panel/VBox"]
+
+[node name="InfoLabel" type="Label" parent="UI/Panel/VBox/InfoRow"]
+text = "Loading..."
+custom_minimum_size = Vector2(540, 40)
+autowrap_mode = 2
