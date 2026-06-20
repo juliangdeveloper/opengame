@@ -10,6 +10,13 @@ extends Node3D
 const CHAR_DIR := "res://assets/imports/characters/realpg"
 const ANIM_DIR := "res://assets/imports/animations/realpg"
 const WPN_DIR := "res://assets/models/weapons"
+const WPN_TRES_DIR := "res://data/weapons"
+
+# Per-weapon grip config loaded from data/weapons/*.tres.
+# Each entry: { "rotation_deg": Vector3, "grip_offset": float, "scale": float }
+# Keyed by weapon stem (e.g. "wpn_short_sword"). Weapons without a matching
+# .tres fall back to a sensible default (grip_offset=0.2, no extra rotation).
+var weapon_grips: Dictionary = {}
 
 # Auto-discovered
 var characters: Array[String] = []        # res:// paths
@@ -41,12 +48,13 @@ func _ready() -> void:
 	_scan_characters()
 	_scan_animations()
 	_scan_weapons()
+	_load_weapon_grips()
 	_populate_options()
 	_connect_signals()
 	_load_character(0)
 	# Apply initial weapon option (after character loads so we can equip on demand)
 	_update_info()
-	print("[Viewer] ready — chars=%d anims=%d weapons=%d" % [characters.size(), animations.size(), weapons.size()])
+	print("[Viewer] ready — chars=%d anims=%d weapons=%d (grips=%d)" % [characters.size(), animations.size(), weapons.size(), weapon_grips.size()])
 
 
 func _scan_characters() -> void:
@@ -107,6 +115,38 @@ func _humanize(s: String) -> String:
 		if s.to_lower().begins_with(prefix):
 			s = s.substr(prefix.length())
 	return s.capitalize()
+
+
+func _load_weapon_grips() -> void:
+	# Load every WeaponResource .tres in data/weapons/ and index by stem.
+	# Stems are normalized to the wpn_ prefix (e.g. "short_sword.tres" becomes
+	# "wpn_short_sword") so the lookup matches the GLB file stems.
+	var dir := DirAccess.open(WPN_TRES_DIR)
+	if not dir:
+		push_warning("No weapon .tres dir: %s" % WPN_TRES_DIR)
+		return
+	dir.list_dir_begin()
+	var f := dir.get_next()
+	while f != "":
+		if f.ends_with(".tres"):
+			var res_path: String = WPN_TRES_DIR + "/" + f
+			var res: Resource = load(res_path)
+			if res == null:
+				f = dir.get_next()
+				continue
+			var stem: String = f.get_basename()
+			var key: String = stem if stem.begins_with("wpn_") else "wpn_" + stem
+			weapon_grips[key] = {
+				"rotation_deg": res.model_rotation,
+				"grip_offset": res.grip_offset,
+				"scale": res.model_scale,
+				"hands": res.hands,
+				"category": res.category,
+				"display_name": res.display_name,
+			}
+			print("[Viewer] grip loaded: %s → offset=%.2f rot=%s" % [key, res.grip_offset, res.model_rotation])
+		f = dir.get_next()
+	dir.list_dir_end()
 
 
 func _populate_options() -> void:
@@ -378,16 +418,59 @@ func _try_equip_to_character(wpn: Node3D) -> void:
 	if not is_instance_valid(current_character):
 		return
 	var hand := _find_right_hand_bone(current_character)
-	if hand:
-		# Reparent and zero out local transform so the weapon sits at the bone
-		var original_global := wpn.global_transform
-		wpn.reparent(hand, false)
-		wpn.transform = Transform3D.IDENTITY
-		# Apply small forward offset so weapon pokes out of hand
-		wpn.position = Vector3(0.05, -0.05, -0.1)
-		print("[Viewer] equipped to bone: %s" % hand.name)
-	else:
+	if not hand:
 		print("[Viewer] no right-hand bone found; weapon stays at character origin")
+		return
+
+	# Look up grip config for this weapon by file stem
+	var wpn_stem: String = wpn.name.get_basename()  # "wpn_short_sword"
+	var grip: Dictionary = _lookup_grip(wpn_stem)
+
+	# Reparent under the hand bone (BoneAttachment3D or hand bone itself)
+	wpn.reparent(hand, false)
+
+	# Build the local transform:
+	# 1. Base rotation: Blender Z-up → Godot Y-up (X by -90°)
+	# 2. model_rotation from .tres (Euler XYZ degrees)
+	# 3. Lower the model in Y by grip_offset so the grip point sits at the hand origin
+	var base_basis := Basis.from_euler(Vector3(deg_to_rad(-90.0), 0.0, 0.0))
+	var extra_basis := Basis.from_euler(Vector3(
+		deg_to_rad(grip.rotation_deg.x),
+		deg_to_rad(grip.rotation_deg.y),
+		deg_to_rad(grip.rotation_deg.z),
+	))
+	var total_basis := base_basis * extra_basis
+	var scale_val: float = grip.scale
+	wpn.transform = Transform3D(total_basis, Vector3(0.0, -grip.grip_offset, 0.0)).scaled_local(Vector3.ONE * scale_val)
+	# Note: scaled_local doesn't change position; we want uniform scale on rotation only
+	wpn.scale = Vector3.ONE * scale_val
+
+	print("[Viewer] equipped '%s' to bone '%s' (grip_offset=%.2fm, rot=%s, scale=%.2f)" % [
+		wpn_stem, hand.name, grip.grip_offset, grip.rotation_deg, scale_val
+	])
+
+
+func _lookup_grip(wpn_stem: String) -> Dictionary:
+	# Direct match
+	if weapon_grips.has(wpn_stem):
+		return weapon_grips[wpn_stem]
+	# Try stripping "wpn_" prefix
+	var without_prefix := wpn_stem.replace("wpn_", "")
+	if weapon_grips.has(without_prefix):
+		return weapon_grips[without_prefix]
+	# Try adding "wpn_" prefix
+	var with_prefix := "wpn_" + wpn_stem
+	if weapon_grips.has(with_prefix):
+		return weapon_grips[with_prefix]
+	# Default fallback
+	return {
+		"rotation_deg": Vector3.ZERO,
+		"grip_offset": 0.20,
+		"scale": 1.0,
+		"hands": 1,
+		"category": &"unknown",
+		"display_name": wpn_stem,
+	}
 
 
 func _find_right_hand_bone(node: Node) -> Node3D:
