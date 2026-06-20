@@ -173,14 +173,19 @@ func _load_character(idx: int) -> void:
 	# Find or create AnimationPlayer
 	animation_player = _find_animation_player(current_character)
 	if not animation_player:
-		# Create a new AnimationPlayer so external animations can be applied
+		# Create a new AnimationPlayer so external animations can be applied.
+		# Set root_node = ".." so source FBX tracks (format "Skeleton3D:bone_name")
+		# resolve correctly when the destination has Skeleton3D as a sibling.
 		animation_player = AnimationPlayer.new()
 		animation_player.name = "ExternalAnimationPlayer"
-		current_character.add_child(animation_player)
-		# Try to find a Skeleton3D path for the animation root
+		character_pivot.add_child(animation_player)
+		# Reparent to current_character so root_node = ".." means current_character
+		animation_player.reparent(current_character, false)
+		animation_player.root_node = NodePath("..")
+		# Find Skeleton3D so tracks can look up bones by name
 		var skel := _find_skeleton(current_character)
-		if skel:
-			animation_player.root_node = animation_player.get_path_to(skel)
+		if not skel:
+			push_warning("[Viewer] character has no Skeleton3D — animations may not play")
 
 	_update_info()
 	print("[Viewer] loaded character: %s" % character_labels[idx])
@@ -273,12 +278,12 @@ func _play_animation(anim_path: String) -> void:
 	var lib2: AnimationLibrary = animation_player.get_animation_library(lib_name)
 	lib2.add_animation(anim_name, dup)
 
-	# Remap track paths: the animation was recorded with the source's root_node path
-	# We need to retarget those paths to the character's skeleton/animation_player root.
-	var char_skel := _find_skeleton(current_character)
-	if char_skel:
-		var new_root_path := animation_player.root_node
-		_remap_animation_paths(dup, src_ap.root_node, new_root_path)
+	# Normalize track paths: different FBX sources use different prefixes
+	# before "Skeleton3D:bone_name" — e.g. "Root/Skeleton3D:Shoulder_R"
+	# (when source AP.root_node is "Root") or just "Skeleton3D:B-hips"
+	# (when source AP.root_node is ".."). We strip everything before
+	# "Skeleton3D:" so tracks resolve to our local Skeleton3D.
+	_normalize_track_paths(dup)
 
 	# Apply loop setting
 	dup.loop_mode = Animation.LOOP_LINEAR if loop_check.button_pressed else Animation.LOOP_NONE
@@ -313,6 +318,19 @@ func _on_loop_toggled(pressed: bool) -> void:
 	if anim:
 		anim.loop_mode = Animation.LOOP_LINEAR if pressed else Animation.LOOP_NONE
 	_update_info()
+
+
+func _normalize_track_paths(anim: Animation) -> void:
+	# Strip any prefix before "Skeleton3D:" in track paths so they resolve to
+	# our local Skeleton3D regardless of the source FBX's path conventions.
+	var tracks := anim.get_track_count()
+	for i in range(tracks):
+		var path: NodePath = anim.track_get_path(i)
+		var path_str := str(path)
+		var idx := path_str.find("Skeleton3D:")
+		if idx > 0:
+			var new_path := path_str.substr(idx)
+			anim.track_set_path(i, NodePath(new_path))
 
 
 # ---------- Weapon handling ----------
