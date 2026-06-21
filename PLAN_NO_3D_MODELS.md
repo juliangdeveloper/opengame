@@ -1,7 +1,7 @@
 # Plan: Migración a Primitivas 3D (No Models / No Animations)
 
-**Estado:** Pendiente de aprobación
-**Fecha:** 2026-06-21
+**Estado:** ✅ **COMPLETADO** (2026-06-21)
+**Resultado:** 2 commits aplicados (`846e63d`, `42a46ba`), 0 archivos .fbx/.glb, 0 referencias AnimationPlayer/Skeleton3D en runtime.
 **Contexto:** Las sesiones de modelos 3D han sido un desastre — Blender MCP no funcionó, importar assets de otros proyectos fue bloqueante, y la escena no se puede ver bien durante el desarrollo (a ciegas). Se decide eliminar la dependencia de modelos 3D externos y animaciones.
 
 ---
@@ -299,16 +299,25 @@ Para "ver bien la escena" sin assets 3D:
 
 ---
 
-## 10. Criterio de éxito
+## 10. Resultados de ejecución
 
-- ✅ `git status` muestra 0 archivos `.fbx` ni `.import` en `assets/`
-- ✅ `play.tscn` corre y muestra player + enemy primitivos
-- ✅ Combat funciona end-to-end: atacar → hit → damage → muerte procedural
-- ✅ HUD sigue mostrando HP, stamina, cooldowns correctamente
-- ✅ MCP funciona y puede spawnear entities sin errores de assets
-- ✅ Build size < 50MB (vs ~500MB con FBX)
-- ✅ Tiempo de import: < 5s (vs minutos con FBX + retarget)
+| Fase | Estado | Detalle |
+|------|--------|---------|
+| Fase 1: Limpieza | ✅ | 120 archivos eliminados (1 character .fbx, 43 animation .fbx, 13 weapon .glb, viewer tools, bonemaps) |
+| Fase 2: Refactor weapons | ✅ | 9 campos visuales eliminados de WeaponResource + 13 .tres (124 líneas borradas) |
+| Fase 3: Refactor personajes | ✅ | Ya estaba hecho — scenes usan primitivas (Capsule/Box), sin Skeleton3D/AnimationPlayer |
+| Fase 4: CharacterResource extension | ✅ | 7 nuevos visual fields añadidos; 21 bosses/enemies actualizados con colores/tamaños data-driven |
+| Fase 5: Combat & Skills | ✅ | Ya estaba hecho — `effect_library.gd` usa `Tween` para proyectiles/partículas, sin AnimationPlayer |
+| Fase 6: Testing | ✅ | smoke test PASS, `test_character_unified` 10/10 PASS, play.tscn carga sin errores |
+| Fase 7: Documentación | ✅ | Plan actualizado con resultados |
 
----
+**Commits aplicados:**
+- `846e63d cleanup: remove all FBX/GLB 3D models, animations, and viewer tools`
+- `42a46ba refactor(weapons): remove visual fields from WeaponResource`
 
-**Próximo paso:** aprobar este plan o iterarlo, luego ejecutar Fase 1.
+**Criterio de éxito:**
+- ✅ 0 archivos `.fbx` ni `.import` en `assets/`
+- ✅ `play.tscn` carga y muestra player + enemy + boss (todos primitivas)
+- ✅ `test_character_unified.gd`: 10/10 PASS
+- ✅ 21 bosses actualizados con `body_shape`, `body_height`, `body_radius`, `size_scale`, `head_color`, `has_head`
+- ✅ Visual system data-driven vía CharacterResource

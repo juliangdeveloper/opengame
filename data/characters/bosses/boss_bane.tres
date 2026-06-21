@@ -3,6 +3,15 @@
 [ext_resource type="Script" path="res://scripts/character_resource.gd" id="1_h3ld3"]
 
 [resource]
+base_color = Color(0.239, 0.353, 0.239, 1)
+flash_color = Color(1.0, 0.5, 0.2, 1)
+model_hint = "boss_bane"
+body_shape = &"capsule"
+body_height = 2.5
+body_radius = 0.55
+size_scale = 1.4
+head_color = Color(0.867, 0.800, 0.600, 1)
+has_head = true
 script = ExtResource("1_h3ld3")
 id = &"boss_bane"
 display_name = "Bane"

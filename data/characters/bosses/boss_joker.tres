@@ -3,6 +3,15 @@
 [ext_resource type="Script" path="res://scripts/character_resource.gd" id="1_ur3io"]
 
 [resource]
+base_color = Color(0.133, 0.067, 0.400, 1)
+flash_color = Color(1.0, 0.5, 0.2, 1)
+model_hint = "boss_joker"
+body_shape = &"capsule"
+body_height = 1.85
+body_radius = 0.35
+size_scale = 1.05
+head_color = Color(0.200, 1.000, 0.200, 1)
+has_head = true
 script = ExtResource("1_ur3io")
 id = &"boss_joker"
 display_name = "The Joker"

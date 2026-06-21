@@ -86,10 +86,16 @@ var behavior: String = "aggressive"
 @export var reaction_time_sec: float = 0.6         # tiempo entre decisiones AI
 
 
-# === Visual ===
+# === Visual (procedural primitives — no FBX models) ===
 @export var base_color: Color = Color(0.8, 0.15, 0.2)
 @export var flash_color: Color = Color(1.0, 0.5, 0.2)
-@export var model_hint: String = ""                # "goblin", "humanoid", "boss_frieza", etc.
+@export var model_hint: String = ""                # visual archetype tag (decorative)
+@export var body_shape: StringName = &"capsule"    # "capsule", "cube", "sphere", "cylinder"
+@export var body_height: float = 1.8                # meters
+@export var body_radius: float = 0.35               # meters
+@export var size_scale: float = 1.0                 # uniform scale (bosses can be 1.5x)
+@export var head_color: Color = Color(1, 1, 1)      # optional head tint (procedural sphere on top)
+@export var has_head: bool = true                   # render small sphere on top of body
 
 
 # === Daño de ataque básico ===
