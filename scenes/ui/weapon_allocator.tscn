@@ -127,6 +127,7 @@ theme_override_constants/margin_right = 0
 theme_override_constants/margin_bottom = 0
 
 [node name="Scroll" type="ScrollContainer" parent="Panel/Margin/VBox/HBoxBody/LeftPanel/LeftMargin"]
+follow_focus = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -155,6 +156,7 @@ theme_override_constants/margin_right = 0
 theme_override_constants/margin_bottom = 0
 
 [node name="DetailScroll" type="ScrollContainer" parent="Panel/Margin/VBox/HBoxBody/DetailPanel/DetailMargin"]
+follow_focus = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3

@@ -1,16 +1,21 @@
 {
-  "$comment": "20 villanos predefinidos. Cada uno con skills/armas/elementos únicos. Recompensa en skill_points escalando por tier.",
+  "$comment": "20 villanos predefinidos. Cada uno con skills/armas/elementos \u00fanicos. Recompensa en skill_points escalando por tier.",
   "bosses": [
     {
       "id": "boss_frieza",
       "display_name": "Frieza",
       "title": "El Tirano del Espacio",
-      "description": "Forma final. Castea a distancia; arrogant_dodge le hace contraataques a quien se acerque. Usa death_beam rápido. AGUANTAR el burst inicial y counter con physical.",
+      "description": "Forma final. Castea a distancia; arrogant_dodge le hace contraataques a quien se acerque. Usa death_beam r\u00e1pido. AGUANTAR el burst inicial y counter con physical.",
       "inspiration": "Dragon Ball Z",
-      "max_hp": 1500.0,
+      "max_hp": 1350.0,
       "tier": 4,
       "weapon_id": "staff_arcane",
-      "skill_ids": ["kamehameha_001", "lightning_bolt_001", "stone_skin_001", "arrogant_dodge_001"],
+      "skill_ids": [
+        "kamehameha_001",
+        "lightning_bolt_001",
+        "stone_skin_001",
+        "arrogant_dodge_001"
+      ],
       "behavior": "caster",
       "aggression": 0.7,
       "preferred_range": "ranged",
@@ -19,19 +24,29 @@
       "weakness_mult": 1.4,
       "resistance_element": "arcane",
       "resistance_mult": 0.6,
-      "skill_weights": [1.0, 1.2, 0.4, 0.6],
+      "skill_weights": [
+        1.0,
+        1.2,
+        0.4,
+        0.6
+      ],
       "reward_skill_points": 20
     },
     {
       "id": "boss_sauron",
       "display_name": "Sauron",
-      "title": "El Señor Oscuro de Mordor",
+      "title": "El Se\u00f1or Oscuro de Mordor",
       "description": "Necromancer. Invoca orcos con summon_orc y castea dark_bolt. PRIORIZAR A LOS ORCOS, luego burst con light. Sin adds es vulnerable.",
-      "inspiration": "El Señor de los Anillos",
-      "max_hp": 2000.0,
+      "inspiration": "El Se\u00f1or de los Anillos",
+      "max_hp": 1250.0,
       "tier": 5,
       "weapon_id": "mace_dark",
-      "skill_ids": ["dark_bolt_001", "summon_minion_001", "light_attack_001", "dark_pact_001"],
+      "skill_ids": [
+        "dark_bolt_001",
+        "summon_minion_001",
+        "light_attack_001",
+        "dark_pact_001"
+      ],
       "behavior": "summoner",
       "aggression": 0.5,
       "preferred_range": "ranged",
@@ -40,19 +55,29 @@
       "weakness_mult": 1.6,
       "resistance_element": "dark",
       "resistance_mult": 0.5,
-      "skill_weights": [1.0, 1.4, 0.3, 0.2],
+      "skill_weights": [
+        1.0,
+        1.4,
+        0.3,
+        0.2
+      ],
       "reward_skill_points": 25
     },
     {
       "id": "boss_vader",
       "display_name": "Darth Vader",
-      "title": "El Sith de Negro Caparazón",
-      "description": "Espadachín con force powers. Parry_riposte: NO atacar durante su windup de sable. Force_choke es ranged. Esquivar y castigar después del swing.",
+      "title": "El Sith de Negro Caparaz\u00f3n",
+      "description": "Espadach\u00edn con force powers. Parry_riposte: NO atacar durante su windup de sable. Force_choke es ranged. Esquivar y castigar despu\u00e9s del swing.",
       "inspiration": "Star Wars",
-      "max_hp": 1200.0,
+      "max_hp": 1100.0,
       "tier": 3,
       "weapon_id": "scimitar_red",
-      "skill_ids": ["light_attack_001", "force_choke_001", "parry_riposte_001", "gomu_gomu_pistol_001"],
+      "skill_ids": [
+        "light_attack_001",
+        "force_choke_001",
+        "parry_riposte_001",
+        "gomu_gomu_pistol_001"
+      ],
       "behavior": "defensive",
       "aggression": 0.6,
       "preferred_range": "melee",
@@ -61,19 +86,29 @@
       "weakness_mult": 1.4,
       "resistance_element": "dark",
       "resistance_mult": 0.5,
-      "skill_weights": [0.6, 1.0, 1.4, 0.8],
+      "skill_weights": [
+        0.6,
+        1.0,
+        1.4,
+        0.8
+      ],
       "reward_skill_points": 15
     },
     {
       "id": "boss_joker",
       "display_name": "The Joker",
-      "title": "El Príncipe Payaso del Crimen",
-      "description": "Cazador impredecible. poisoned_dart, smoke_bomb (invisibilidad), exploding_card. BAJA HP, no confiar en patrón: random skill cada vez. Atacar sin pausa.",
+      "title": "El Pr\u00edncipe Payaso del Crimen",
+      "description": "Cazador impredecible. poisoned_dart, smoke_bomb (invisibilidad), exploding_card. BAJA HP, no confiar en patr\u00f3n: random skill cada vez. Atacar sin pausa.",
       "inspiration": "DC Comics",
-      "max_hp": 600.0,
+      "max_hp": 1150.0,
       "tier": 2,
       "weapon_id": "dagger_poison",
-      "skill_ids": ["poison_dart_001", "smoke_bomb_001", "exploding_card_001", "light_attack_001"],
+      "skill_ids": [
+        "poison_dart_001",
+        "smoke_bomb_001",
+        "exploding_card_001",
+        "light_attack_001"
+      ],
       "behavior": "trickster",
       "aggression": 0.5,
       "preferred_range": "any",
@@ -82,19 +117,29 @@
       "weakness_mult": 1.5,
       "resistance_element": "dark",
       "resistance_mult": 0.7,
-      "skill_weights": [1.0, 0.8, 0.8, 0.4],
+      "skill_weights": [
+        1.0,
+        0.8,
+        0.8,
+        0.4
+      ],
       "reward_skill_points": 10
     },
     {
       "id": "boss_lich",
       "display_name": "The Lich",
       "title": "El Amo del Mal Puro",
-      "description": "Mago oscuro supremo. lich_bolt rápido, necromancy revive adds. lich_form: al <30% HP, se vuelve INMORTAL 5s (curar DoT = daño). Interrumpir casts.",
+      "description": "Mago oscuro supremo. lich_bolt r\u00e1pido, necromancy revive adds. lich_form: al <30% HP, se vuelve INMORTAL 5s (curar DoT = da\u00f1o). Interrumpir casts.",
       "inspiration": "Adventure Time",
-      "max_hp": 1800.0,
+      "max_hp": 1400.0,
       "tier": 5,
       "weapon_id": "staff_dark",
-      "skill_ids": ["dark_bolt_001", "summon_minion_001", "lich_form_001", "soul_drain_001"],
+      "skill_ids": [
+        "dark_bolt_001",
+        "summon_minion_001",
+        "lich_form_001",
+        "soul_drain_001"
+      ],
       "behavior": "caster",
       "aggression": 0.4,
       "preferred_range": "ranged",
@@ -103,19 +148,29 @@
       "weakness_mult": 1.7,
       "resistance_element": "dark",
       "resistance_mult": 0.4,
-      "skill_weights": [1.2, 1.0, 0.3, 0.8],
+      "skill_weights": [
+        1.2,
+        1.0,
+        0.3,
+        0.8
+      ],
       "reward_skill_points": 25
     },
     {
       "id": "boss_medusa",
       "display_name": "Medusa",
       "title": "La Gorgona de Cabello de Serpiente",
-      "description": "petrify_gaze: si la miras, STUN 2s. Atacar siempre por DETRÁS o por la espalda. snake_strike y venomous_bite son melee, sword_slash es wide.",
-      "inspiration": "Mitología Griega",
-      "max_hp": 900.0,
+      "description": "petrify_gaze: si la miras, STUN 2s. Atacar siempre por DETR\u00c1S o por la espalda. snake_strike y venomous_bite son melee, sword_slash es wide.",
+      "inspiration": "Mitolog\u00eda Griega",
+      "max_hp": 1150.0,
       "tier": 2,
       "weapon_id": "sword_stone",
-      "skill_ids": ["petrify_gaze_001", "light_attack_001", "venomous_bite_001", "poison_dart_001"],
+      "skill_ids": [
+        "petrify_gaze_001",
+        "light_attack_001",
+        "venomous_bite_001",
+        "poison_dart_001"
+      ],
       "behavior": "evasive",
       "aggression": 0.6,
       "preferred_range": "melee",
@@ -124,19 +179,29 @@
       "weakness_mult": 1.5,
       "resistance_element": "light",
       "resistance_mult": 0.4,
-      "skill_weights": [0.7, 0.8, 1.0, 0.6],
+      "skill_weights": [
+        0.7,
+        0.8,
+        1.0,
+        0.6
+      ],
       "reward_skill_points": 10
     },
     {
       "id": "boss_pennywise",
       "display_name": "Pennywise",
       "title": "El Payaso de It",
-      "description": "Ilusionista. shapeshift le hace cambiar de elemento débil momentáneamente. dead_lights es UN INSTAKILL si HP<10%. light element = único counter.",
+      "description": "Ilusionista. shapeshift le hace cambiar de elemento d\u00e9bil moment\u00e1neamente. dead_lights es UN INSTAKILL si HP<10%. light element = \u00fanico counter.",
       "inspiration": "Stephen King",
-      "max_hp": 800.0,
+      "max_hp": 1400.0,
       "tier": 2,
       "weapon_id": "",
-      "skill_ids": ["fear_aura_001", "smoke_bomb_001", "dead_lights_001", "mind_break_001"],
+      "skill_ids": [
+        "fear_aura_001",
+        "smoke_bomb_001",
+        "dead_lights_001",
+        "mind_break_001"
+      ],
       "behavior": "trickster",
       "aggression": 0.4,
       "preferred_range": "any",
@@ -145,19 +210,29 @@
       "weakness_mult": 1.8,
       "resistance_element": "dark",
       "resistance_mult": 0.4,
-      "skill_weights": [1.0, 0.8, 0.2, 1.0],
+      "skill_weights": [
+        1.0,
+        0.8,
+        0.2,
+        1.0
+      ],
       "reward_skill_points": 10
     },
     {
       "id": "boss_bane",
       "display_name": "Bane",
-      "title": "El Que Rompe al Murciélago",
-      "description": "Brute con venom. venom_pump BUFFEA su damage x2.5 cada 30s. Si no lo matás en el primer ciclo, se vuelve imparable. STUN > buff removible.",
+      "title": "El Que Rompe al Murci\u00e9lago",
+      "description": "Brute con venom. venom_pump BUFFEA su damage x2.5 cada 30s. Si no lo mat\u00e1s en el primer ciclo, se vuelve imparable. STUN > buff removible.",
       "inspiration": "DC Comics",
-      "max_hp": 1400.0,
+      "max_hp": 1200.0,
       "tier": 3,
       "weapon_id": "",
-      "skill_ids": ["charging_tackle_001", "ground_pound_001", "venom_pump_001", "break_defense_001"],
+      "skill_ids": [
+        "charging_tackle_001",
+        "ground_pound_001",
+        "venom_pump_001",
+        "break_defense_001"
+      ],
       "behavior": "aggressive",
       "aggression": 0.9,
       "preferred_range": "melee",
@@ -166,7 +241,12 @@
       "weakness_mult": 1.5,
       "resistance_element": "physical",
       "resistance_mult": 0.7,
-      "skill_weights": [1.0, 0.7, 0.6, 0.4],
+      "skill_weights": [
+        1.0,
+        0.7,
+        0.6,
+        0.4
+      ],
       "reward_skill_points": 15
     },
     {
@@ -175,10 +255,15 @@
       "title": "El Rey Demonio",
       "description": "Warrior-mage. triforce_buff le da escudo + damage 8s. Esperar a que se le caiga, luego burst. triangle_blast es AOE en cono.",
       "inspiration": "The Legend of Zelda",
-      "max_hp": 1600.0,
+      "max_hp": 1200.0,
       "tier": 4,
       "weapon_id": "sword_dark",
-      "skill_ids": ["dark_bolt_001", "light_attack_001", "battle_cry_001", "triangle_blast_001"],
+      "skill_ids": [
+        "dark_bolt_001",
+        "light_attack_001",
+        "battle_cry_001",
+        "triangle_blast_001"
+      ],
       "behavior": "tactical",
       "aggression": 0.7,
       "preferred_range": "any",
@@ -187,19 +272,29 @@
       "weakness_mult": 1.5,
       "resistance_element": "dark",
       "resistance_mult": 0.5,
-      "skill_weights": [0.8, 0.7, 0.5, 1.2],
+      "skill_weights": [
+        0.8,
+        0.7,
+        0.5,
+        1.2
+      ],
       "reward_skill_points": 20
     },
     {
       "id": "boss_hades",
       "display_name": "Hades",
       "title": "Dios del Inframundo",
-      "description": "soul_drain: LIFESTEAL puro. Si lo peleás lento, se cura más de lo que le hacés. BURST o morís. bident_thrust es melee rapidísimo.",
-      "inspiration": "Mitología Griega",
-      "max_hp": 1300.0,
+      "description": "soul_drain: LIFESTEAL puro. Si lo pele\u00e1s lento, se cura m\u00e1s de lo que le hac\u00e9s. BURST o mor\u00eds. bident_thrust es melee rapid\u00edsimo.",
+      "inspiration": "Mitolog\u00eda Griega",
+      "max_hp": 1200.0,
       "tier": 3,
       "weapon_id": "spear_dark",
-      "skill_ids": ["soul_drain_001", "light_attack_001", "firebreath_001", "death_call_001"],
+      "skill_ids": [
+        "soul_drain_001",
+        "light_attack_001",
+        "firebreath_001",
+        "death_call_001"
+      ],
       "behavior": "tactical",
       "aggression": 0.7,
       "preferred_range": "any",
@@ -208,19 +303,29 @@
       "weakness_mult": 1.5,
       "resistance_element": "dark",
       "resistance_mult": 0.5,
-      "skill_weights": [1.4, 0.6, 0.5, 0.3],
+      "skill_weights": [
+        1.4,
+        0.6,
+        0.5,
+        0.3
+      ],
       "reward_skill_points": 15
     },
     {
       "id": "boss_voldemort",
       "display_name": "Voldemort",
-      "title": "El Señor Tenebroso",
-      "description": "Caster puro SIN MELEE. avada_kedavra: si no lo interrumpís, hace 250 damage. crucio es DoT. water element = debilidad (Harry usó una estatua de agua).",
+      "title": "El Se\u00f1or Tenebroso",
+      "description": "Caster puro SIN MELEE. avada_kedavra: si no lo interrump\u00eds, hace 250 damage. crucio es DoT. water element = debilidad (Harry us\u00f3 una estatua de agua).",
       "inspiration": "Harry Potter",
-      "max_hp": 900.0,
+      "max_hp": 1250.0,
       "tier": 3,
       "weapon_id": "staff_dark",
-      "skill_ids": ["avada_kedavra_001", "crucio_001", "flight_001", "dark_bolt_001"],
+      "skill_ids": [
+        "avada_kedavra_001",
+        "crucio_001",
+        "flight_001",
+        "dark_bolt_001"
+      ],
       "behavior": "caster",
       "aggression": 0.4,
       "preferred_range": "ranged",
@@ -229,7 +334,12 @@
       "weakness_mult": 1.5,
       "resistance_element": "dark",
       "resistance_mult": 0.4,
-      "skill_weights": [1.0, 0.8, 0.3, 1.2],
+      "skill_weights": [
+        1.0,
+        0.8,
+        0.3,
+        1.2
+      ],
       "reward_skill_points": 15
     },
     {
@@ -237,11 +347,16 @@
       "display_name": "Maleficent",
       "title": "La Hada del Mal",
       "description": "Zoner caster. dragon_breath: cono de fuego amplio. thorny_vine: AOE en zona fija. fae_mirage: DECOY (golpear al real, no al dummy). earth la destruye.",
-      "inspiration": "Disney — La Bella Durmiente",
-      "max_hp": 1100.0,
+      "inspiration": "Disney \u2014 La Bella Durmiente",
+      "max_hp": 1300.0,
       "tier": 3,
       "weapon_id": "staff_dark",
-      "skill_ids": ["firebreath_001", "dark_spike_001", "thorny_vine_001", "mirror_image_001"],
+      "skill_ids": [
+        "firebreath_001",
+        "dark_spike_001",
+        "thorny_vine_001",
+        "mirror_image_001"
+      ],
       "behavior": "caster",
       "aggression": 0.5,
       "preferred_range": "ranged",
@@ -250,19 +365,29 @@
       "weakness_mult": 1.5,
       "resistance_element": "fire",
       "resistance_mult": 0.5,
-      "skill_weights": [0.9, 0.7, 1.0, 0.4],
+      "skill_weights": [
+        0.9,
+        0.7,
+        1.0,
+        0.4
+      ],
       "reward_skill_points": 15
     },
     {
       "id": "boss_majin_buu",
       "display_name": "Majin Buu",
       "title": "El Demonio de Goma Eterna",
-      "description": "Regenera 3% HP/segundo. candy_beam: STUN + teleport. absorption: si lo matás con su misma HP exactamente, revive con full. lightning ANULA la regen.",
+      "description": "Regenera 3% HP/segundo. candy_beam: STUN + teleport. absorption: si lo mat\u00e1s con su misma HP exactamente, revive con full. lightning ANULA la regen.",
       "inspiration": "Dragon Ball Z",
-      "max_hp": 1700.0,
+      "max_hp": 1150.0,
       "tier": 4,
       "weapon_id": "",
-      "skill_ids": ["candy_beam_001", "regeneration_001", "light_attack_001", "absorption_001"],
+      "skill_ids": [
+        "candy_beam_001",
+        "regeneration_001",
+        "light_attack_001",
+        "absorption_001"
+      ],
       "behavior": "berserker",
       "aggression": 0.6,
       "preferred_range": "melee",
@@ -271,19 +396,29 @@
       "weakness_mult": 1.5,
       "resistance_element": "dark",
       "resistance_mult": 0.6,
-      "skill_weights": [0.5, 0.3, 1.2, 0.2],
+      "skill_weights": [
+        0.5,
+        0.3,
+        1.2,
+        0.2
+      ],
       "reward_skill_points": 20
     },
     {
       "id": "boss_storm",
       "display_name": "Storm",
       "title": "La Diosa del Clima",
-      "description": "Zoner puro. Nunca melee. hurricane: BLOQUEA melee (aura). chain_lightning salta. Físico pasa por la tormenta? HURT 2x. Cerrar distancia es la clave.",
+      "description": "Zoner puro. Nunca melee. hurricane: BLOQUEA melee (aura). chain_lightning salta. F\u00edsico pasa por la tormenta? HURT 2x. Cerrar distancia es la clave.",
       "inspiration": "X-Men",
-      "max_hp": 900.0,
+      "max_hp": 1400.0,
       "tier": 2,
       "weapon_id": "staff_lightning",
-      "skill_ids": ["lightning_bolt_001", "tornado_001", "hurricane_001", "chain_lightning_001"],
+      "skill_ids": [
+        "lightning_bolt_001",
+        "tornado_001",
+        "hurricane_001",
+        "chain_lightning_001"
+      ],
       "behavior": "caster",
       "aggression": 0.5,
       "preferred_range": "ranged",
@@ -292,19 +427,29 @@
       "weakness_mult": 1.4,
       "resistance_element": "lightning",
       "resistance_mult": 0.5,
-      "skill_weights": [1.0, 0.7, 0.5, 1.3],
+      "skill_weights": [
+        1.0,
+        0.7,
+        0.5,
+        1.3
+      ],
       "reward_skill_points": 10
     },
     {
       "id": "boss_kratos",
       "display_name": "Kratos",
       "title": "El Fantasma de Esparta",
-      "description": "Berserker absoluto. spartan_rage: BUFF x3 dmg + lifesteal 10s. rage_of_titans: AOE. water element = Kryptonita (recuerdo: se ahogó).",
+      "description": "Berserker absoluto. spartan_rage: BUFF x3 dmg + lifesteal 10s. rage_of_titans: AOE. water element = Kryptonita (recuerdo: se ahog\u00f3).",
       "inspiration": "God of War",
-      "max_hp": 1500.0,
+      "max_hp": 1100.0,
       "tier": 4,
       "weapon_id": "axe_fire",
-      "skill_ids": ["blades_of_chaos_001", "battle_cry_001", "ground_pound_001", "helm_splitter_001"],
+      "skill_ids": [
+        "blades_of_chaos_001",
+        "battle_cry_001",
+        "ground_pound_001",
+        "helm_splitter_001"
+      ],
       "behavior": "berserker",
       "aggression": 1.0,
       "preferred_range": "melee",
@@ -313,19 +458,29 @@
       "weakness_mult": 1.6,
       "resistance_element": "fire",
       "resistance_mult": 0.5,
-      "skill_weights": [1.4, 0.5, 0.6, 1.0],
+      "skill_weights": [
+        1.4,
+        0.5,
+        0.6,
+        1.0
+      ],
       "reward_skill_points": 20
     },
     {
       "id": "boss_dio",
       "display_name": "DIO",
       "title": "El Vampiro que Detuvo el Tiempo",
-      "description": "za_warudo: 3s TIME STOP — durante esos 3s DIO golpea FREE. road_roller = MASSIVE single hit. light element = SOL (lo daña crítico). No atacar durante stop.",
+      "description": "za_warudo: 3s TIME STOP \u2014 durante esos 3s DIO golpea FREE. road_roller = MASSIVE single hit. light element = SOL (lo da\u00f1a cr\u00edtico). No atacar durante stop.",
       "inspiration": "JoJo's Bizarre Adventure",
-      "max_hp": 1100.0,
+      "max_hp": 1150.0,
       "tier": 3,
       "weapon_id": "dagger_knife",
-      "skill_ids": ["za_warudo_001", "light_attack_001", "knives_throw_001", "vaporizing_eye_001"],
+      "skill_ids": [
+        "za_warudo_001",
+        "light_attack_001",
+        "knives_throw_001",
+        "vaporizing_eye_001"
+      ],
       "behavior": "tactical",
       "aggression": 0.8,
       "preferred_range": "any",
@@ -334,19 +489,29 @@
       "weakness_mult": 1.6,
       "resistance_element": "dark",
       "resistance_mult": 0.5,
-      "skill_weights": [0.5, 0.8, 1.0, 0.4],
+      "skill_weights": [
+        0.5,
+        0.8,
+        1.0,
+        0.4
+      ],
       "reward_skill_points": 15
     },
     {
       "id": "boss_guts",
       "display_name": "Guts",
-      "title": "El Espadachín Negro",
-      "description": "drag_slayer es MASSIVE cleave 360°. behelit_howl invoca sombras (doom). cannon_arm = ranged. arcane = su debilidad (Brand of Sacrifice).",
+      "title": "El Espadach\u00edn Negro",
+      "description": "drag_slayer es MASSIVE cleave 360\u00b0. behelit_howl invoca sombras (doom). cannon_arm = ranged. arcane = su debilidad (Brand of Sacrifice).",
       "inspiration": "Berserk",
-      "max_hp": 1400.0,
+      "max_hp": 1100.0,
       "tier": 3,
       "weapon_id": "sword_great",
-      "skill_ids": ["massive_cleave_001", "cannon_arm_001", "summon_minion_001", "battle_cry_001"],
+      "skill_ids": [
+        "massive_cleave_001",
+        "cannon_arm_001",
+        "summon_minion_001",
+        "battle_cry_001"
+      ],
       "behavior": "berserker",
       "aggression": 0.9,
       "preferred_range": "melee",
@@ -355,19 +520,29 @@
       "weakness_mult": 1.5,
       "resistance_element": "physical",
       "resistance_mult": 0.6,
-      "skill_weights": [1.4, 0.6, 0.4, 0.5],
+      "skill_weights": [
+        1.4,
+        0.6,
+        0.4,
+        0.5
+      ],
       "reward_skill_points": 15
     },
     {
       "id": "boss_meruem",
       "display_name": "Meruem",
       "title": "El Rey de las Hormigas Quimera",
-      "description": "Tactical adaptive. nen_pulse: si vos usás el mismo skill 2 veces, lo COUNTERA y devuelve 150% daño. photon_sterilizer es beam. fire = su Némesis (Netero).",
+      "description": "Tactical adaptive. nen_pulse: si vos us\u00e1s el mismo skill 2 veces, lo COUNTERA y devuelve 150% da\u00f1o. photon_sterilizer es beam. fire = su N\u00e9mesis (Netero).",
       "inspiration": "Hunter x Hunter",
-      "max_hp": 1300.0,
+      "max_hp": 1100.0,
       "tier": 3,
       "weapon_id": "",
-      "skill_ids": ["light_attack_001", "photon_sterilizer_001", "tail_lash_001", "nen_pulse_001"],
+      "skill_ids": [
+        "light_attack_001",
+        "photon_sterilizer_001",
+        "tail_lash_001",
+        "nen_pulse_001"
+      ],
       "behavior": "tactical",
       "aggression": 0.7,
       "preferred_range": "any",
@@ -376,19 +551,29 @@
       "weakness_mult": 1.5,
       "resistance_element": "physical",
       "resistance_mult": 0.5,
-      "skill_weights": [0.8, 0.7, 1.0, 0.5],
+      "skill_weights": [
+        0.8,
+        0.7,
+        1.0,
+        0.5
+      ],
       "reward_skill_points": 15
     },
     {
       "id": "boss_sephiroth",
       "display_name": "Sephiroth",
-      "title": "El Ángel de Un Ala",
+      "title": "El \u00c1ngel de Un Ala",
       "description": "Sword-master absoluto. masamune_slash = 12-hit combo. supernova: si HP>50%, EXPLOTA (200 dmg). heartless_angel: STUN si HP<10%. water lo debilita.",
       "inspiration": "Final Fantasy VII",
-      "max_hp": 1500.0,
+      "max_hp": 1200.0,
       "tier": 4,
       "weapon_id": "sword_long",
-      "skill_ids": ["gomu_gomu_pistol_001", "light_attack_001", "supernova_001", "parry_riposte_001"],
+      "skill_ids": [
+        "gomu_gomu_pistol_001",
+        "light_attack_001",
+        "supernova_001",
+        "parry_riposte_001"
+      ],
       "behavior": "tactical",
       "aggression": 0.8,
       "preferred_range": "any",
@@ -397,19 +582,29 @@
       "weakness_mult": 1.5,
       "resistance_element": "fire",
       "resistance_mult": 0.5,
-      "skill_weights": [0.8, 0.7, 0.4, 1.2],
+      "skill_weights": [
+        0.8,
+        0.7,
+        0.4,
+        1.2
+      ],
       "reward_skill_points": 20
     },
     {
       "id": "boss_yhwach",
       "display_name": "Yhwach",
       "title": "El Rey de las Almas",
-      "description": "almighty: REWIND tu último ataque (te lo roba). auswählen: mata adds pero también mata a Yhwach. still_zombie: no muere hasta HP<-200%. dark = counter.",
+      "description": "almighty: REWIND tu \u00faltimo ataque (te lo roba). ausw\u00e4hlen: mata adds pero tambi\u00e9n mata a Yhwach. still_zombie: no muere hasta HP<-200%. dark = counter.",
       "inspiration": "Bleach",
-      "max_hp": 2000.0,
+      "max_hp": 1200.0,
       "tier": 5,
       "weapon_id": "sword_soul",
-      "skill_ids": ["light_attack_001", "soul_drain_001", "battle_cry_001", "dark_pact_001"],
+      "skill_ids": [
+        "light_attack_001",
+        "soul_drain_001",
+        "battle_cry_001",
+        "dark_pact_001"
+      ],
       "behavior": "tactical",
       "aggression": 0.5,
       "preferred_range": "any",
@@ -418,7 +613,12 @@
       "weakness_mult": 1.5,
       "resistance_element": "light",
       "resistance_mult": 0.4,
-      "skill_weights": [0.8, 1.0, 0.4, 0.6],
+      "skill_weights": [
+        0.8,
+        1.0,
+        0.4,
+        0.6
+      ],
       "reward_skill_points": 25
     }
   ]

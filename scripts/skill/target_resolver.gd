@@ -114,6 +114,41 @@ static func resolve(
 					continue
 				if (n as Node3D).global_position.distance_squared_to(center_p.global_position) <= r2_p:
 					result.append(n)
+		&"boss":
+			# Boss vs boss: el target_override del caster.
+			if caster and "target_override" in caster and caster.target_override != null and is_instance_valid(caster.target_override):
+				result.append(caster.target_override)
+			else:
+				# Fallback: cualquier boss vivo en el grupo "bosses"
+				var ml: SceneTree = Engine.get_main_loop()
+				if ml:
+					for n in ml.get_nodes_in_group("bosses"):
+						if not is_instance_valid(n) or n == caster:
+							continue
+						result.append(n)
+						break
+		&"boss_aoe":
+			# Boss vs boss AoE: todos los bosses (excepto caster) en radio.
+			var center_b: Node3D = null
+			if caster and caster is Node3D:
+				center_b = caster as Node3D
+			var r_b: float = float(params.get("radius", 6.0))
+			if center_b == null:
+				return result
+			var r2_b := r_b * r_b
+			var ml2: SceneTree = Engine.get_main_loop()
+			if ml2:
+				for n in ml2.get_nodes_in_group("bosses"):
+					if not is_instance_valid(n) or not n is Node3D or n == caster:
+						continue
+					if (n as Node3D).global_position.distance_squared_to(center_b.global_position) <= r2_b:
+						result.append(n)
+				# También añadir al player si está en rango
+				for n in ml2.get_nodes_in_group(PLAYER_GROUP):
+					if not is_instance_valid(n) or not n is Node3D:
+						continue
+					if (n as Node3D).global_position.distance_squared_to(center_b.global_position) <= r2_b:
+						result.append(n)
 	return result
 
 
