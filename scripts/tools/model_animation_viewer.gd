@@ -299,13 +299,17 @@ func _on_animation_selected(idx: int) -> void:
 	if not animation_player:
 		info_label.text = "No AnimationPlayer on current character"
 		return
-	if idx < 0 or idx >= animations.size():
-		# "(none)" or out-of-range → stop
+	# OptionButton row 0 is "(none)". Row N (>=1) corresponds to animations[N-1].
+	# item_selected fires with the ROW index, not the stored data id.
+	if idx <= 0:
 		animation_player.stop()
 		current_animation = ""
 		_update_info()
 		return
-	_play_animation(animations[idx])
+	var anim_idx := idx - 1
+	if anim_idx >= animations.size():
+		return
+	_play_animation(animations[anim_idx])
 
 
 func _play_animation(anim_path: String) -> void:
