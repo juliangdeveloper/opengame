@@ -3,6 +3,15 @@
 [ext_resource type="Script" path="res://scripts/character_resource.gd" id="1_jq6ir"]
 
 [resource]
+base_color = Color(0.333, 0.200, 0.133, 1)
+flash_color = Color(1.0, 0.5, 0.2, 1)
+model_hint = "boss_guts"
+body_shape = &"capsule"
+body_height = 2.0
+body_radius = 0.5
+size_scale = 1.2
+head_color = Color(0.133, 0.133, 0.133, 1)
+has_head = true
 script = ExtResource("1_jq6ir")
 id = &"boss_guts"
 display_name = "Guts"

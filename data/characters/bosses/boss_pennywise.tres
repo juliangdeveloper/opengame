@@ -3,6 +3,15 @@
 [ext_resource type="Script" path="res://scripts/character_resource.gd" id="1_nwwcs"]
 
 [resource]
+base_color = Color(0.800, 0.200, 0.267, 1)
+flash_color = Color(1.0, 0.5, 0.2, 1)
+model_hint = "boss_pennywise"
+body_shape = &"capsule"
+body_height = 1.7
+body_radius = 0.35
+size_scale = 1.0
+head_color = Color(0.878, 0.784, 0.627, 1)
+has_head = true
 script = ExtResource("1_nwwcs")
 id = &"boss_pennywise"
 display_name = "Pennywise"

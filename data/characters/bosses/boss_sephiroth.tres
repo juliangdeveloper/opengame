@@ -3,6 +3,15 @@
 [ext_resource type="Script" path="res://scripts/character_resource.gd" id="1_k2t5v"]
 
 [resource]
+base_color = Color(0.800, 0.800, 0.800, 1)
+flash_color = Color(1.0, 0.5, 0.2, 1)
+model_hint = "boss_sephiroth"
+body_shape = &"capsule"
+body_height = 2.0
+body_radius = 0.4
+size_scale = 1.2
+head_color = Color(1.000, 0.200, 0.200, 1)
+has_head = true
 script = ExtResource("1_k2t5v")
 id = &"boss_sephiroth"
 display_name = "Sephiroth"

@@ -219,10 +219,18 @@ func _make_player_controller() -> Node:
 
 
 func _setup_visuals() -> void:
-	if mesh_instance:
+	# Apply procedural visuals from CharacterResource data.
+	# No FBX models — just primitives with data-driven colors, shapes, sizes.
+	if mesh_instance and data != null:
 		_base_mat = StandardMaterial3D.new()
 		_base_mat.albedo_color = base_color
 		mesh_instance.material_override = _base_mat
+		# Resize body mesh according to data.body_height / body_radius / size_scale
+		if data.body_height > 0.0:
+			_resize_body_mesh(mesh_instance, data.body_height, data.body_radius, data.size_scale)
+		# Build head if enabled and not already in scene
+		if data.has_head and not _head_instance:
+			_build_procedural_head()
 	if attack_area and hit_collision:
 		_hitbox_mat = StandardMaterial3D.new()
 		_hitbox_mat.transparency = 1
@@ -236,6 +244,45 @@ func _setup_visuals() -> void:
 		attack_area.monitoring = false
 	if label_hp:
 		label_hp.text = "%d/%d" % [int(hp), int(max_hp)]
+
+
+## Resize the body mesh (Capsule/Cube/Sphere/Cylinder) based on data params.
+## This replaces the hardcoded Capsule sizes in the .tscn files.
+func _resize_body_mesh(mesh_inst: MeshInstance3D, height: float, radius: float, scale: float) -> void:
+	var m: Mesh = mesh_inst.mesh
+	if m is CapsuleMesh:
+		m.height = height
+		m.radius = radius
+	elif m is CylinderMesh:
+		m.top_radius = radius
+		m.bottom_radius = radius
+		m.height = height
+	elif m is SphereMesh:
+		m.radius = max(radius, height * 0.5)
+	elif m is BoxMesh:
+		m.size = Vector3(radius * 2.0, height, radius * 2.0)
+	mesh_inst.scale = Vector3.ONE * scale
+
+
+## Build a small procedural head sphere on top of the body.
+## Only called when data.has_head = true and no head exists in the .tscn.
+var _head_instance: MeshInstance3D = null
+func _build_procedural_head() -> void:
+	if model == null:
+		return
+	_head_instance = MeshInstance3D.new()
+	_head_instance.name = "ProceduralHead"
+	var head_mesh := SphereMesh.new()
+	var r: float = data.body_radius * 0.6
+	head_mesh.radius = r
+	head_mesh.height = r * 2.0
+	_head_instance.mesh = head_mesh
+	var head_mat := StandardMaterial3D.new()
+	head_mat.albedo_color = data.head_color
+	_head_instance.material_override = head_mat
+	var head_y: float = data.body_height * 0.5 + r * 0.5
+	_head_instance.position = Vector3(0, head_y, 0)
+	model.add_child(_head_instance)
 
 
 func _find_mesh(parent: Node) -> MeshInstance3D:

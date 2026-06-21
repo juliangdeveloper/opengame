@@ -28,5 +28,11 @@ skill_ids = Array[StringName]([
 &"correr_001"
 ])
 base_color = Color(0.3, 0.5, 0.8, 1)
+body_shape = &"capsule"
+body_height = 1.8
+body_radius = 0.35
+size_scale = 1.0
+head_color = Color(0.878, 0.784, 0.627, 1)
+has_head = true
 flash_color = Color(1, 0.5, 0.2, 1)
 model_hint = "humanoid"
