@@ -561,8 +561,16 @@ func _find_right_hand_bone(node: Node) -> Node3D:
 
 		# Score: higher = better
 		var score := 0
-		var is_right := ("right" in lower or lower.begins_with("r_") or lower.begins_with("r.") \
-			or "_r_" in lower or lower.ends_with(".r") or " r " in lower)
+		var is_right := false
+		var lower2 := lower
+		# Right-side patterns: covers Mixamo (mixamorig_RightHand, B-hand_R),
+		# Unreal (hand_r, RightHand), generic (R_hand, .R), and "_R" suffix.
+		if "right" in lower2 or "_r_" in lower2 or " r " in lower2:
+			is_right = true
+		elif lower2.begins_with("r_") or lower2.begins_with("r.") \
+			or lower2.ends_with("_r") or lower2.ends_with(".r") \
+			or lower2.ends_with("_right") or lower2.ends_with("_hand_r"):
+			is_right = true
 		if not is_right:
 			continue
 		score += 100
@@ -570,18 +578,20 @@ func _find_right_hand_bone(node: Node) -> Node3D:
 		if "hand" in lower:
 			score += 50
 			if lower == "righthand" or lower == "right_hand" or lower == "b-hand_r" \
-				or lower == "hand.r" or lower == "r_hand":
+				or lower == "hand.r" or lower == "r_hand" \
+				or lower == "b-hand_l" or lower == "hand_l":
 				score += 30  # exact match bonus
 		if "wrist" in lower:
 			score += 20
 		if "palm" in lower:
-			score += 10
+			# Palm is the parent of fingers but NOT the wrist. Penalize palms
+			# so they don't outscore the hand bone.
+			score -= 30
 
-		# Strongest signal: this bone has CHILDREN (fingers belong to a wrist).
-		# If a "right_hand" candidate has at least 2 children, it's very likely
-		# the wrist — the parent of finger bones.
-		# Count how many of its DIRECT children are finger bones.
+		# Strongest signal: count direct children that are palms or fingers.
+		# The wrist bone's children are palms (>= 2); a palm's children are fingers.
 		var finger_child_count := 0
+		var palm_child_count := 0
 		for j in range(skel.get_bone_count()):
 			if skel.get_bone_parent(j) == i:
 				var child_name: String = skel.get_bone_name(j).to_lower()
@@ -589,13 +599,18 @@ func _find_right_hand_bone(node: Node) -> Node3D:
 					if fw in child_name:
 						finger_child_count += 1
 						break
+				if "palm" in child_name:
+					palm_child_count += 1
 		if finger_child_count >= 2:
-			score += 500  # "right hand" with multiple finger children = wrist
+			# This is a PALM bone (parent of fingers) — smaller bonus than wrist.
+			score += 200
+		if palm_child_count >= 2:
+			# This is the WRIST bone (parent of palms).
+			score += 500
 
 		if score > best_score:
 			best_score = score
 			best_name = bn
-
 	if best_name == "":
 		return null
 
