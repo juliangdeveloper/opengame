@@ -203,6 +203,11 @@ func _load_character(idx: int) -> void:
 
 	character_pivot.add_child(current_character)
 
+	# Normalize scale: many FBX rigs use cm (Mixamo, Unreal exports) so the
+	# model ends up ~30x too big for a Godot scene. Detect by checking the
+	# skeleton's bone positions and rescale to a human-sized 1.7m tall character.
+	_normalize_character_scale(current_character)
+
 	# Re-parent any weapon that was previously equipped to the new character's hand
 	if is_instance_valid(current_weapon):
 		var old_weapon := current_weapon
@@ -249,6 +254,43 @@ func _find_skeleton(node: Node) -> Skeleton3D:
 		if found:
 			return found
 	return null
+
+
+# Detect rig scale by checking bone distances. Many FBX rigs from Mixamo,
+# Unreal, and similar tools export in cm. We want a human-sized character
+# (~1.7m tall). If the bone positions indicate the rig is at a different
+# scale, rescale the character to 1.7m height.
+#
+# Approach: find the height of the skeleton by looking at the highest bone
+# (head) and the lowest (feet). If the height suggests > 5m or < 0.5m,
+# rescale to 1.7m.
+func _normalize_character_scale(node: Node) -> void:
+	var skel := _find_skeleton(node)
+	if not skel:
+		return
+	if skel.get_bone_count() == 0:
+		return
+
+	# Find the bounding height of all bone positions in world space.
+	var min_y: float = INF
+	var max_y: float = -INF
+	for i in range(skel.get_bone_count()):
+		var p := skel.get_bone_global_pose(i).origin
+		if p.y < min_y: min_y = p.y
+		if p.y > max_y: max_y = p.y
+	var height: float = max_y - min_y
+	if height <= 0.0:
+		return
+
+	# Target human height ~1.7m. If the rig is already in that ballpark
+	# (0.5m .. 5m), don't touch it.
+	var target_height := 1.7
+	if height >= 0.5 and height <= 5.0:
+		return
+
+	var scale_factor := target_height / height
+	node.scale = Vector3.ONE * scale_factor
+	print("[Viewer] normalized rig scale: height=%.2fm → scale=%.4f" % [height, scale_factor])
 
 
 # ---------- Animation handling ----------
@@ -481,17 +523,22 @@ func _find_right_hand_bone(node: Node) -> Node3D:
 		return null
 
 	# Priority list — match exact/contains in order from most specific to least.
-	# Each entry is (substrings_to_avoid, primary_substring).
 	# We skip bones that contain "thumb", "index", "middle", "ring", "pinky" (fingers).
 	var finger_words := ["thumb", "index", "middle", "ring", "pinky"]
 
+	# Pre-compute the children of each bone (by index) to detect "has finger children"
+	# — the wrist bone is the only hand bone whose children are finger bones.
+	var child_count: PackedInt32Array = PackedInt32Array()
+	child_count.resize(skel.get_bone_count())
+	for i in range(skel.get_bone_count()):
+		child_count[i] = 0
+	for i in range(skel.get_bone_count()):
+		var pi: int = skel.get_bone_parent(i)
+		if pi >= 0:
+			child_count[pi] += 1
+
 	var best_name := ""
 	var best_score := -1
-
-	# Get the skeleton's scale so we can detect "real" bones (with non-trivial
-	# global pose origin) vs dummy/root bones (often at world origin, no parent).
-	var skel_scale: Vector3 = skel.scale
-	var skel_xform: Transform3D = skel.global_transform
 
 	for i in range(skel.get_bone_count()):
 		var bn: String = skel.get_bone_name(i)
@@ -506,7 +553,7 @@ func _find_right_hand_bone(node: Node) -> Node3D:
 		if is_finger:
 			continue
 
-		# Skip root-level dummy bones (no parent, at skeleton origin).
+		# Skip root-level dummy bones (no parent in hierarchy).
 		# These are usually reference dummies imported alongside the main rig.
 		var parent_idx: int = skel.get_bone_parent(i)
 		if parent_idx < 0:
@@ -530,17 +577,20 @@ func _find_right_hand_bone(node: Node) -> Node3D:
 		if "palm" in lower:
 			score += 10
 
-		# Prefer bones that are actually positioned in space (not at skeleton origin).
-		# The wrist bone's global pose origin is far from (0,0,0) because it inherits
-		# the parent chain's translations; root/dummy bones sit at skeleton origin.
-		var pose_origin: Vector3 = skel.get_bone_global_pose(i).origin
-		# Compare in world space (apply skeleton scale + transform)
-		var world_pos: Vector3 = skel_xform * (pose_origin * skel_scale)
-		var dist_from_origin: float = world_pos.length()
-		if dist_from_origin > 1.0:
-			score += 200  # real wrist/hand bone — far from skeleton origin
-		else:
-			score -= 50   # dummy at origin — strongly penalize
+		# Strongest signal: this bone has CHILDREN (fingers belong to a wrist).
+		# If a "right_hand" candidate has at least 2 children, it's very likely
+		# the wrist — the parent of finger bones.
+		# Count how many of its DIRECT children are finger bones.
+		var finger_child_count := 0
+		for j in range(skel.get_bone_count()):
+			if skel.get_bone_parent(j) == i:
+				var child_name: String = skel.get_bone_name(j).to_lower()
+				for fw in finger_words:
+					if fw in child_name:
+						finger_child_count += 1
+						break
+		if finger_child_count >= 2:
+			score += 500  # "right hand" with multiple finger children = wrist
 
 		if score > best_score:
 			best_score = score
@@ -557,9 +607,18 @@ func _find_right_hand_bone(node: Node) -> Node3D:
 
 	var attach := BoneAttachment3D.new()
 	attach.name = attach_name
+	# Set BOTH bone_name and bone_idx — setting bone_idx explicitly is required
+	# because some Godot 4 versions don't update the tracked bone if only
+	# bone_name is assigned (see godot forum: boneattachment3d-not-following).
 	attach.bone_name = best_name
+	attach.bone_idx = skel.find_bone(best_name)
+	# Default is override_pose=false (we want to COPY the bone transform, not
+	# override it). Explicitly set for clarity.
+	attach.override_pose = false
+	# Ensure physics interpolation uses the proper mode for bone tracking.
+	attach.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_INHERIT
 	skel.add_child(attach)
-	print("[Viewer] created BoneAttachment3D for bone: %s (score=%d, world_pos=%s)" % [best_name, best_score, skel_xform * (skel.get_bone_global_pose(skel.find_bone(best_name)).origin * skel_scale)])
+	print("[Viewer] created BoneAttachment3D for bone: %s idx=%d (score=%d)" % [best_name, attach.bone_idx, best_score])
 	return attach
 
 
