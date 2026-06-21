@@ -488,6 +488,11 @@ func _find_right_hand_bone(node: Node) -> Node3D:
 	var best_name := ""
 	var best_score := -1
 
+	# Get the skeleton's scale so we can detect "real" bones (with non-trivial
+	# global pose origin) vs dummy/root bones (often at world origin, no parent).
+	var skel_scale: Vector3 = skel.scale
+	var skel_xform: Transform3D = skel.global_transform
+
 	for i in range(skel.get_bone_count()):
 		var bn: String = skel.get_bone_name(i)
 		var lower := bn.to_lower()
@@ -499,6 +504,12 @@ func _find_right_hand_bone(node: Node) -> Node3D:
 				is_finger = true
 				break
 		if is_finger:
+			continue
+
+		# Skip root-level dummy bones (no parent, at skeleton origin).
+		# These are usually reference dummies imported alongside the main rig.
+		var parent_idx: int = skel.get_bone_parent(i)
+		if parent_idx < 0:
 			continue
 
 		# Score: higher = better
@@ -519,6 +530,18 @@ func _find_right_hand_bone(node: Node) -> Node3D:
 		if "palm" in lower:
 			score += 10
 
+		# Prefer bones that are actually positioned in space (not at skeleton origin).
+		# The wrist bone's global pose origin is far from (0,0,0) because it inherits
+		# the parent chain's translations; root/dummy bones sit at skeleton origin.
+		var pose_origin: Vector3 = skel.get_bone_global_pose(i).origin
+		# Compare in world space (apply skeleton scale + transform)
+		var world_pos: Vector3 = skel_xform * (pose_origin * skel_scale)
+		var dist_from_origin: float = world_pos.length()
+		if dist_from_origin > 1.0:
+			score += 200  # real wrist/hand bone — far from skeleton origin
+		else:
+			score -= 50   # dummy at origin — strongly penalize
+
 		if score > best_score:
 			best_score = score
 			best_name = bn
@@ -536,7 +559,7 @@ func _find_right_hand_bone(node: Node) -> Node3D:
 	attach.name = attach_name
 	attach.bone_name = best_name
 	skel.add_child(attach)
-	print("[Viewer] created BoneAttachment3D for bone: %s (score=%d)" % [best_name, best_score])
+	print("[Viewer] created BoneAttachment3D for bone: %s (score=%d, world_pos=%s)" % [best_name, best_score, skel_xform * (skel.get_bone_global_pose(skel.find_bone(best_name)).origin * skel_scale)])
 	return attach
 
 
