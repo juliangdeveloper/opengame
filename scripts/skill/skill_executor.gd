@@ -64,6 +64,21 @@ func cast() -> bool:
 	_is_casting = true
 	skill_started.emit(skill)
 	print("[SkillExecutor] cast skill=%s" % skill.name)
+	# Log: skill cast event
+	var cl: Node = Engine.get_main_loop().root.get_node_or_null("CombatLog")
+	if cl and cl.has_method("log_event"):
+		var caster_id: String = String(caster.name) if caster else "?"
+		var caster_meta: Dictionary = {
+			"caster": caster_id,
+			"skill_id": String(skill.id),
+			"skill_name": String(skill.name),
+			"category": String(skill.category),
+			"type": String(skill.type),
+		}
+		if caster and "boss_data" in caster and caster.boss_data != null:
+			caster_meta["boss_id"] = String(caster.boss_data.id)
+			caster_meta["behavior"] = String(caster.boss_data.behavior)
+		cl.log_event("skill_cast", caster_meta)
 
 	# Aplica cada átomo en orden
 	for atom in skill.atoms:
