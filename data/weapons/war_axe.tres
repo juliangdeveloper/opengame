@@ -30,13 +30,5 @@ class_dmg_mult = {
 }
 compatible_skill_ids = []
 blocked_skill_ids = []
-mesh_hint = "axe"
-model_path = "res://assets/models/weapons/wpn_war_axe.glb"
-model_rotation = Vector3(0, 0, 0)
-grip_offset = 0.45
-model_scale = 1.0
-tint_color = Color(0.7, 0.7, 0.75, 1)
-blade_length = 0.3
-trail_color = Color(0.8, 0.5, 0.3, 0.7)
 hit_sound = "axe_chop"
 category = &"melee"

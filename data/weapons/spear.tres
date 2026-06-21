@@ -31,13 +31,5 @@ class_dmg_mult = {
 }
 compatible_skill_ids = []
 blocked_skill_ids = []
-mesh_hint = "spear"
-model_path = "res://assets/models/weapons/wpn_spear.glb"
-model_rotation = Vector3(0, 0, 0)
-grip_offset = 0.50
-model_scale = 1.0
-tint_color = Color(0.7, 0.55, 0.4, 1)
-blade_length = 0.4
-trail_color = Color(0.9, 0.95, 1.0, 0.5)
 hit_sound = "spear_thrust"
 category = &"melee"

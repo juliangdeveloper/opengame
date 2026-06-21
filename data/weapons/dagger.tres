@@ -36,13 +36,5 @@ attribute_modifiers = {
 }
 compatible_skill_ids = [&"backstab", &"dagger_flurry"]
 blocked_skill_ids = []
-mesh_hint = "dagger"
-model_path = "res://assets/models/weapons/wpn_dagger.glb"
-model_rotation = Vector3(0, 0, 0)
-grip_offset = 0.13
-model_scale = 1.0
-tint_color = Color(0.6, 0.7, 0.85, 1)
-blade_length = 0.3
-trail_color = Color(0.7, 0.9, 1.0, 0.7)
 hit_sound = "dagger_stab"
 category = &"melee"

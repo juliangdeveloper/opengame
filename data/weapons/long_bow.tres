@@ -30,13 +30,5 @@ class_dmg_mult = {
 }
 compatible_skill_ids = [&"bow_shot", &"arrow_volley", &"aimed_shot"]
 blocked_skill_ids = [&"melee_slash", &"heavy_swing", &"dagger_flurry"]
-mesh_hint = "bow"
-model_path = "res://assets/models/weapons/wpn_long_bow.glb"
-model_rotation = Vector3(0, 0, 0)
-grip_offset = 0.75
-model_scale = 1.0
-tint_color = Color(0.6, 0.4, 0.25, 1)
-blade_length = 0.0
-trail_color = Color(1.0, 0.95, 0.6, 0.5)
 hit_sound = "arrow_hit"
 category = &"ranged"
