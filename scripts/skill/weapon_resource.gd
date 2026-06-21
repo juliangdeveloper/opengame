@@ -7,7 +7,7 @@
 ##   - Stats base (damage, speed, range, weight, reach)
 ##   - Multiplicadores por stat del jugador (fuerza → damage, destreza → speed)
 ##   - Compatibilidad de skills (qué skills pueden usarse con esta arma equipada)
-##   - Visual (mesh_hint para el modelo, color tinte, longitud hoja)
+
 ##
 ## El SkillExecutor consulta el arma equipada al castear un skill melee para
 ## ajustar damage, knockback, hitbox size. El catalogue (WeaponCatalog) registra
@@ -140,30 +140,7 @@ func remove_from_caster(caster: Node) -> bool:
 ## "unarmed" o un tipo específico de arma.
 @export var blocked_skill_ids: Array[StringName] = []
 
-## Visual. mesh_hint lo lee Player para swapear el modelo.
-@export var mesh_hint: String = ""        # "sword_1h", "scythe_2h", "bow_long", etc.
-@export var tint_color: Color = Color(0.8, 0.8, 0.85)
-@export var blade_length: float = 0.0     # longitud visual (metros)
-@export var trail_color: Color = Color(1.0, 0.9, 0.6, 0.7)
-@export var hit_sound: String = "sword_hit"  # nombre lógico del sfx
 
-## Visual attachment config. Lo lee Player._load_weapon_model para colocar
-## el modelo 3D en la mano del jugador.
-##   model_path:     res:// path al .glb (e.g. "res://assets/models/weapons/wpn_short_sword.glb").
-##                  Si está vacío, se usa el BoxMesh placeholder (e.g. unarmed).
-##   model_rotation: rotación adicional aplicada al modelo (en grados, Euler XYZ)
-##                  después de la rotación base que convierte Blender Z-up a Godot Y-up.
-##                  Útil para armas que se sostienen horizontalmente (bow) o invertidas.
-##   grip_offset:    distancia en metros desde el origen del modelo hasta el punto
-##                  donde la mano agarra (eje Y del modelo, después de la rotación base).
-##                  El modelo se baja en Y por este valor para que el grip quede en
-##                  (0,0,0) del Weapon node (la mano).
-##   model_scale:    escala uniforme aplicada al modelo (default 1.0).
-@export_group("Visual Attachment")
-@export var model_path: String = ""
-@export var model_rotation: Vector3 = Vector3.ZERO   # Euler XYZ en grados
-@export var grip_offset: float = 0.20                # default sensato para espadas 1h
-@export var model_scale: float = 1.0
 
 ## Categoría para UI / filtros en el catálogo.
 @export var category: StringName = &"melee"

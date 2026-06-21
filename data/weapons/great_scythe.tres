@@ -30,13 +30,5 @@ class_dmg_mult = {
 }
 compatible_skill_ids = [&"scythe_sweep", &"scythe_reap"]
 blocked_skill_ids = []
-mesh_hint = "scythe"
-model_path = "res://assets/models/weapons/wpn_great_scythe.glb"
-model_rotation = Vector3(0, 0, 0)
-grip_offset = 0.55
-model_scale = 1.0
-tint_color = Color(0.75, 0.75, 0.8, 1)
-blade_length = 1.8
-trail_color = Color(0.5, 1.0, 0.5, 0.7)
 hit_sound = "scythe_swing"
 category = &"melee"

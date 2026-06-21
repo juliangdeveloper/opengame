@@ -29,13 +29,5 @@ class_dmg_mult = {
 }
 compatible_skill_ids = [&"arcane_bolt", &"arcane_shield", &"mana_burst"]
 blocked_skill_ids = [&"melee_slash", &"heavy_swing"]
-mesh_hint = "staff"
-model_path = "res://assets/models/weapons/wpn_arcane_staff.glb"
-model_rotation = Vector3(0, 0, 0)
-grip_offset = 0.55
-model_scale = 1.0
-tint_color = Color(0.5, 0.4, 0.7, 1)
-blade_length = 0.0
-trail_color = Color(0.6, 0.5, 1.0, 0.7)
 hit_sound = "staff_hit"
 category = &"magic"

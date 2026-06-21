@@ -30,13 +30,5 @@ class_dmg_mult = {
 }
 compatible_skill_ids = []
 blocked_skill_ids = []
-mesh_hint = "sword_long"
-model_path = "res://assets/models/weapons/wpn_long_sword.glb"
-model_rotation = Vector3(0, 0, 0)
-grip_offset = 0.25
-model_scale = 1.0
-tint_color = Color(0.75, 0.75, 0.85, 1)
-blade_length = 1.0
-trail_color = Color(0.8, 0.9, 1.0, 0.7)
 hit_sound = "sword_hit"
 category = &"melee"

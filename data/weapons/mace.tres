@@ -30,13 +30,5 @@ class_dmg_mult = {
 }
 compatible_skill_ids = []
 blocked_skill_ids = []
-mesh_hint = "mace"
-model_path = "res://assets/models/weapons/wpn_mace.glb"
-model_rotation = Vector3(0, 0, 0)
-grip_offset = 0.45
-model_scale = 1.0
-tint_color = Color(0.6, 0.6, 0.65, 1)
-blade_length = 0.0
-trail_color = Color(0.7, 0.7, 0.7, 0.6)
 hit_sound = "mace_impact"
 category = &"melee"
