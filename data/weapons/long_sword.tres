@@ -30,5 +30,11 @@ class_dmg_mult = {
 }
 compatible_skill_ids = []
 blocked_skill_ids = []
+attribute_modifiers = {
+"attack_power": 0.22,
+"attack_speed": 0.0,
+"crit_chance": 0.05,
+"parry_bonus": 0.15
+}
 hit_sound = "sword_hit"
 category = &"melee"

@@ -323,10 +323,12 @@ func _state_chase(delta: float) -> void:
 		velocity.z = to.z * move_speed
 
 
-## Override en subclase (o vía controller) para decidir qué skill castear.
-## Default: weighted random de skill_ids con anti-streak.
+## Delega la decisión de skill al controller si existe,否则 weighted random.
 func _state_choose_skill() -> void:
-	current_skill_id = _pick_weighted_skill()
+	if controller != null and controller.has_method("decide_skill"):
+		current_skill_id = controller.decide_skill()
+	else:
+		current_skill_id = _pick_weighted_skill()
 	if current_skill_id == &"":
 		_enter_recover()
 		return
