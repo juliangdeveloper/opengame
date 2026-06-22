@@ -30,5 +30,10 @@ class_dmg_mult = {
 }
 compatible_skill_ids = [&"bow_shot", &"arrow_volley", &"aimed_shot"]
 blocked_skill_ids = [&"melee_slash", &"heavy_swing", &"dagger_flurry"]
+attribute_modifiers = {
+"attack_power": 0.2,
+"attack_speed": -0.1,
+"crit_chance": 0.15
+}
 hit_sound = "arrow_hit"
 category = &"ranged"

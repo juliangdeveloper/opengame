@@ -29,5 +29,12 @@ class_dmg_mult = {
 }
 compatible_skill_ids = [&"arcane_bolt", &"arcane_shield", &"mana_burst"]
 blocked_skill_ids = [&"melee_slash", &"heavy_swing"]
+attribute_modifiers = {
+"attack_power": 0.1,
+"ele_dmg": 0.15,
+"attack_speed": -0.05,
+"crit_chance": 0.06,
+"parry_bonus": 0.05
+}
 hit_sound = "staff_hit"
 category = &"magic"

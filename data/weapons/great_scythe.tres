@@ -30,5 +30,10 @@ class_dmg_mult = {
 }
 compatible_skill_ids = [&"scythe_sweep", &"scythe_reap"]
 blocked_skill_ids = []
+attribute_modifiers = {
+"attack_power": 0.45,
+"attack_speed": -0.35,
+"crit_chance": 0.12
+}
 hit_sound = "scythe_swing"
 category = &"melee"
