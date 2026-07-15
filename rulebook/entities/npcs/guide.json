@@ -1,0 +1,30 @@
+{
+  "entity_id": "guide",
+  "type": "npc",
+  "display_name": "El Guía",
+  "archetype": "guide",
+  "memory_file": "memories/templates/guide_npc.json",
+  "stats": {
+    "max_hp": -1,
+    "note": "The Guide cannot be damaged. HP is undefined."
+  },
+  "visual": {
+    "body_shape": "sphere",
+    "body_height": 0.5,
+    "body_radius": 0.3,
+    "size_scale": 1.0,
+    "has_head": false,
+    "base_color": "#FFD700",
+    "opacity": 0.6,
+    "particle_effect": "shimmer",
+    "perspective": "third_person_visible"
+  },
+  "controller": "guide_ai",
+  "behavior": {
+    "always_present": true,
+    "follows_player": true,
+    "follow_distance": 3.0,
+    "visible_condition": "player has ver_guia skill",
+    "dialogue_style": "calm_enigmatic"
+  }
+}

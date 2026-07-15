@@ -1,0 +1,77 @@
+{
+  "version": "1.0.0",
+  "description": "Master index of all skills in the RuleBook. Each skill is defined in its category file.",
+  "categories": {
+    "control": {
+      "file": "skills/control/camera.json",
+      "count": 6,
+      "skills": [
+        "camera_rotate_right",
+        "camera_rotate_left",
+        "camera_look_up",
+        "camera_look_down",
+        "camera_free_look",
+        "camera_reset"
+      ]
+    },
+    "movement": {
+      "file": "skills/movement/locomotion.json",
+      "count": 4,
+      "skills": [
+        "walk",
+        "saltar_001",
+        "correr_001",
+        "esquivar_001"
+      ]
+    },
+    "combat": {
+      "file": "skills/combat/melee.json",
+      "count": 3,
+      "skills": [
+        "light_attack_001",
+        "defenderse_001",
+        "parry_riposte_001"
+      ]
+    },
+    "guide": {
+      "file": "skills/guide/guide.json",
+      "count": 4,
+      "skills": [
+        "ver_guia",
+        "hablar_guia",
+        "solicitar_habilidad",
+        "guia_otorga"
+      ]
+    },
+    "magic": {
+      "file": "skills/magic/elemental.json",
+      "count": 2,
+      "skills": [
+        "kamehameha_001",
+        "bola_fuego_001"
+      ]
+    }
+  },
+  "total_skills": 19,
+  "innate_skills": [
+    "ver_guia",
+    "camera_rotate_right",
+    "camera_rotate_left",
+    "camera_look_up",
+    "camera_look_down",
+    "camera_free_look",
+    "camera_reset",
+    "walk"
+  ],
+  "player_starting_skills": [
+    "ver_guia",
+    "camera_rotate_right",
+    "camera_rotate_left",
+    "camera_look_up",
+    "camera_look_down",
+    "camera_free_look",
+    "camera_reset",
+    "walk"
+  ],
+  "note": "This index is auto-maintained. When adding a new skill to any category file, update this index."
+}

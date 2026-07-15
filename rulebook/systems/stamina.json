@@ -1,0 +1,37 @@
+{
+  "system": "Stamina",
+  "description": "Stamina is the measure of a character's physical endurance. Every physical action consumes stamina. When depleted, the character cannot perform stamina-costing actions until it regenerates.",
+  "rule": "If a skill does not define a stamina cost, it does not affect stamina. Skills that drain continuously (like walk) consume stamina per second. Skills with instant effects (like jump) consume a flat amount on activation.",
+  "max_stamina": {
+    "default": 100,
+    "attribute_link": "vitality",
+    "note": "Max stamina can be increased through vitality allocations."
+  },
+  "regeneration": {
+    "rate": 15.0,
+    "unit": "points_per_second",
+    "condition": "Active when the character is NOT performing a stamina-consuming action.",
+    "note": "Stamina regenerates passively. Walking or jumping pauses regeneration during the action."
+  },
+  "depletion": {
+    "effect": "Character cannot activate any skill with stamina cost > 0.",
+    "walk_override": "Walking stops when stamina hits 0 (character cannot move).",
+    "note": "There is no 'exhaustion' penalty — stamina simply stops regenerating until the action stops."
+  },
+  "cost_types": {
+    "per_second": {
+      "description": "Continuous drain while the action is held/active.",
+      "example": "walk costs 1 stamina/second while moving.",
+      "formula": "cost_per_second × delta_time"
+    },
+    "flat": {
+      "description": "Instant cost on activation.",
+      "example": "jump costs 5 stamina per activation.",
+      "formula": "cost_flat (deducted once)"
+    }
+  },
+  "engine_mapping": {
+    "godot": "PlayerController tracks current_stamina. process_movement() deducts walk cost. Jump deducts on activation. Regen applied each frame when no cost is active.",
+    "agnostic": "Any engine tracks stamina as a float [0, max_stamina]. Skills declare costs in their atoms. The interpreter enforces the check."
+  }
+}

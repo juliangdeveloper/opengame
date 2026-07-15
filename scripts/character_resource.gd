@@ -35,6 +35,8 @@ extends Resource
 # === Combat stats (escalables vía skill_points) ===
 @export var max_hp: float = 100.0
 @export var max_stamina: float = 50.0
+@export var weight: float = 1.0
+@export var push_effect: float = 1.0
 
 
 # === Movement stats ===

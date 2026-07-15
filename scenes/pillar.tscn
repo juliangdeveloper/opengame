@@ -1,0 +1,31 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/game_object.gd" id="1_pillar"]
+
+[sub_resource type="BoxShape3D" id="bs_pillar"]
+size = Vector3(0.5, 3.0, 0.5)
+
+[sub_resource type="BoxMesh" id="bm_pillar"]
+size = Vector3(0.5, 3.0, 0.5)
+
+[sub_resource type="StandardMaterial3D" id="mat_wood"]
+albedo_color = Color(0.55, 0.35, 0.2, 1)
+roughness = 0.85
+
+[node name="Pillar" type="StaticBody3D"]
+collision_layer = 1
+collision_mask = 0
+script = ExtResource("1_pillar")
+object_name = "wood_pillar"
+max_hp = 30.0
+weight = 100.0
+push_effect = 4.0
+material_type = "wood"
+destructible = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("bs_pillar")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("bm_pillar")
+material_override = SubResource("mat_wood")

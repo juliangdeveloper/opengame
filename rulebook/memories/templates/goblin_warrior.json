@@ -1,0 +1,23 @@
+{
+  "entity_id": "goblin_warrior_001",
+  "name": "Goblin Guerrero",
+  "archetype": "warrior",
+  "innate_skills": [
+    "light_attack_001"
+  ],
+  "learned_skills": [],
+  "combat_behavior": {
+    "pattern": "aggressive_melee",
+    "preferred_skill": "light_attack_001",
+    "approach": "rush_target",
+    "retreat_threshold": 0.2
+  },
+  "memory_size": 4,
+  "state": {
+    "hp": 40.0,
+    "max_hp": 40.0,
+    "stamina": 60.0,
+    "attack_power": 0.8,
+    "move_speed": 3.0
+  }
+}

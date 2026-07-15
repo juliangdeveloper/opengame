@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"camera_rotate_right"
+name = "Girar Cámara Derecha"
+description = "Rotates the camera to the right. Speed determined by input magnitude."
+flavor_text = "The act of turning one's gaze — the most fundamental form of perception control."
+category = &"control"
+type = &"control"
+target_resolver = {
+"kind": "self",
+"params": {}
+}
+atoms = [{
+"type": "camera",
+"params": {
+"axis": "yaw",
+"direction": "right",
+"base_speed": 2.5,
+"sensitivity_curve": "linear",
+"input_type": "axis"
+}
+}]
+costs = {
+"stamina": 0.0,
+"cooldown": 0.0
+}

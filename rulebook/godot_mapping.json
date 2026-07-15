@@ -1,0 +1,40 @@
+{
+  "description": "Maps RuleBook concepts to Godot-specific implementations. This file helps the Godot engine interpret the RuleBook.",
+  "skill_to_tres": {
+    "pattern": "Each skill in the RuleBook maps to a .tres file in data/skills/",
+    "mapping": {
+      "skill.atoms": "Godot SkillResource.atoms array",
+      "skill.cooldown": "Godot SkillResource.cooldown",
+      "skill.stamina_cost": "Godot SkillResource.stamina_cost",
+      "skill.combo_triggers": "Godot SkillResource.combo_triggers",
+      "atom.type": "Godot atom type string (hit, move, buff, status, dot, burst_aoe, projectile)",
+      "atom.params": "Godot atom params Dictionary"
+    },
+    "new_atom_types_needed": {
+      "camera": "New atom type for camera manipulation. Implement in EffectLibrary._apply_camera().",
+      "guide_commune": "New atom type for Guide interaction. Implement in EffectLibrary._apply_guide().",
+      "interact": "New atom type for entity/object interaction. Implement in EffectLibrary._apply_interact()."
+    }
+  },
+  "memory_to_character_resource": {
+    "pattern": "A memory maps to a CharacterResource (.tres) + ProgressionState save",
+    "mapping": {
+      "memory.innate_skills": "CharacterResource.default_skills",
+      "memory.learned_skills": "ProgressionState.owned_skills",
+      "memory.active_slots": "ProgressionState.skill_slots",
+      "memory.state.hp": "EntityCharacter.current_hp",
+      "memory.state.stamina": "EntityCharacter.current_stamina",
+      "memory.controls": "InputMap actions in project.godot"
+    }
+  },
+  "controls_to_inputmap": {
+    "pattern": "Each binding in controls/ maps to an InputMap action in project.godot",
+    "camera_skills": "New InputMap actions needed: camera_yaw_left, camera_yaw_right, camera_pitch_up, camera_pitch_right. These are processed by PlayerController, not SkillExecutor.",
+    "note": "Camera skills are a special case: they modify the Camera3D transform directly, not through the skill pipeline. They're still defined as skills in the RuleBook for portability, but the Godot engine handles them at the controller level."
+  },
+  "first_person": {
+    "camera": "Camera3D is child of player, positioned at eye height (y=1.6). Player body mesh is invisible to owner (layer mask).",
+    "crosshair": "Simple crosshair HUD element centered on screen.",
+    "interaction_ray": "RayCast3D from camera forward, range=3.0m, for interact/solicitar_habilidad."
+  }
+}

@@ -76,6 +76,12 @@ static func apply_atom(
 			_apply_zone(executor, params, targets)
 		&"trigger":
 			_apply_trigger(executor, atom)
+		&"camera":
+			_apply_camera(executor, params, targets)
+		&"guide_commune":
+			_apply_guide_commune(executor, params, targets)
+		&"interact":
+			_apply_interact(executor, params, targets)
 		_:
 			push_warning("[EffectLibrary] unknown atom type: %s" % atom_type)
 
@@ -1241,3 +1247,151 @@ static func _get_or_create_component(target: Node, component_name: String) -> No
 	comp.name = component_name
 	target.add_child(comp)
 	return comp
+
+
+# === camera (RuleBook atom type) ===
+## Camera manipulation. Applies rotation to the caster's CameraPivot (pitch)
+## and to the caster itself (yaw). Designed for continuous per-frame application
+## via the PlayerController, but also works as a one-shot skill atom.
+##
+## Params:
+##   axis: "yaw" | "pitch" | "roll" | "reset" | "free_look"
+##   direction: "left" | "right" | "up" | "down" (for yaw/pitch)
+##   base_speed: float (radians/second at full input)
+##   sensitivity_curve: "linear" | "exponential" (default "linear")
+##   clamp_min / clamp_max: float (degrees, for pitch clamping)
+##   duration: float (for reset — smooth transition time)
+##   amount: float (direct rotation in radians, for one-shot)
+static func _apply_camera(executor: Node, params: Dictionary, targets: Array[Node]) -> void:
+	if targets.is_empty():
+		return
+	for target in targets:
+		if not is_instance_valid(target):
+			continue
+		var axis: String = String(params.get("axis", "yaw"))
+		var direction: String = String(params.get("direction", "right"))
+		var base_speed: float = float(params.get("base_speed", 2.5))
+		var amount: float = float(params.get("amount", 0.0))
+
+		match axis:
+			"yaw":
+				var sign: float = -1.0 if direction == "right" else 1.0
+				if amount != 0.0:
+					target.rotate_y(sign * amount)
+				else:
+					# Continuous mode: base_speed is applied externally by controller
+					# This path is for one-shot casts (e.g. "turn 90 degrees")
+					target.rotate_y(sign * base_speed * 0.016)  # ~1 frame at 60fps
+			"pitch":
+				var pivot: Node3D = target.get_node_or_null("CameraPivot")
+				if pivot == null:
+					continue
+				var sign: float = -1.0 if direction == "up" else 1.0
+				var clamp_min: float = deg_to_rad(float(params.get("clamp_min", -85.0)))
+				var clamp_max: float = deg_to_rad(float(params.get("clamp_max", 85.0)))
+				if amount != 0.0:
+					pivot.rotate_x(sign * amount)
+				else:
+					pivot.rotate_x(sign * base_speed * 0.016)
+				pivot.rotation.x = clampf(pivot.rotation.x, clamp_min, clamp_max)
+			"reset":
+				var pivot: Node3D = target.get_node_or_null("CameraPivot")
+				if pivot == null:
+					continue
+				var duration: float = float(params.get("duration", 0.2))
+				if duration > 0.0 and target.get_tree():
+					# Smooth reset via tween
+					var tween: Tween = target.create_tween()
+					tween.set_ease(Tween.EASE_OUT)
+					tween.set_trans(Tween.TRANS_QUAD)
+					tween.tween_property(pivot, "rotation:x", 0.0, duration)
+					# Yaw reset on the character body
+					var cam: Camera3D = pivot.get_node_or_null("Camera3D")
+					# Note: yaw is on the character, not pivot. Reset yaw to 0 relative.
+					# We don't reset absolute yaw (player may want to keep facing direction).
+					# Only pitch resets to neutral.
+				else:
+					pivot.rotation.x = 0.0
+			"free_look":
+				# Free look is a mode toggle, handled by PlayerController.
+				# This atom exists for RuleBook portability.
+				pass
+
+	if DEBUG:
+		print("[EffectLibrary] camera axis=%s dir=%s speed=%.2f" % [String(params.get("axis", "")), String(params.get("direction", "")), float(params.get("base_speed", 0.0))])
+
+
+# === guide_commune (RuleBook atom type) ===
+## Communication with the Guide entity. Handles perception, dialogue, and
+## skill granting through the Guide.
+##
+## Params:
+##   action: "perceive" | "dialogue" | "request_skill" | "grant_skill"
+##   target: "guide" | "dialogue_partner" | "self"
+##   message_type: string (contextual)
+static func _apply_guide_commune(executor: Node, params: Dictionary, targets: Array[Node]) -> void:
+	var action: String = String(params.get("action", ""))
+	match action:
+		"perceive":
+			# ver_guia: make the Guide entity visible to the caster
+			var caster: Node = executor.caster if "caster" in executor else executor
+			if caster == null:
+				return
+			# Find the Guide NPC in the scene
+			var guide: Node = caster.get_tree().root.find_child("Guide", true, false)
+			if guide != null and guide.has_method("reveal"):
+				guide.call("reveal", caster)
+			if DEBUG:
+				print("[EffectLibrary] guide_commune: perceive — Guide revealed to %s" % caster.name)
+		"dialogue":
+			# Open dialogue UI with the Guide
+			var caster: Node = executor.caster if "caster" in executor else executor
+			if caster != null and caster.has_signal("guide_dialogue_requested"):
+				caster.emit_signal("guide_dialogue_requested")
+			if DEBUG:
+				print("[EffectLibrary] guide_commune: dialogue opened")
+		"request_skill":
+			if DEBUG:
+				print("[EffectLibrary] guide_commune: skill request submitted")
+		"grant_skill":
+			if DEBUG:
+				print("[EffectLibrary] guide_commune: skill granted to target")
+
+
+# === interact (RuleBook atom type) ===
+## Interaction with entities and objects in the world.
+##
+## Params:
+##   target_type: "entity" | "object" | "guide" | "npc"
+##   action: "dialogue" | "pick_up" | "use" | "examine"
+##   range: float (interaction range in meters)
+##   opens_ui: string (UI scene to open, if any)
+static func _apply_interact(executor: Node, params: Dictionary, targets: Array[Node]) -> void:
+	var action: String = String(params.get("action", ""))
+	var opens_ui: String = String(params.get("opens_ui", ""))
+
+	for target in targets:
+		if not is_instance_valid(target):
+			continue
+		match action:
+			"dialogue":
+				if target.has_method("start_dialogue"):
+					target.call("start_dialogue", executor.caster if "caster" in executor else executor)
+			"pick_up":
+				if target.has_method("pick_up"):
+					target.call("pick_up", executor.caster if "caster" in executor else executor)
+			"use":
+				if target.has_method("use"):
+					target.call("use", executor.caster if "caster" in executor else executor)
+			"examine":
+				if target.has_method("examine"):
+					target.call("examine", executor.caster if "caster" in executor else executor)
+
+	if opens_ui != "" and executor.get_tree():
+		var scene: PackedScene = load("res://scenes/ui/%s.tscn" % opens_ui)
+		if scene != null:
+			var ui: Node = scene.instantiate()
+			executor.get_tree().root.add_child(ui)
+
+	if DEBUG:
+		print("[EffectLibrary] interact: action=%s targets=%d" % [action, targets.size()])

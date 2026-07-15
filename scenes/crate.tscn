@@ -1,0 +1,30 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/game_object.gd" id="1_crate"]
+
+[sub_resource type="BoxShape3D" id="bs_crate"]
+size = Vector3(0.5, 0.5, 0.5)
+
+[sub_resource type="BoxMesh" id="bm_crate"]
+size = Vector3(0.5, 0.5, 0.5)
+
+[sub_resource type="StandardMaterial3D" id="mat_wood"]
+albedo_color = Color(0.65, 0.45, 0.25, 1)
+roughness = 0.8
+
+[node name="Crate" type="StaticBody3D"]
+collision_layer = 1
+collision_mask = 0
+script = ExtResource("1_crate")
+object_name = "crate"
+max_hp = 10.0
+weight = 5.0
+material_type = "wood"
+destructible = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("bs_crate")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("bm_crate")
+material_override = SubResource("mat_wood")

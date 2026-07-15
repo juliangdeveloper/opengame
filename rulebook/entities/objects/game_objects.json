@@ -1,0 +1,58 @@
+{
+  "concept": "Game Objects",
+  "description": "Every object in the game world is defined in the RuleBook. Objects have properties that determine how they interact with skills and the environment. If an object has a profile in the RuleBook, it is interactable.",
+  "rule": "If an object has a RuleBook profile, it can be affected by skills. If it has no profile, it is scenery (cannot be interacted with).",
+  "base_properties": {
+    "hp": {
+      "description": "Hit points. When reduced to 0, the object is destroyed.",
+      "type": "float",
+      "required": true,
+      "note": "Every interactable object has HP. Even a wooden pillar can be destroyed."
+    },
+    "weight": {
+      "description": "Mass of the object. Affects push force calculations. Heavier objects require more force to move.",
+      "type": "float",
+      "required": true,
+      "default": 1.0,
+      "note": "Push force = skill.force × caster.weight / target.weight. A 10-force hit on a 2-weight pillar moves it 5 units. On a 20-weight boulder, only 0.5 units."
+    },
+    "material": {
+      "description": "The material the object is made of. Affects damage type interactions and visual/audio feedback.",
+      "type": "string",
+      "required": false,
+      "examples": ["wood", "stone", "metal", "flesh", "crystal"]
+    },
+    "destructible": {
+      "description": "Whether the object can be destroyed by reducing HP to 0.",
+      "type": "bool",
+      "default": true
+    }
+  },
+  "examples": {
+    "wood_pillar": {
+      "hp": 30,
+      "weight": 2.0,
+      "material": "wood",
+      "destructible": true
+    },
+    "stone_wall": {
+      "hp": 100,
+      "weight": 50.0,
+      "material": "stone",
+      "destructible": true
+    },
+    "crate": {
+      "hp": 10,
+      "weight": 5.0,
+      "material": "wood",
+      "destructible": true,
+      "note": "Lightweight wooden crate. 10× lighter than the player. Easy to push around."
+    },
+    "indestructible_pillar": {
+      "hp": -1,
+      "weight": 100.0,
+      "material": "stone",
+      "destructible": false
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "concept": "Target Resolution",
+  "description": "Every skill has a target — the entity that receives the effect. If a skill does not explicitly define a target_resolver, the default target is the caster itself (self).",
+  "rule": "target_resolver is OPTIONAL. If omitted, target = caster. If defined, it specifies how the engine resolves who receives the effect.",
+  "target_types": {
+    "self": {
+      "description": "The caster receives the effect. Used by movement skills (walk, jump), buffs, self-heals.",
+      "implicit": true,
+      "note": "This is the DEFAULT. Skills like walk and jump don't need to declare it — they affect the caster by definition."
+    },
+    "area": {
+      "description": "Whatever enters the trigger area receives the effect. Used by hit, AoE attacks, zones.",
+      "resolution": "The trigger (Area3D) detects overlaps. Each overlapping body is a target.",
+      "note": "The hit skill spawns a trigger cube. Any CharacterBody3D that overlaps it gets pushed."
+    },
+    "single": {
+      "description": "A single specific target. Used by ranged attacks, lock-on skills.",
+      "resolution": "Raycast or lock-on system picks one target.",
+      "note": "Not yet implemented."
+    },
+    "all_enemies": {
+      "description": "All enemies in range. Used by AoE ultimates.",
+      "resolution": "Query all bodies in radius, filter by team/faction.",
+      "note": "Not yet implemented."
+    }
+  },
+  "examples": {
+    "walk": {
+      "target_resolver": null,
+      "explanation": "No target_resolver defined. Default = self. The caster moves themselves."
+    },
+    "jump": {
+      "target_resolver": null,
+      "explanation": "No target_resolver defined. Default = self. The caster jumps."
+    },
+    "hit": {
+      "target_resolver": { "kind": "area", "params": {} },
+      "explanation": "Target = whoever activates the trigger (enters the hitbox cube). Could be an enemy, a destructible, anything with a collision body."
+    }
+  }
+}

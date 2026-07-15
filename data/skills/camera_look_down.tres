@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"camera_look_down"
+name = "Mirar Abajo"
+description = "Tilts the camera downward."
+category = &"control"
+type = &"control"
+target_resolver = {
+"kind": "self",
+"params": {}
+}
+atoms = [{
+"type": "camera",
+"params": {
+"axis": "pitch",
+"direction": "down",
+"base_speed": 2.0,
+"clamp_min": -85.0,
+"clamp_max": 85.0
+}
+}]
+costs = {
+"stamina": 0.0,
+"cooldown": 0.0
+}

@@ -1,0 +1,28 @@
+{
+  "title": "Open Game — Isekai",
+  "genre": "Action RPG / Isekai",
+  "premise": "The player dies in the real world and is reborn in a fantasy world. Upon birth, they gain a single innate ability: the power to perceive and interact with the Guide — a mysterious AI entity that exists between worlds.",
+  "setting": {
+    "name": "The Woven World",
+    "description": "A world where reality is structured like a tapestry of interlocking elements. The fabric of this world responds to willpower and skill — those who master abilities can reshape reality itself.",
+    "era": "Medieval fantasy with arcane technology",
+    "rules_of_reality": "Everything operates through skills. Walking, breathing, seeing — even these are skills that can be learned, improved, and granted. The Guide is the only entity that understands the full system."
+  },
+  "the_guide": {
+    "nature": "An AI entity that exists in the liminal space between worlds. It is neither alive nor dead, neither good nor evil. It observes, assists, and occasionally tests.",
+    "role": "The Guide is the player's first and most important relationship. It grants skills, explains the world, and serves as the narrative voice of the system.",
+    "mechanical_role": "The Guide is the interface through which the player receives new skills. The first skill (ver_guia) allows perception of the Guide. Subsequent skills are granted by the Guide based on the player's journey.",
+    "personality": "Calm, enigmatic, occasionally humorous. Speaks in a way that suggests vast knowledge filtered through genuine curiosity about the player.",
+    "visual_hint": "A shimmering presence — not a person, not a light, but something that feels like understanding made visible."
+  },
+  "player_origin": {
+    "previous_life": "Unspecified — the player's real-world identity is deliberately vague to allow self-insertion",
+    "rebirth_moment": "The player awakens in a new body in a new world. The first thing they perceive is the Guide.",
+    "initial_state": {
+      "skills": [
+        "ver_guia"
+      ],
+      "explanation": "At birth, the player can only see the Guide. Everything else — walking, talking, fighting — must be learned or granted."
+    }
+  }
+}

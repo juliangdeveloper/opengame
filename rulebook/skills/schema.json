@@ -1,0 +1,33 @@
+{
+  "skill_schema": {
+    "description": "Every action in the game is a skill. This includes movement, combat, magic, camera control, UI interaction, and even breathing.",
+    "fields": {
+      "id": "Unique identifier (snake_case + 3-digit suffix)",
+      "name": "Display name",
+      "category": "movement | combat | magic | control | guide | social | craft",
+      "description": "What the skill does in game terms",
+      "lore": "Why this skill exists in the world's narrative",
+      "is_innate": "true if granted at birth (e.g. ver_guia). Cannot be lost.",
+      "atoms": "Array of effect atoms that compose this skill. Each atom is executed in order.",
+      "cooldown": "Seconds before the skill can be used again",
+      "stamina_cost": "Stamina consumed on use (0 = free)",
+      "input_type": "button | trigger | hold | toggle | axis | gesture",
+      "input_sensitivity": "For triggers/axes: how input magnitude affects output (0.0-1.0)",
+      "usable_by": "player | npc | both",
+      "animation_hint": "Suggested visual representation (for engines that support it)",
+      "combo_triggers": "Skills auto-cast on specific conditions (e.g. parry_success → riposte)"
+    },
+    "atom_types": {
+      "hit": "Direct damage to target. Params: amount, damage_type, element, knockback.",
+      "move": "Spatial movement. Params: kind (dash/jump/teleport/push), distance, duration, direction, i_frames.",
+      "buff": "Temporary stat modification. Params: stat, value, kind (add/multiply), duration.",
+      "status": "Apply status effect. Params: status_id, duration, chance.",
+      "dot": "Damage over time. Params: amount, interval, duration, element.",
+      "burst_aoe": "Area of effect burst. Params: radius, shape, amount, element.",
+      "projectile": "Ranged projectile. Params: speed, lifetime, on_hit_atoms.",
+      "camera": "Camera manipulation. Params: axis (yaw/pitch/roll), speed, sensitivity, relative.",
+      "interact": "Interaction with entities/objects. Params: target_type, action, range.",
+      "guide_commune": "Communication with the Guide. Params: message_type, context."
+    }
+  }
+}

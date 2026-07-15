@@ -1,0 +1,27 @@
+{
+  "entity_id": "player",
+  "type": "player",
+  "display_name": "The Reborn",
+  "memory_file": "memories/player_memory.json",
+  "stats": {
+    "max_hp": 100.0,
+    "max_stamina": 100.0,
+    "base_move_speed": 4.0,
+    "base_attack_power": 1.0,
+    "base_crit_chance": 0.05,
+    "base_dodge_chance": 0.0,
+    "base_parry_bonus": 0.0
+  },
+  "visual": {
+    "body_shape": "capsule",
+    "body_height": 1.8,
+    "body_radius": 0.35,
+    "size_scale": 1.0,
+    "has_head": true,
+    "head_color": "#FFFFFF",
+    "base_color": "#5599FF",
+    "perspective": "first_person"
+  },
+  "controller": "player",
+  "note": "In first-person, the body exists for physics/collision but is invisible to the owner. Other players see the body."
+}

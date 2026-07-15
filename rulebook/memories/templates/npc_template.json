@@ -1,0 +1,62 @@
+{
+  "description": "Base NPC memory template. All NPCs follow this structure.",
+  "schema": {
+    "entity_id": "unique NPC identifier",
+    "name": "display name",
+    "archetype": "warrior | mage | rogue | beast | boss | civilian | guide",
+    "innate_skills": "skills the NPC always has",
+    "learned_skills": "skills gained through narrative/progression",
+    "combat_behavior": "preferred skill patterns (for AI controller reference)",
+    "memory_size": "how many skills this NPC can hold (complexity budget)"
+  },
+  "archetypes": {
+    "warrior": {
+      "memory_size": 6,
+      "preferred_range": "melee",
+      "default_skills": [
+        "light_attack_001",
+        "defenderse_001"
+      ]
+    },
+    "mage": {
+      "memory_size": 8,
+      "preferred_range": "ranged",
+      "default_skills": [
+        "bola_fuego_001"
+      ]
+    },
+    "rogue": {
+      "memory_size": 5,
+      "preferred_range": "melee",
+      "default_skills": [
+        "light_attack_001",
+        "esquivar_001"
+      ]
+    },
+    "beast": {
+      "memory_size": 3,
+      "preferred_range": "melee",
+      "default_skills": [
+        "light_attack_001"
+      ]
+    },
+    "boss": {
+      "memory_size": 12,
+      "preferred_range": "varies",
+      "default_skills": []
+    },
+    "civilian": {
+      "memory_size": 1,
+      "preferred_range": "none",
+      "default_skills": []
+    },
+    "guide": {
+      "memory_size": 999,
+      "preferred_range": "none",
+      "default_skills": [
+        "ver_guia",
+        "guia_otorga"
+      ]
+    }
+  }
+}

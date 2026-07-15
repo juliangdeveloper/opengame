@@ -1,0 +1,38 @@
+{
+  "system": "Effect / Resistance",
+  "description": "Every skill effect has a type (push, damage, burn, etc.). Every interactable object has an effect value for each effect type. The SAME variable is used on caster and target: the caster's value multiplies, the target's value divides.",
+  "rule": "final_force = base_force × caster.effect / target.effect. If not defined, defaults to 1.",
+  "formula": {
+    "general": "result = base × caster_effect / target_effect",
+    "push_example": {
+      "base_force": 1.0,
+      "caster_push_effect": 2.0,
+      "target_push_effect": 1.0,
+      "result": "1.0 × 2.0 / 1.0 = 2.0"
+    },
+    "push_example_2": {
+      "base_force": 1.0,
+      "caster_push_effect": 2.0,
+      "target_push_effect": 4.0,
+      "result": "1.0 × 2.0 / 4.0 = 0.5"
+    }
+  },
+  "effect_types": {
+    "push": {
+      "description": "Physical knockback. Moves the target away from the caster.",
+      "variable": "push_effect",
+      "caster_behavior": "multiplies the base force",
+      "target_behavior": "divides the base force",
+      "default": 1.0
+    },
+    "damage": {
+      "description": "Raw damage to HP.",
+      "variable": "damage_effect",
+      "default": 1.0,
+      "note": "Not yet implemented."
+    }
+  },
+  "engine_mapping": {
+    "godot": "CharacterResource.push_effect (caster). GameObject.push_effect (target). Same name, different role."
+  }
+}

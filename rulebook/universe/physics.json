@@ -1,0 +1,25 @@
+{
+  "world_physics": {
+    "gravity": 22.0,
+    "units": "meters/second²",
+    "note": "Approximately 2x Earth gravity — this world is heavier, making movement a skill that must be mastered"
+  },
+  "movement_rules": {
+    "walking": "Default movement. No stamina cost. Speed determined by entity's move_speed attribute.",
+    "running": "Sprint modifier. Stamina drain per second. Speed = base × (1 + sprint_bonus).",
+    "jumping": "Vertical launch. Requires being on solid ground. Stamina cost. Height = jump_velocity attribute.",
+    "dashing": "Rapid lateral movement with invincibility frames. High stamina cost. Skill-gated.",
+    "falling": "Passive. Applies gravity. No skill required. Damage on hard landing based on fall distance."
+  },
+  "combat_rules": {
+    "damage_formula": "bilateral: reads attributes from BOTH caster and target. Final = base × attack_power × crit × elemental_mult × resistance.",
+    "hit_detection": "Skill-defined hitboxes. Shape, size, and lifetime per skill atom.",
+    "invincibility_frames": "Granted by dodge skills. Duration per skill. During i-frames, all collision is ignored.",
+    "parry_window": "Time window during which a defensive skill can counter an incoming attack. Duration per skill.",
+    "death": "HP reaches 0. Entity enters dying state. Death animation. Removal from combat."
+  },
+  "time_scale": {
+    "real_time": "All actions happen in real-time. No turn-based mechanics in the computer implementation.",
+    "tabletop_adaptation": "When played as tabletop RPG, time scales to rounds (6 seconds each). Skills with cooldowns map to round counts."
+  }
+}
