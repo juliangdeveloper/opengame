@@ -1,0 +1,91 @@
+{
+  "system": "Status Effects",
+  "description": "15 status effects: 5 elemental (with damage over time) + 10 classic (pure flags). Elemental statuses can also apply classic flags.",
+  "elemental_statuses": [
+    {
+      "id": "burn",
+      "element": "fire",
+      "dot_damage": 3.0,
+      "tick_interval": 1.0,
+      "flags": []
+    },
+    {
+      "id": "freeze",
+      "element": "water",
+      "dot_damage": 0.5,
+      "tick_interval": 1.0,
+      "flags": [
+        "root",
+        "slow"
+      ],
+      "slow_magnitude": 0.8
+    },
+    {
+      "id": "shock",
+      "element": "lightning",
+      "dot_damage": 1.0,
+      "tick_interval": 1.0,
+      "flags": [
+        "stun"
+      ],
+      "restun_chance": 0.3
+    },
+    {
+      "id": "bleed",
+      "element": "physical",
+      "dot_damage": 2.0,
+      "tick_interval": 1.0,
+      "flags": []
+    },
+    {
+      "id": "poison",
+      "element": "earth",
+      "dot_damage": 2.5,
+      "tick_interval": 1.5,
+      "flags": [],
+      "prevents_regen": true
+    }
+  ],
+  "classic_statuses": [
+    {
+      "id": "stun",
+      "description": "Cannot act. Duration-based."
+    },
+    {
+      "id": "root",
+      "description": "Cannot move. Can still use skills."
+    },
+    {
+      "id": "slow",
+      "description": "Movement speed reduced. Has magnitude (0.0-1.0)."
+    },
+    {
+      "id": "silence",
+      "description": "Cannot cast magical skills."
+    },
+    {
+      "id": "disarm",
+      "description": "Cannot use weapon skills."
+    },
+    {
+      "id": "sleep",
+      "description": "Cannot act. Broken by damage."
+    },
+    {
+      "id": "blind",
+      "description": "Accuracy reduced. Miss chance increased."
+    },
+    {
+      "id": "charm",
+      "description": "Cannot attack the source. Duration-based."
+    },
+    {
+      "id": "fear",
+      "description": "Forced to move away from source."
+    },
+    {
+      "id": "taunt",
+      "description": "Forced to attack the source."
+    }
+  ]
+}

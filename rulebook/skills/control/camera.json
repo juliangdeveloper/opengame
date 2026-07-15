@@ -1,0 +1,143 @@
+[
+  {
+    "id": "camera_rotate_right",
+    "name": "Girar Cámara Derecha",
+    "category": "control",
+    "description": "Rotates the camera to the right. Speed determined by input magnitude.",
+    "lore": "The act of turning one's gaze — the most fundamental form of perception control.",
+    "is_innate": true,
+    "atoms": [
+      {
+        "type": "camera",
+        "params": {
+          "axis": "yaw",
+          "direction": "right",
+          "base_speed": 2.5,
+          "sensitivity_curve": "linear",
+          "input_type": "axis",
+          "note": "When bound to a trigger: speed = base_speed × trigger_value (0.0-1.0). When bound to a button: speed = base_speed × 1.0"
+        }
+      }
+    ],
+    "cooldown": 0.0,
+    "stamina_cost": 0.0,
+    "input_type": "axis",
+    "input_sensitivity": 1.0,
+    "usable_by": "player",
+    "animation_hint": "none (camera only)"
+  },
+  {
+    "id": "camera_rotate_left",
+    "name": "Girar Cámara Izquierda",
+    "category": "control",
+    "description": "Rotates the camera to the left.",
+    "lore": "The complement of rightward gaze — perception is omnidirectional.",
+    "is_innate": true,
+    "atoms": [
+      {
+        "type": "camera",
+        "params": {
+          "axis": "yaw",
+          "direction": "left",
+          "base_speed": 2.5,
+          "sensitivity_curve": "linear",
+          "input_type": "axis"
+        }
+      }
+    ],
+    "cooldown": 0.0,
+    "stamina_cost": 0.0,
+    "input_type": "axis",
+    "input_sensitivity": 1.0,
+    "usable_by": "player",
+    "animation_hint": "none"
+  },
+  {
+    "id": "camera_look_up",
+    "name": "Mirar Arriba",
+    "category": "control",
+    "description": "Tilts the camera upward.",
+    "is_innate": true,
+    "atoms": [
+      {
+        "type": "camera",
+        "params": {
+          "axis": "pitch",
+          "direction": "up",
+          "base_speed": 2.0,
+          "clamp_min": -85.0,
+          "clamp_max": 85.0
+        }
+      }
+    ],
+    "cooldown": 0.0,
+    "stamina_cost": 0.0,
+    "input_type": "axis",
+    "usable_by": "player"
+  },
+  {
+    "id": "camera_look_down",
+    "name": "Mirar Abajo",
+    "category": "control",
+    "description": "Tilts the camera downward.",
+    "is_innate": true,
+    "atoms": [
+      {
+        "type": "camera",
+        "params": {
+          "axis": "pitch",
+          "direction": "down",
+          "base_speed": 2.0,
+          "clamp_min": -85.0,
+          "clamp_max": 85.0
+        }
+      }
+    ],
+    "cooldown": 0.0,
+    "stamina_cost": 0.0,
+    "input_type": "axis",
+    "usable_by": "player"
+  },
+  {
+    "id": "camera_free_look",
+    "name": "Mirar Libre",
+    "category": "control",
+    "description": "Free camera rotation while held. Movement direction does not change.",
+    "lore": "The ability to observe without commitment — to look without turning.",
+    "is_innate": true,
+    "atoms": [
+      {
+        "type": "camera",
+        "params": {
+          "mode": "free_look",
+          "note": "While held, right stick controls camera yaw/pitch independently of movement direction. On release, camera snaps back to movement direction."
+        }
+      }
+    ],
+    "cooldown": 0.0,
+    "stamina_cost": 0.0,
+    "input_type": "hold",
+    "usable_by": "player"
+  },
+  {
+    "id": "camera_reset",
+    "name": "Centrar Cámara",
+    "category": "control",
+    "description": "Resets camera to forward-facing position relative to character.",
+    "is_innate": true,
+    "atoms": [
+      {
+        "type": "camera",
+        "params": {
+          "mode": "reset",
+          "duration": 0.2,
+          "easing": "ease_out"
+        }
+      }
+    ],
+    "cooldown": 0.1,
+    "stamina_cost": 0.0,
+    "input_type": "button",
+    "usable_by": "player"
+  }
+]

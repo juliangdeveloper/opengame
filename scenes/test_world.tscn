@@ -1,17 +1,38 @@
-[gd_scene load_steps=9 format=3 uid="uid://b2testworld"]
+[gd_scene load_steps=11 format=3 uid="uid://b2testworld"]
 
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="1_player"]
-[ext_resource type="PackedScene" path="res://scenes/dummy.tscn" id="2_dummy"]
+[ext_resource type="PackedScene" path="res://scenes/pillar.tscn" id="2_pillar"]
+[ext_resource type="PackedScene" path="res://scenes/crate.tscn" id="3_crate"]
 
 [sub_resource type="BoxShape3D" id="bs_floor"]
-size = Vector3(500, 1, 500)
+size = Vector3(100, 1, 100)
 
 [sub_resource type="BoxMesh" id="bm_floor"]
-size = Vector3(500, 1, 500)
+size = Vector3(100, 0.1, 100)
 
-[sub_resource type="StandardMaterial3D" id="mat_floor"]
-albedo_color = Color(0.35, 0.32, 0.28, 1)
-roughness = 0.9
+[sub_resource type="Shader" id="checker_shader"]
+code = "shader_type spatial;
+
+uniform float grid_size = 1.0;
+uniform vec4 color_a : source_color = vec4(0.28, 0.26, 0.22, 1.0);
+uniform vec4 color_b : source_color = vec4(0.42, 0.40, 0.35, 1.0);
+
+varying vec3 world_pos;
+
+void vertex() {
+	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+}
+
+void fragment() {
+	vec2 uv = world_pos.xz / grid_size;
+	vec2 grid = step(vec2(0.5), fract(uv));
+	float checker = mod(grid.x + grid.y, 2.0);
+	ALBEDO = mix(color_a, color_b, checker).rgb;
+	ROUGHNESS = 0.9;
+}"
+
+[sub_resource type="ShaderMaterial" id="mat_floor"]
+shader = SubResource("checker_shader")
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
 sky_top_color = Color(0.22, 0.34, 0.55, 1)
@@ -53,14 +74,20 @@ shape = SubResource("bs_floor")
 mesh = SubResource("bm_floor")
 material_override = SubResource("mat_floor")
 
-[node name="Dummy1" parent="." instance=ExtResource("2_dummy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 1, -3)
+[node name="Pillar1" parent="." instance=ExtResource("2_pillar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1.5, 0)
 
-[node name="Dummy2" parent="." instance=ExtResource("2_dummy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 1, 2)
+[node name="Pillar2" parent="." instance=ExtResource("2_pillar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1.5, 5)
 
-[node name="Dummy3" parent="." instance=ExtResource("2_dummy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 5)
+[node name="Pillar3" parent="." instance=ExtResource("2_pillar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -8)
+
+[node name="Crate1" parent="." instance=ExtResource("3_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.25, -2)
+
+[node name="Crate2" parent="." instance=ExtResource("3_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.25, -3)
 
 [node name="Player" parent="." instance=ExtResource("1_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)

@@ -1,0 +1,66 @@
+{
+  "entity_id": "player",
+  "name": "The Reborn",
+  "description": "A soul reborn in the Woven World. Starts with nothing but the ability to perceive the Guide.",
+  "innate_skills": [
+    "ver_guia",
+    "camera_rotate_right",
+    "camera_rotate_left",
+    "camera_look_up",
+    "camera_look_down",
+    "camera_free_look",
+    "camera_reset"
+  ],
+  "learned_skills": [],
+  "equipment_skills": [],
+  "active_slots": {
+    "slot_0": null,
+    "slot_1": null,
+    "slot_2": null,
+    "slot_3": null,
+    "slot_4": null,
+    "slot_5": null,
+    "slot_6": null,
+    "slot_7": null
+  },
+  "controls": {
+    "left_stick": "walk (always active, no skill slot needed)",
+    "right_stick_x": "camera_rotate_left/right (axis, sensitivity-mapped)",
+    "right_stick_y": "camera_look_up/down (axis, sensitivity-mapped)",
+    "R3_press": "camera_reset",
+    "L3_press": "correr_001 (once learned)",
+    "face_button_0": "slot_0",
+    "face_button_1": "slot_1",
+    "face_button_2": "slot_2",
+    "face_button_3": "slot_3",
+    "L1+face_0": "slot_4",
+    "L1+face_1": "slot_5",
+    "L1+face_2": "slot_6",
+    "L1+face_3": "slot_7",
+    "R1": "next_menu_tab (UI only)",
+    "L1_solo": "modifier (no gameplay action)",
+    "Share": "toggle_menu"
+  },
+  "skill_allocations": {},
+  "state": {
+    "hp": 100.0,
+    "max_hp": 100.0,
+    "stamina": 100.0,
+    "max_stamina": 100.0,
+    "skill_points": 0,
+    "position": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "active_statuses": [],
+    "active_cooldowns": {},
+    "equipped_weapon": null
+  },
+  "narrative_state": {
+    "has_met_guide": false,
+    "guide_relationship": 0,
+    "skills_granted_by_guide": [],
+    "current_objective": null
+  }
+}

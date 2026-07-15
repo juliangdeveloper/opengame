@@ -52,6 +52,7 @@ var hp: float = 100.0
 var max_stamina: float = 50.0
 var stamina: float = 50.0
 var move_speed: float = 5.0
+var weight: float = 1.0
 var turn_speed: float = 6.0
 var detection_range: float = 12.0
 var attack_range: float = 2.6
@@ -149,6 +150,7 @@ func _apply_data() -> void:
 	max_stamina = float(data.max_stamina)
 	stamina = max_stamina
 	move_speed = float(data.move_speed)
+	weight = float(data.weight)
 	turn_speed = float(data.turn_speed)
 	detection_range = float(data.detection_range)
 	attack_range = float(data.attack_range)
@@ -194,6 +196,9 @@ func _install_default_controller() -> void:
 		controller = _make_ai_controller()
 	else:
 		controller = _make_player_controller()
+	# Add controller to scene tree so _process/_input/_physics_process fire
+	if controller != null and not controller.is_inside_tree():
+		add_child(controller)
 
 
 ## Crea el AIController. (Stub — el script real se implementa aparte)

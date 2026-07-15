@@ -1,0 +1,53 @@
+{
+  "system": "Progression",
+  "description": "Unified skill point system. A single pool of points is shared across skill allocations, attribute allocations, element allocations, and weapon allocations.",
+  "skill_points": {
+    "source": "Granted by the Guide upon completing objectives, defeating bosses, or discovering new areas.",
+    "initial_grant": 10,
+    "boss_rewards": "10-25 points per boss tier",
+    "shared_pool": true,
+    "note": "Same points spent on attributes, elements, skills, and weapons. Strategic choice: specialize or diversify."
+  },
+  "attributes": [
+    {
+      "id": "strength",
+      "name": "Fuerza",
+      "max_points": 5,
+      "effect": "+10% attack power per point"
+    },
+    {
+      "id": "dexterity",
+      "name": "Destreza",
+      "max_points": 5,
+      "effect": "+5% attack speed, +2% crit per point"
+    },
+    {
+      "id": "vitality",
+      "name": "Vitalidad",
+      "max_points": 5,
+      "effect": "+15% max HP per point"
+    },
+    {
+      "id": "intelligence",
+      "name": "Inteligencia",
+      "max_points": 5,
+      "effect": "+10% magical damage per point"
+    },
+    {
+      "id": "faith",
+      "name": "Fe",
+      "max_points": 5,
+      "effect": "+5% parry bonus, +3% status resistance per point"
+    },
+    {
+      "id": "luck",
+      "name": "Suerte",
+      "max_points": 5,
+      "effect": "+3% crit chance, +2% drop rate per point"
+    }
+  ],
+  "weapon_scaling": {
+    "description": "Weapons modify attributes directly via temp_offsets. A weapon with attack_power: +0.15 adds 15% to the caster's attack power.",
+    "cap": "5 points per weapon stat allocation"
+  }
+}

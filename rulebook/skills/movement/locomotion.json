@@ -1,0 +1,109 @@
+[
+  {
+    "id": "walk",
+    "name": "Caminar",
+    "category": "movement",
+    "description": "Basic directional movement. The most fundamental act of will in this world.",
+    "lore": "In the Woven World, even walking is a skill — the act of threading one's body through the fabric of reality.",
+    "is_innate": true,
+    "atoms": [
+      {
+        "type": "move",
+        "params": {
+          "kind": "directional",
+          "speed_attribute": "move_speed",
+          "input_source": "left_stick_or_wasd",
+          "diagonal_handling": "normalize",
+          "note": "Input vector is clamped to unit circle BEFORE converting to world-space. This prevents the √2 (1.41x) speed boost on diagonals. The joystick's analog range (0.0-1.0) provides natural speed scaling for partial tilt."
+        }
+      }
+    ],
+    "cooldown": 0.0,
+    "stamina_cost": 0.0,
+    "input_type": "axis",
+    "usable_by": "both",
+    "animation_hint": "procedural_primitive_movement",
+    "note": "This is the ONLY skill that is always active and requires no button press. It reads the left stick and WASD continuously. Engine implementation: PlayerController._physics_process_movement() reads input, normalizes, converts to world-space relative to character facing, applies to velocity.x/z. Gravity (velocity.y) is handled separately by the character body.",
+    "diagonal_math": {
+      "input_space": "Vector2(lx, -ly) for stick; additive WASD",
+      "clamp": "if input_dir.length() > 1.0: input_dir = input_dir.normalized()",
+      "world_conversion": "forward × input_dir.y + right × input_dir.x",
+      "world_clamp": "if world_dir.length() > 1.0: world_dir = world_dir.normalized()",
+      "result": "Diagonal input at full stick tilt = same speed as cardinal. Partial tilt = proportional speed (analog)."
+    }
+  },
+  {
+    "id": "saltar_001",
+    "name": "Saltar",
+    "category": "movement",
+    "description": "Vertical launch. Defies gravity briefly through force of will.",
+    "lore": "The first rebellion against the world's heavy gravity — a small victory, but a victory.",
+    "is_innate": false,
+    "atoms": [
+      {
+        "type": "move",
+        "params": {
+          "kind": "jump",
+          "distance": 6.5,
+          "duration": 0.05,
+          "requires": "is_on_floor"
+        }
+      }
+    ],
+    "cooldown": 0.0,
+    "stamina_cost": 5.0,
+    "input_type": "button",
+    "usable_by": "both",
+    "animation_hint": "tween_position_y"
+  },
+  {
+    "id": "correr_001",
+    "name": "Correr",
+    "category": "movement",
+    "description": "Sprint movement. Faster but draining.",
+    "lore": "Channeling vitality into velocity — the body burns to move faster.",
+    "is_innate": false,
+    "atoms": [
+      {
+        "type": "buff",
+        "params": {
+          "stat": "move_speed",
+          "value": 0.5,
+          "kind": "add",
+          "duration": 1.0
+        }
+      }
+    ],
+    "cooldown": 0.1,
+    "stamina_cost": 8.0,
+    "input_type": "hold",
+    "usable_by": "both",
+    "note": "While held, re-casts every 0.1s to maintain the buff. Stamina drains continuously."
+  },
+  {
+    "id": "esquivar_001",
+    "name": "Esquivar",
+    "category": "movement",
+    "description": "Rapid dash with invincibility frames. The art of not being where the attack lands.",
+    "lore": "A momentary dissolution of the self — the body becomes briefly unreal.",
+    "is_innate": false,
+    "atoms": [
+      {
+        "type": "move",
+        "params": {
+          "kind": "dash",
+          "target_relative": "forward",
+          "distance": 4.0,
+          "duration": 0.3,
+          "i_frames": true,
+          "blink": true
+        }
+      }
+    ],
+    "cooldown": 1.5,
+    "stamina_cost": 18.0,
+    "input_type": "button",
+    "usable_by": "both",
+    "animation_hint": "tween_position_dash + model_blink"
+  }
+]

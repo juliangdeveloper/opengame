@@ -1,0 +1,95 @@
+[
+  {
+    "id": "ver_guia",
+    "name": "Ver al Guía",
+    "category": "guide",
+    "description": "Perceive the Guide's presence. The first and only innate skill. Without this, the Guide cannot be seen, heard, or interacted with.",
+    "lore": "The first breath in a new world. The player opens their eyes and sees not the sky, not the ground, but something else — a shimmering intelligence that has been waiting.",
+    "is_innate": true,
+    "atoms": [
+      {
+        "type": "guide_commune",
+        "params": {
+          "action": "perceive",
+          "range": "unlimited",
+          "always_active": true
+        }
+      }
+    ],
+    "cooldown": 0.0,
+    "stamina_cost": 0.0,
+    "input_type": "passive",
+    "usable_by": "player",
+    "note": "This skill is always active once acquired. It is the prerequisite for all other guide skills."
+  },
+  {
+    "id": "hablar_guia",
+    "name": "Hablar con el Guía",
+    "category": "guide",
+    "description": "Speak to the Guide. Ask questions, request skills, receive guidance.",
+    "lore": "The second gift: language. The Guide teaches the player to speak, and in speaking, to ask.",
+    "is_innate": false,
+    "granted_by": "ver_guia (automatic on first perception)",
+    "atoms": [
+      {
+        "type": "interact",
+        "params": {
+          "target": "guide",
+          "action": "dialogue",
+          "opens_ui": "guide_dialogue"
+        }
+      }
+    ],
+    "cooldown": 0.0,
+    "stamina_cost": 0.0,
+    "input_type": "button",
+    "usable_by": "player",
+    "note": "Opens a dialogue interface with the Guide. From here, the player can request skills, ask about the world, or receive missions."
+  },
+  {
+    "id": "solicitar_habilidad",
+    "name": "Solicitar Habilidad",
+    "category": "guide",
+    "description": "Request a new skill from the Guide. The Guide evaluates the request and may grant, deny, or offer alternatives.",
+    "lore": "To ask is to grow. The Guide does not simply hand out power — it offers what the seeker is ready to receive.",
+    "is_innate": false,
+    "atoms": [
+      {
+        "type": "interact",
+        "params": {
+          "target": "guide",
+          "action": "request_skill",
+          "opens_ui": "skill_request"
+        }
+      }
+    ],
+    "cooldown": 60.0,
+    "stamina_cost": 0.0,
+    "input_type": "button",
+    "usable_by": "player",
+    "note": "The Guide's decision is influenced by: player's current skill set, progression, narrative context, and the Guide's own agenda."
+  },
+  {
+    "id": "guia_otorga",
+    "name": "El Guía Otorga",
+    "category": "guide",
+    "description": "The Guide's granting action. Not a player skill — this is the Guide's own ability to bestow skills onto others.",
+    "lore": "The Guide reaches through the fabric and weaves a new thread into the seeker's being.",
+    "is_innate": true,
+    "atoms": [
+      {
+        "type": "guide_commune",
+        "params": {
+          "action": "grant_skill",
+          "target": "dialogue_partner"
+        }
+      }
+    ],
+    "cooldown": 0.0,
+    "stamina_cost": 0.0,
+    "input_type": "auto",
+    "usable_by": "npc",
+    "npc_id": "guide",
+    "note": "This is the Guide NPC's innate skill. When the Guide decides to grant a skill, this atom executes."
+  }
+]

@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"camera_reset"
+name = "Centrar Cámara"
+description = "Resets camera to forward-facing position."
+category = &"control"
+type = &"control"
+target_resolver = {
+"kind": "self",
+"params": {}
+}
+atoms = [{
+"type": "camera",
+"params": {
+"axis": "reset",
+"duration": 0.2
+}
+}]
+costs = {
+"stamina": 0.0,
+"cooldown": 0.1
+}

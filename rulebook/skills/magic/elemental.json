@@ -1,0 +1,66 @@
+[
+  {
+    "id": "kamehameha_001",
+    "name": "Kamehameha",
+    "category": "magic",
+    "description": "Channeled energy beam. Massive damage in a line.",
+    "lore": "The convergence of will into a single devastating point. The air itself screams.",
+    "is_innate": false,
+    "atoms": [
+      {
+        "type": "burst_aoe",
+        "params": {
+          "shape": "beam",
+          "width": 2.0,
+          "length": 15.0,
+          "amount": 80.0,
+          "element": "arcane",
+          "knockback": 5.0
+        }
+      }
+    ],
+    "cooldown": 8.0,
+    "stamina_cost": 35.0,
+    "input_type": "button",
+    "usable_by": "both"
+  },
+  {
+    "id": "bola_fuego_001",
+    "name": "Bola de Fuego",
+    "category": "magic",
+    "description": "Launch a fireball projectile. Explodes on impact.",
+    "lore": "Fire given form and purpose — the most honest of all magics.",
+    "is_innate": false,
+    "atoms": [
+      {
+        "type": "projectile",
+        "params": {
+          "speed": 12.0,
+          "lifetime": 3.0,
+          "on_hit": [
+            {
+              "type": "burst_aoe",
+              "params": {
+                "radius": 3.0,
+                "amount": 50.0,
+                "element": "fire"
+              }
+            },
+            {
+              "type": "status",
+              "params": {
+                "status_id": "burn",
+                "duration": 4.0,
+                "chance": 0.5
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "cooldown": 3.0,
+    "stamina_cost": 20.0,
+    "input_type": "button",
+    "usable_by": "both"
+  }
+]

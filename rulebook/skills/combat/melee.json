@@ -1,0 +1,78 @@
+[
+  {
+    "id": "light_attack_001",
+    "name": "Ataque Ligero",
+    "category": "combat",
+    "description": "Basic melee strike. Quick, low commitment.",
+    "lore": "The first lesson of combat: strike before you are struck.",
+    "is_innate": false,
+    "atoms": [
+      {
+        "type": "hit",
+        "params": {
+          "amount": 28.0,
+          "damage_type": "physical",
+          "element": "physical",
+          "knockback": 1.5
+        }
+      }
+    ],
+    "cooldown": 0.6,
+    "stamina_cost": 8.0,
+    "input_type": "button",
+    "usable_by": "both",
+    "animation_hint": "tween_rotation_z_strike"
+  },
+  {
+    "id": "defenderse_001",
+    "name": "Defenderse",
+    "category": "combat",
+    "description": "Open a parry window. If an attack connects during the window, auto-counter with riposte.",
+    "lore": "Patience is the sharpest blade. Wait, and the enemy defeats itself.",
+    "is_innate": false,
+    "atoms": [
+      {
+        "type": "status",
+        "params": {
+          "kind": "parry_window",
+          "duration": 0.4
+        }
+      }
+    ],
+    "combo_triggers": [
+      {
+        "condition": "parry_success",
+        "trigger_skill_id": "parry_riposte_001",
+        "description": "On successful parry, automatically cast riposte counter"
+      }
+    ],
+    "cooldown": 1.0,
+    "stamina_cost": 12.0,
+    "input_type": "button",
+    "usable_by": "both"
+  },
+  {
+    "id": "parry_riposte_001",
+    "name": "Contraataque",
+    "category": "combat",
+    "description": "Auto-cast counter-attack after successful parry. High damage, unblockable.",
+    "lore": "The moment of weakness exploited — a gift returned to the giver.",
+    "is_innate": false,
+    "atoms": [
+      {
+        "type": "hit",
+        "params": {
+          "amount": 45.0,
+          "damage_type": "physical",
+          "element": "physical",
+          "knockback": 3.0
+        }
+      }
+    ],
+    "cooldown": 0.0,
+    "stamina_cost": 0.0,
+    "input_type": "auto",
+    "usable_by": "both",
+    "note": "Never manually cast. Only triggered by combo_triggers from defenderse_001."
+  }
+]

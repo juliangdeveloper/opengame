@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"walk"
+name = "Caminar"
+description = "Movimiento direccional continuo. El stick izquierdo o WASD."
+flavor_text = "En el Woven World, hasta caminar es una habilidad — el acto de hilvanar el cuerpo a través de la tela de la realidad."
+category = &"control"
+type = &"control"
+target_resolver = {
+"kind": "self",
+"params": {}
+}
+atoms = [{
+"type": "move",
+"params": {
+"kind": "directional",
+"speed": 4.0
+}
+}]
+costs = {
+"stamina_per_second": 2.0,
+"cooldown": 0.0
+}

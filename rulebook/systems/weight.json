@@ -1,0 +1,18 @@
+{
+  "concept": "Weight System",
+  "description": "Weight is a fundamental property of every entity and object in the game. It determines how skills like push interact with targets. Heavier objects are harder to move.",
+  "unit": "kg",
+  "formula": {
+    "push_distance": "push_force × caster.weight / target.weight",
+    "explanation": "A 50kg player with push_force=8 hits a 5kg crate: 8 × 50 / 5 = 80 effective force. The same hit on a 50kg pillar: 8 × 50 / 50 = 8 effective force."
+  },
+  "default_weights": {
+    "player": 50.0,
+    "wood_pillar": 2.0,
+    "crate": 5.0,
+    "stone_wall": 100.0
+  },
+  "engine_mapping": {
+    "godot": "CharacterResource.weight → CharacterBody3D.weight. GameObject.weight for non-character objects. Hitbox reads both."
+  }
+}

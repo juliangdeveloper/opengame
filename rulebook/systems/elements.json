@@ -1,0 +1,133 @@
+{
+  "system": "Elemental Affinity",
+  "description": "9 elements form the foundation of all magical and physical interactions. Pokémon-style strengths and weaknesses. Investing points in an element boosts both attack AND resistance for that element.",
+  "progression_rule": "Same point boosts attack AND defense. Cap: 5 points per element.",
+  "formulas": {
+    "attack_multiplier": "1.0 + 0.1 × points (max 1.5 at 5 points)",
+    "resistance_multiplier": "1.0 - 0.1 × points (min 0.5 at 5 points)",
+    "final_damage": "base × elemental_matrix[atk][def] × target_resistance"
+  },
+  "elements": [
+    {
+      "id": "physical",
+      "name": "Físico",
+      "color": "#D9D9E6",
+      "strong_vs": [],
+      "weak_vs": [],
+      "note": "Neutral. Scales with physical attributes only."
+    },
+    {
+      "id": "fire",
+      "name": "Fuego",
+      "color": "#FF6619",
+      "strong_vs": [
+        "earth"
+      ],
+      "weak_vs": [
+        "air",
+        "water"
+      ]
+    },
+    {
+      "id": "water",
+      "name": "Agua",
+      "color": "#3380FF",
+      "strong_vs": [
+        "fire"
+      ],
+      "weak_vs": [
+        "lightning"
+      ]
+    },
+    {
+      "id": "earth",
+      "name": "Tierra",
+      "color": "#8C6633",
+      "strong_vs": [
+        "lightning"
+      ],
+      "weak_vs": [
+        "air"
+      ]
+    },
+    {
+      "id": "air",
+      "name": "Aire",
+      "color": "#CCE6FF",
+      "strong_vs": [
+        "earth",
+        "fire"
+      ],
+      "weak_vs": []
+    },
+    {
+      "id": "lightning",
+      "name": "Rayo",
+      "color": "#FFFF4D",
+      "strong_vs": [
+        "water",
+        "air"
+      ],
+      "weak_vs": [
+        "earth"
+      ]
+    },
+    {
+      "id": "light",
+      "name": "Luz",
+      "color": "#FFF2B3",
+      "strong_vs": [
+        "dark"
+      ],
+      "weak_vs": []
+    },
+    {
+      "id": "dark",
+      "name": "Oscuridad",
+      "color": "#733399",
+      "strong_vs": [
+        "light"
+      ],
+      "weak_vs": []
+    },
+    {
+      "id": "arcane",
+      "name": "Arcano",
+      "color": "#BF59E6",
+      "strong_vs": [],
+      "weak_vs": [],
+      "note": "Scales only with mastery, no natural strengths/weaknesses."
+    }
+  ],
+  "elemental_matrix": {
+    "note": "Values are multipliers. 2.0 = strong, 0.5 = weak, 1.0 = neutral, 0.0 = immune",
+    "fire": {
+      "earth": 2.0,
+      "air": 0.5,
+      "water": 0.5
+    },
+    "water": {
+      "fire": 2.0,
+      "lightning": 0.5
+    },
+    "earth": {
+      "lightning": 2.0,
+      "air": 0.5
+    },
+    "air": {
+      "earth": 2.0,
+      "fire": 2.0
+    },
+    "lightning": {
+      "water": 2.0,
+      "air": 2.0,
+      "earth": 0.5
+    },
+    "light": {
+      "dark": 2.0
+    },
+    "dark": {
+      "light": 2.0
+    }
+  }
+}

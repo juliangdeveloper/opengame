@@ -1,0 +1,56 @@
+{
+  "concept": "Effect Atoms",
+  "description": "Atoms are the building blocks of skills. Each atom represents a single effect that the engine interprets. A skill can have multiple atoms executed in sequence.",
+  "atom_types": {
+    "move": {
+      "description": "Applies movement to the caster. Sub-kinds: directional (walk), jump, dash.",
+      "params_example": { "kind": "jump", "height": 6.5 }
+    },
+    "camera": {
+      "description": "Rotates the camera. Axis: yaw or pitch.",
+      "params_example": { "axis": "yaw", "direction": "right", "base_speed": 2.5 }
+    },
+    "spawn_object": {
+      "description": "Instantiates a reusable scene asset at a position relative to the caster. The object is a trigger (Area3D) — it detects overlaps but has no physics response.",
+      "params": {
+        "asset": "Path to the .tscn asset to instantiate.",
+        "offset": "Position relative to the caster's facing direction (forward, right, up).",
+        "dimensions": "Scale of the spawned object relative to the asset's base size.",
+        "duration": "How long the object lives before being freed (seconds). 0 = instant."
+      },
+      "params_example": {
+        "asset": "res://assets/hitbox_cube.tscn",
+        "offset": { "forward": 0.5, "right": 0.0, "up": 0.0 },
+        "dimensions": { "x": 0.5, "y": 0.5, "z": 0.5 },
+        "duration": 0.1
+      }
+    },
+    "push": {
+      "description": "Applies a velocity impulse to all bodies overlapping a trigger. Direction is the caster's forward. Force is calculated from skill speed and caster weight.",
+      "params": {
+        "force": "Base push force (speed of the skill).",
+        "weight_multiplier": "If true, force is multiplied by the caster's weight attribute."
+      },
+      "params_example": {
+        "force": 8.0,
+        "weight_multiplier": true
+      }
+    },
+    "hit": {
+      "description": "Composite atom: spawn_object + push. Spawns a trigger hitbox and pushes anything inside it. This is a convenience atom that combines spawn_object and push into one.",
+      "params_example": {
+        "asset": "res://assets/hitbox_cube.tscn",
+        "offset": { "forward": 0.5 },
+        "dimensions": { "x": 0.5, "y": 0.5, "z": 0.5 },
+        "duration": 0.1,
+        "push_force": 8.0,
+        "weight_multiplier": true
+      }
+    }
+  },
+  "trigger": {
+    "description": "A trigger is an Area3D node that detects overlaps with physics bodies but does not push them. Used for hit detection, zones, and area effects.",
+    "implementation": "Godot: Area3D with collision_layer=0, collision_mask set to target layers. On body_entered → apply effect.",
+    "reusable_assets": "Trigger objects (hitbox_cube.tscn, hitbox_sphere.tscn) are stored in res://assets/ and reused across skills. Only dimensions and spawn offset change per skill."
+  }
+}

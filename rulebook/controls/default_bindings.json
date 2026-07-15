@@ -1,0 +1,262 @@
+{
+  "system": "Control Bindings",
+  "description": "Maps physical inputs to skills. This file defines the DEFAULT bindings. The engine reads this to configure its input system. The player can rebind.",
+  "input_device_schema": {
+    "type": "gamepad | keyboard | mouse | touch | vr_controller",
+    "bindings": "Array of {input, skill_id, sensitivity, deadzone}"
+  },
+  "default_gamepad": {
+    "device_type": "gamepad",
+    "layout": "standard (Xbox/PS)",
+    "bindings": [
+      {
+        "input": "left_stick",
+        "skill_id": "walk",
+        "type": "axis",
+        "sensitivity": 1.0,
+        "deadzone": 0.15
+      },
+      {
+        "input": "right_stick_x",
+        "skill_id": "camera_rotate_left|camera_rotate_right",
+        "type": "axis",
+        "sensitivity": 2.5,
+        "deadzone": 0.1,
+        "note": "Negative = left skill, Positive = right skill"
+      },
+      {
+        "input": "right_stick_y",
+        "skill_id": "camera_look_up|camera_look_down",
+        "type": "axis",
+        "sensitivity": 2.0,
+        "deadzone": 0.1,
+        "note": "Negative = up, Positive = down"
+      },
+      {
+        "input": "R3",
+        "skill_id": "camera_reset",
+        "type": "button"
+      },
+      {
+        "input": "L3",
+        "skill_id": "correr_001",
+        "type": "hold",
+        "note": "Sprint while held. Only works once skill is learned."
+      },
+      {
+        "input": "face_0",
+        "skill_id": "slot_0",
+        "type": "button",
+        "label": "X / A"
+      },
+      {
+        "input": "face_1",
+        "skill_id": "slot_1",
+        "type": "button",
+        "label": "□ / X"
+      },
+      {
+        "input": "face_2",
+        "skill_id": "slot_2",
+        "type": "button",
+        "label": "○ / B"
+      },
+      {
+        "input": "face_3",
+        "skill_id": "slot_3",
+        "type": "button",
+        "label": "△ / Y"
+      },
+      {
+        "input": "L1+face_0",
+        "skill_id": "slot_4",
+        "type": "button_combo"
+      },
+      {
+        "input": "L1+face_1",
+        "skill_id": "slot_5",
+        "type": "button_combo"
+      },
+      {
+        "input": "L1+face_2",
+        "skill_id": "slot_6",
+        "type": "button_combo"
+      },
+      {
+        "input": "L1+face_3",
+        "skill_id": "slot_7",
+        "type": "button_combo"
+      },
+      {
+        "input": "L2_analog",
+        "skill_id": null,
+        "type": "trigger",
+        "note": "Reserved for future use. Sensitivity: 0.0-1.0 analog range."
+      },
+      {
+        "input": "R2_analog",
+        "skill_id": null,
+        "type": "trigger",
+        "note": "Reserved for future use. Could be analog attack strength."
+      },
+      {
+        "input": "L1",
+        "skill_id": null,
+        "type": "modifier",
+        "note": "Modifier only. No standalone gameplay action."
+      },
+      {
+        "input": "R1",
+        "skill_id": null,
+        "type": "modifier",
+        "note": "Tab navigation in menus. No gameplay action."
+      },
+      {
+        "input": "Share",
+        "skill_id": null,
+        "type": "toggle",
+        "note": "Opens/closes the in-game menu."
+      },
+      {
+        "input": "D-pad_up",
+        "skill_id": null,
+        "type": "ui_nav",
+        "note": "Focus navigation in menus."
+      },
+      {
+        "input": "D-pad_down",
+        "skill_id": null,
+        "type": "ui_nav"
+      },
+      {
+        "input": "D-pad_left",
+        "skill_id": null,
+        "type": "ui_nav"
+      },
+      {
+        "input": "D-pad_right",
+        "skill_id": null,
+        "type": "ui_nav"
+      }
+    ]
+  },
+  "default_keyboard_mouse": {
+    "device_type": "keyboard+mouse",
+    "bindings": [
+      {
+        "input": "W",
+        "skill_id": "walk",
+        "type": "axis",
+        "action": "move_forward"
+      },
+      {
+        "input": "S",
+        "skill_id": "walk",
+        "type": "axis",
+        "action": "move_backward"
+      },
+      {
+        "input": "A",
+        "skill_id": "walk",
+        "type": "axis",
+        "action": "move_left"
+      },
+      {
+        "input": "D",
+        "skill_id": "walk",
+        "type": "axis",
+        "action": "move_right"
+      },
+      {
+        "input": "WASD",
+        "skill_id": "walk",
+        "type": "axis"
+      },
+      {
+        "input": "mouse_x",
+        "skill_id": "camera_rotate_left|camera_rotate_right",
+        "type": "axis",
+        "sensitivity": 3.0
+      },
+      {
+        "input": "mouse_y",
+        "skill_id": "camera_look_up|camera_look_down",
+        "type": "axis",
+        "sensitivity": 2.5
+      },
+      {
+        "input": "Space",
+        "skill_id": "saltar_001",
+        "type": "button"
+      },
+      {
+        "input": "Shift",
+        "skill_id": "correr_001",
+        "type": "hold"
+      },
+      {
+        "input": "LMB",
+        "skill_id": "slot_0",
+        "type": "button"
+      },
+      {
+        "input": "RMB",
+        "skill_id": "slot_1",
+        "type": "button"
+      },
+      {
+        "input": "key_1",
+        "skill_id": "slot_0",
+        "type": "button"
+      },
+      {
+        "input": "key_2",
+        "skill_id": "slot_1",
+        "type": "button"
+      },
+      {
+        "input": "key_3",
+        "skill_id": "slot_2",
+        "type": "button"
+      },
+      {
+        "input": "key_4",
+        "skill_id": "slot_3",
+        "type": "button"
+      },
+      {
+        "input": "key_5",
+        "skill_id": "slot_4",
+        "type": "button"
+      },
+      {
+        "input": "key_6",
+        "skill_id": "slot_5",
+        "type": "button"
+      },
+      {
+        "input": "key_7",
+        "skill_id": "slot_6",
+        "type": "button"
+      },
+      {
+        "input": "key_8",
+        "skill_id": "slot_7",
+        "type": "button"
+      },
+      {
+        "input": "Backspace",
+        "skill_id": null,
+        "type": "toggle",
+        "note": "Open/close menu"
+      }
+    ]
+  },
+  "trigger_sensitivity": {
+    "description": "Triggers (L2/R2) provide analog input 0.0-1.0. Skills bound to triggers can scale their effect by the input value.",
+    "example": "If camera_rotate_right is bound to a trigger: rotation_speed = base_speed × trigger_value. Light press = slow rotation, full press = fast rotation.",
+    "deadzone": 0.1,
+    "curve": "linear",
+    "note": "In the current implementation, triggers are buttons (digital). Analog support is a future enhancement. The RuleBook defines the full spec; the engine implements what it can."
+  }
+}

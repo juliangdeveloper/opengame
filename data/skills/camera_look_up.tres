@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"camera_look_up"
+name = "Mirar Arriba"
+description = "Tilts the camera upward."
+category = &"control"
+type = &"control"
+target_resolver = {
+"kind": "self",
+"params": {}
+}
+atoms = [{
+"type": "camera",
+"params": {
+"axis": "pitch",
+"direction": "up",
+"base_speed": 2.0,
+"clamp_min": -85.0,
+"clamp_max": 85.0
+}
+}]
+costs = {
+"stamina": 0.0,
+"cooldown": 0.0
+}

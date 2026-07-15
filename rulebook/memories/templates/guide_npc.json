@@ -1,0 +1,19 @@
+{
+  "entity_id": "guide",
+  "name": "El Guía",
+  "archetype": "guide",
+  "innate_skills": [
+    "ver_guia",
+    "guia_otorga",
+    "hablar_guia"
+  ],
+  "learned_skills": [],
+  "all_known_skills": "ALL — the Guide knows every skill in the RuleBook but only grants what the seeker is ready for",
+  "granting_rules": [
+    "Player must have ver_guia active",
+    "Player must be in dialogue (hablar_guia)",
+    "Player must request (solicitar_habilidad)",
+    "Guide evaluates: current skills, narrative context, readiness",
+    "Guide may deny, grant, or offer an alternative"
+  ]
+}

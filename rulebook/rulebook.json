@@ -1,0 +1,28 @@
+{
+  "rulebook_version": "1.0.0",
+  "name": "Open Game RuleBook",
+  "description": "Technology-agnostic game specification. The game IS this document. Any engine, renderer, or human GM can interpret it.",
+  "format": "JSON (software-readable), with optional Markdown rendering for human consumption",
+  "design_principles": [
+    "Everything is a skill — every action from breathing to casting a meteor is a skill defined here",
+    "Memories define what an entity CAN do — the list of skills available to it",
+    "The RuleBook is the single source of truth — engines are interchangeable interpreters",
+    "A session can start on a computer and continue on a tabletop — state is portable",
+    "No action is hardcoded in the engine — the engine reads and executes skills from this book"
+  ],
+  "structure": {
+    "universe/": "Lore, world rules, physics",
+    "systems/": "Game systems (elements, status effects, progression)",
+    "skills/": "All skills organized by category",
+    "memories/": "Entity memory templates — lists of available skills per character",
+    "entities/": "Character definitions referencing their memory",
+    "controls/": "Input bindings — which physical action triggers which skill"
+  },
+  "godot_data_mapping": {
+    "note": "Existing .tres files in data/ are the Godot-specific implementation of this RuleBook. This JSON is the technology-agnostic source; .tres files are derived from it.",
+    "skills/": "data/skills/*.tres",
+    "systems/elements": "scripts/skill/elements.gd",
+    "entities/": "data/characters/*.tres",
+    "controls/": "project.godot InputMap + scripts/player.gd"
+  }
+}

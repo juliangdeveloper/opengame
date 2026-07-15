@@ -1,0 +1,26 @@
+{
+  "system": "Memories",
+  "description": "A memory is the complete list of skills available to an entity. It defines what an entity CAN do, not what it WILL do. The decision of when/how to use a skill is handled by the entity's controller (brain), not by the memory.",
+  "design_principles": [
+    "Memory = list of skill IDs the entity can access",
+    "Memory is portable — it can be loaded by any engine or described to a human GM",
+    "The player starts with only ver_guia and gains skills through the Guide",
+    "NPCs have fixed memories that define their behavior repertoire",
+    "Memory can be exported mid-session to continue on another platform",
+    "Equipment adds skills to memory (a weapon may unlock weapon-specific skills)"
+  ],
+  "memory_schema": {
+    "entity_id": "Reference to the entity this memory belongs to",
+    "innate_skills": "Skills the entity is born with. Cannot be removed.",
+    "learned_skills": "Skills acquired through gameplay. Can be gained and lost.",
+    "equipment_skills": "Skills temporarily available from equipped items. Removed on unequip.",
+    "active_slots": "Which skills are mapped to which input slots (player only)",
+    "skill_allocations": "Points invested in each skill (improves that skill)",
+    "state": "Current HP, stamina, position, active statuses, cooldowns — the live session state"
+  },
+  "portability": {
+    "export_format": "A memory + state snapshot can be serialized to JSON and loaded elsewhere",
+    "tabletop_conversion": "In tabletop mode, the GM reads the memory as the character sheet. Cooldowns become round counts. Stamina becomes action economy.",
+    "cross_engine": "The same memory can be loaded by Godot, Unity, a world model, or a human GM. The engine maps skill atoms to its own execution system."
+  }
+}

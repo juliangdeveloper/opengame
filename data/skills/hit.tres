@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"hit"
+name = "Golpear"
+description = "Golpe frontal. Spawna un cubo trigger que empuja todo lo que toque."
+flavor_text = "La fuerza bruta, canalizada a través de la voluntad."
+category = &"combat"
+type = &"combat"
+target_resolver = {
+"kind": "area",
+"params": {
+"note": "Target = whoever activates the trigger (enters the hitbox). Not the caster."
+}
+}
+atoms = [{
+"type": "hit",
+"params": {
+"asset": "res://assets/hitbox_cube.tscn",
+"offset": {
+"forward": 1.0,
+"right": 0.0,
+"up": 0.0
+},
+"dimensions": {
+"x": 0.5,
+"y": 0.5,
+"z": 0.5
+},
+"duration": 0.1,
+"push_force": 1.0,
+"weight_multiplier": true
+}
+}]
+costs = {
+"stamina": 10.0,
+"cooldown": 0.4
+}
