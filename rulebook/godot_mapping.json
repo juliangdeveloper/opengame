@@ -36,5 +36,20 @@
     "camera": "Camera3D is child of player, positioned at eye height (y=1.6). Player body mesh is invisible to owner (layer mask).",
     "crosshair": "Simple crosshair HUD element centered on screen.",
     "interaction_ray": "RayCast3D from camera forward, range=3.0m, for interact/solicitar_habilidad."
+  },
+  "scene_to_godot": {
+    "pattern": "Each scene JSON in rulebook/scenes/ maps to a .tscn file in scenes/. The JSON is the source of truth for positions/state; the .tscn is the Godot-specific rendering.",
+    "on_load_contract": "GameStartup reads scene JSON → instantiates each instance at its position → applies environment settings. If JSON and .tscn differ, JSON wins.",
+    "on_change_contract": "PlayerController, physics, combat — any code that changes position/state of an instance → writes back to scene JSON via SceneManager singleton.",
+    "mapping": {
+      "scene.environment.floor": "Floor StaticBody3D with BoxShape3D + checker ShaderMaterial",
+      "scene.environment.sky": "WorldEnvironment → ProceduralSkyMaterial + Sky + Environment",
+      "scene.environment.lighting": "DirectionalLight3D rotation/energy/shadows",
+      "instance.position": "node.transform.origin = Vector3(pos[0], pos[1], pos[2])",
+      "instance.rotation_deg": "node.rotation_degrees = Vector3(rot[0], rot[1], rot[2])",
+      "instance.state.hp": "EntityCharacter.current_hp (or destructible object HP)",
+      "instance.entity_ref": "instance PackedScene from entities/*.json → scenes/*.tscn",
+      "instance.object_ref": "instantiate PackedScene from scenes/{object_name}.tscn"
+    }
   }
 }

@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 ErrorLogger="*res://scripts/error_logger.gd"
+SceneManager="*res://scripts/scene_manager.gd"
 
 [display]
 
