@@ -16,7 +16,8 @@
     "skills/": "All skills organized by category",
     "memories/": "Entity memory templates — lists of available skills per character",
     "entities/": "Character definitions referencing their memory",
-    "controls/": "Input bindings — which physical action triggers which skill"
+    "controls/": "Input bindings — which physical action triggers which skill",
+    "scenes/": "Scene state — positions, environment, and live state of every instance. Engine reads on load, writes back on change."
   },
   "godot_data_mapping": {
     "note": "Existing .tres files in data/ are the Godot-specific implementation of this RuleBook. This JSON is the technology-agnostic source; .tres files are derived from it.",

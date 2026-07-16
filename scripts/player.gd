@@ -41,6 +41,9 @@ func _physics_process(delta: float) -> void:
 	# HP regeneration (slower than stamina)
 	if current_hp < max_hp_stat:
 		current_hp = minf(max_hp_stat, current_hp + hp_regen_rate * delta)
+	# Report position to SceneManager for RuleBook sync
+	if SceneManager != null:
+		SceneManager.report_position(self)
 	# Update UI
 	if _stamina_bar != null and controller != null:
 		_stamina_bar.max_value = controller.max_stamina

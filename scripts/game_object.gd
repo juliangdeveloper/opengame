@@ -39,6 +39,9 @@ func _physics_process(delta: float) -> void:
 		speed = maxf(0.0, speed - decel)
 		_velocity = _velocity.normalized() * speed
 		global_position += _velocity * delta
+		# Report position to SceneManager for RuleBook sync
+		if SceneManager != null:
+			SceneManager.report_position(self)
 
 
 ## Push: final_force = base × caster.push_effect / target.push_effect
@@ -67,6 +70,9 @@ func take_damage(amount: float, _attacker: Node = null, _element: StringName = &
 	parent.add_child(fhp)
 	fhp.setup(object_name, hp, max_hp)
 	object_hit.emit(object_name, hp, max_hp)
+	# Report state to SceneManager for RuleBook sync
+	if SceneManager != null:
+		SceneManager.report_object_state(self, hp, weight)
 	if hp <= 0.0:
 		_destroy()
 	return effective
@@ -74,5 +80,8 @@ func take_damage(amount: float, _attacker: Node = null, _element: StringName = &
 
 func _destroy() -> void:
 	print("[object] %s DESTROYED" % object_name)
+	# Report destruction to SceneManager before freeing
+	if SceneManager != null:
+		SceneManager.report_destroyed(self)
 	object_destroyed.emit(object_name)
 	queue_free()

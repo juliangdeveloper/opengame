@@ -1,0 +1,194 @@
+{
+	"description": "Arena plana con checker floor, 3 pilares de madera y 2 cajas. Escena principal de prueba.",
+	"display_name": "Arena de Práctica",
+	"engine_contract": {
+		"on_change": "ANY position/rotation/state change during gameplay MUST be written back to this file. The RuleBook is always up to date with the live game.",
+		"on_load": "Read this JSON. For each instance: if entity_ref → load entity profile for stats/visual/memory, instantiate at position. If object_ref → load object profile from game_objects.json. Environment settings configure floor shader, sky, and lighting.",
+		"on_save": "When saving, serialize all instance transforms and state back here. Next load reproduces the exact same world."
+	},
+	"environment": {
+		"floor": {
+			"color_a": [
+				0.28,
+				0.26,
+				0.22
+			],
+			"color_b": [
+				0.42,
+				0.4,
+				0.35
+			],
+			"grid_size": 1.0,
+			"shader": "checker",
+			"size": [
+				100.0,
+				1.0,
+				100.0
+			]
+		},
+		"lighting": {
+			"ambient_color": [
+				0.4,
+				0.45,
+				0.55
+			],
+			"ambient_energy": 0.6,
+			"shadows": true,
+			"sun_energy": 1.2,
+			"sun_rotation_deg": [
+				-14.5,
+				-45.0,
+				0.0
+			]
+		},
+		"sky": {
+			"ground_bottom_color": [
+				0.12,
+				0.1,
+				0.08
+			],
+			"ground_horizon_color": [
+				0.5,
+				0.45,
+				0.4
+			],
+			"sky_horizon_color": [
+				0.65,
+				0.65,
+				0.7
+			],
+			"sky_top_color": [
+				0.22,
+				0.34,
+				0.55
+			]
+		}
+	},
+	"instances": [
+		{
+			"entity_ref": "entities/player.json",
+			"id": "player_instance",
+			"node_name": "Player",
+			"position": [
+				1.56,
+				1.0,
+				-1.77
+			],
+			"rotation_deg": [
+				0.0,
+				-124.73,
+				0.0
+			],
+			"scale": [
+				1.0,
+				1.0,
+				1.0
+			],
+			"state": {
+				"hp": 100.0,
+				"stamina": 100.0
+			}
+		},
+		{
+			"id": "pillar_2",
+			"node_name": "Pillar2",
+			"object_ref": "objects/wood_pillar",
+			"position": [
+				-5.0,
+				1.5,
+				5.0
+			],
+			"rotation_deg": [
+				0.0,
+				0.0,
+				0.0
+			],
+			"scale": [
+				1.0,
+				1.0,
+				1.0
+			],
+			"source": "entities/objects/game_objects.json",
+			"state": {
+				"hp": 30.0,
+				"weight": 2.0
+			}
+		},
+		{
+			"id": "pillar_3",
+			"node_name": "Pillar3",
+			"object_ref": "objects/indestructible_pillar",
+			"position": [
+				0.0,
+				1.5,
+				-8.0
+			],
+			"rotation_deg": [
+				0.0,
+				0.0,
+				0.0
+			],
+			"scale": [
+				1.0,
+				1.0,
+				1.0
+			],
+			"source": "entities/objects/game_objects.json",
+			"state": {
+				"hp": -1.0,
+				"weight": 100.0
+			}
+		},
+		{
+			"id": "crate_1",
+			"node_name": "Crate1",
+			"object_ref": "objects/crate",
+			"position": [
+				3.47,
+				0.25,
+				0.28
+			],
+			"rotation_deg": [
+				0.0,
+				0.0,
+				0.0
+			],
+			"scale": [
+				1.0,
+				1.0,
+				1.0
+			],
+			"source": "entities/objects/game_objects.json",
+			"state": {
+				"hp": 148.0,
+				"weight": 5.0
+			}
+		},
+		{
+			"id": "crate_2",
+			"node_name": "Crate2",
+			"object_ref": "objects/crate",
+			"position": [
+				-3.5,
+				0.25,
+				-4.54
+			],
+			"rotation_deg": [
+				0.0,
+				0.0,
+				0.0
+			],
+			"scale": [
+				1.0,
+				1.0,
+				1.0
+			],
+			"source": "entities/objects/game_objects.json",
+			"state": {
+				"hp": 184.0,
+				"weight": 5.0
+			}
+		}
+	],
+	"scene_id": "test_world"
+}
