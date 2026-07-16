@@ -74,5 +74,38 @@
     "input_type": "auto",
     "usable_by": "both",
     "note": "Never manually cast. Only triggered by combo_triggers from defenderse_001."
+  },
+  {
+    "id": "hit_projectile_001",
+    "name": "Golpe Proyectil",
+    "category": "combat",
+    "description": "Golpe frontal con movimiento. Spawna un cubo trigger que viaja en la dirección de la cámara durante 2 segundos a 1 m/s.",
+    "lore": "La fuerza bruta, ahora con propósito — viaja hacia donde miras.",
+    "is_innate": false,
+    "atoms": [
+      {
+        "type": "hit",
+        "params": {
+          "asset": "res://assets/hitbox_cube.tscn",
+          "offset": { "forward": 1.0, "right": 0.0, "up": 0.0 },
+          "dimensions": { "x": 0.5, "y": 0.5, "z": 0.5 },
+          "duration": 2.0,
+          "spawn_time": 2.0,
+          "movement": {
+            "direction": "camera",
+            "speed": 1.0
+          },
+          "push_force": 1.0,
+          "base_damage": 2.0,
+          "damage_type": "physical",
+          "element": "physical"
+        }
+      }
+    ],
+    "cooldown": 0.4,
+    "stamina_cost": 10.0,
+    "input_type": "button",
+    "usable_by": "both",
+    "note": "First skill with spawn movement. The hitbox travels toward the camera direction for 2 seconds at 1 m/s. Demonstrates the new spawn_time + movement concept."
   }
 ]

@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = &"hit"
 name = "Golpear"
-description = "Golpe frontal. Spawna un cubo trigger que empuja todo lo que toque."
+description = "Golpe frontal. Spawna un cubo trigger que empuja y daña todo lo que toque."
 flavor_text = "La fuerza bruta, canalizada a través de la voluntad."
 category = &"combat"
 type = &"combat"
@@ -31,8 +31,9 @@ atoms = [{
 "z": 0.5
 },
 "duration": 0.1,
+"spawn_time": 0.5,
 "push_force": 1.0,
-"weight_multiplier": true
+"base_damage": 2.0
 }
 }]
 costs = {

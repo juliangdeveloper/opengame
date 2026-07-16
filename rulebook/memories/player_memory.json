@@ -17,7 +17,7 @@
     "slot_0": null,
     "slot_1": null,
     "slot_2": null,
-    "slot_3": null,
+    "slot_3": "hit_projectile_001",
     "slot_4": null,
     "slot_5": null,
     "slot_6": null,
@@ -32,7 +32,7 @@
     "face_button_0": "slot_0",
     "face_button_1": "slot_1",
     "face_button_2": "slot_2",
-    "face_button_3": "slot_3",
+    "face_button_3": "slot_3 → hit_projectile_001 (triangle/△)",
     "L1+face_0": "slot_4",
     "L1+face_1": "slot_5",
     "L1+face_2": "slot_6",
@@ -41,7 +41,9 @@
     "L1_solo": "modifier (no gameplay action)",
     "Share": "toggle_menu"
   },
-  "skill_allocations": {},
+  "skill_allocations": {
+    "hit_projectile_001": "slot_3"
+  },
   "state": {
     "hp": 100.0,
     "max_hp": 100.0,

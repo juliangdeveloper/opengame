@@ -16,13 +16,37 @@
         "asset": "Path to the .tscn asset to instantiate.",
         "offset": "Position relative to the caster's facing direction (forward, right, up).",
         "dimensions": "Scale of the spawned object relative to the asset's base size.",
-        "duration": "How long the object lives before being freed (seconds). 0 = instant."
+        "duration": "How long the object lives before being freed (seconds). If omitted, defaults to 0.5s.",
+        "spawn_time": "Total lifetime of the spawned object in seconds. If omitted, defaults to 0.5s. If present, the object persists for this duration.",
+        "movement": {
+          "description": "If present, the spawned object moves during its lifetime. Only processed if spawn_time is also defined.",
+          "params": {
+            "direction": "Movement direction. Special values: 'camera' = player camera forward, 'caster' = caster forward, 'target' = toward locked target. Or explicit Vector3.",
+            "speed": "Movement speed in meters per second (m/s)."
+          }
+        }
+      },
+      "defaults": {
+        "spawn_time": 0.5,
+        "duration": 0.5,
+        "note": "If spawn_time or duration are omitted from atom params, the engine uses 0.5s as default. Skills that want shorter/longer lifetime must explicitly declare spawn_time."
       },
       "params_example": {
         "asset": "res://assets/hitbox_cube.tscn",
         "offset": { "forward": 0.5, "right": 0.0, "up": 0.0 },
         "dimensions": { "x": 0.5, "y": 0.5, "z": 0.5 },
         "duration": 0.1
+      },
+      "params_example_with_movement": {
+        "asset": "res://assets/hitbox_cube.tscn",
+        "offset": { "forward": 1.0, "right": 0.0, "up": 0.0 },
+        "dimensions": { "x": 0.5, "y": 0.5, "z": 0.5 },
+        "duration": 2.0,
+        "spawn_time": 2.0,
+        "movement": {
+          "direction": "camera",
+          "speed": 1.0
+        }
       }
     },
     "push": {
@@ -52,5 +76,17 @@
     "description": "A trigger is an Area3D node that detects overlaps with physics bodies but does not push them. Used for hit detection, zones, and area effects.",
     "implementation": "Godot: Area3D with collision_layer=0, collision_mask set to target layers. On body_entered → apply effect.",
     "reusable_assets": "Trigger objects (hitbox_cube.tscn, hitbox_sphere.tscn) are stored in res://assets/ and reused across skills. Only dimensions and spawn offset change per skill."
+  },
+  "movement_rules": {
+    "description": "Spawned objects can move during their lifetime. This enables projectiles, moving hitboxes, and directional attacks.",
+    "activation": "Movement is ONLY processed if the atom params include BOTH 'spawn_time' AND 'movement'. If either is missing, the object is static (spawns at offset, stays there until freed).",
+    "direction_resolution": {
+      "camera": "Direction = player camera's forward vector (full 3D including pitch).",
+      "caster": "Direction = caster's forward vector (horizontal plane only).",
+      "target": "Direction = normalized vector from spawn position to locked target center.",
+      "explicit": "Direction = explicit Vector3 value {x, y, z} in world space."
+    },
+    "speed_units": "Speed is in meters per second (m/s). The object moves speed * delta each physics frame.",
+    "example": "A projectile with spawn_time=2.0 and movement.speed=1.0 travels 2 meters total before being freed."
   }
 }

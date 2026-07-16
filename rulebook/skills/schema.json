@@ -27,7 +27,24 @@
       "projectile": "Ranged projectile. Params: speed, lifetime, on_hit_atoms.",
       "camera": "Camera manipulation. Params: axis (yaw/pitch/roll), speed, sensitivity, relative.",
       "interact": "Interaction with entities/objects. Params: target_type, action, range.",
-      "guide_commune": "Communication with the Guide. Params: message_type, context."
+      "guide_commune": "Communication with the Guide. Params: message_type, context.",
+      "spawn_object": "Instantiate a scene asset at offset from caster. Params: asset, offset, dimensions, duration, spawn_time, movement."
+    },
+    "spawn_defaults": {
+      "description": "If spawn_time or duration are omitted from atom params, the engine uses 0.5s as default lifetime.",
+      "spawn_time_default": 0.5,
+      "duration_default": 0.5,
+      "note": "Skills that want shorter/longer lifetime must explicitly declare spawn_time. Movement only activates when BOTH spawn_time AND movement are present."
+    },
+    "spawn_object_extended": {
+      "description": "When spawn_time AND movement are both present in spawn_object params, the object moves during its lifetime. If either is missing, object is static.",
+      "params": {
+        "spawn_time": "Total lifetime in seconds. Defaults to 0.5s if omitted.",
+        "movement": {
+          "direction": "'camera' | 'caster' | 'target' | {x, y, z}. 'camera' = player camera forward.",
+          "speed": "Speed in meters per second (m/s)."
+        }
+      }
     }
   }
 }

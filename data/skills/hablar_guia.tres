@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"hablar_guia"
+name = "Hablar con el Guía"
+description = "Speak to the Guide. Ask questions, request skills, receive guidance."
+flavor_text = "The second gift: language. The Guide teaches the player to speak, and in speaking, to ask."
+category = &"control"
+type = &"control"
+target_resolver = {
+"kind": "self",
+"params": {}
+}
+atoms = [{
+"type": "interact",
+"params": {
+"target": "guide",
+"action": "dialogue",
+"opens_ui": "guide_dialogue"
+}
+}]
+costs = {
+"stamina": 0.0,
+"cooldown": 0.0
+}

@@ -53,6 +53,7 @@ var max_stamina: float = 50.0
 var stamina: float = 50.0
 var move_speed: float = 5.0
 var weight: float = 1.0
+var vitality: float = 1.0
 var turn_speed: float = 6.0
 var detection_range: float = 12.0
 var attack_range: float = 2.6
@@ -93,8 +94,11 @@ var controller: Node = null  # PlayerController o AIController
 # === Signals ===
 signal character_killed(character_id: StringName)
 signal character_damaged(amount: float, hp_left: float)
+@warning_ignore("unused_signal")
 signal character_dodged(attacker: Node)
+@warning_ignore("unused_signal")
 signal character_parried(attacker: Node)
+@warning_ignore("unused_signal")
 signal character_blocked(attacker: Node)
 signal skill_started(skill_id: StringName)
 signal skill_finished(skill_id: StringName)
@@ -151,6 +155,7 @@ func _apply_data() -> void:
 	stamina = max_stamina
 	move_speed = float(data.move_speed)
 	weight = float(data.weight)
+	vitality = float(data.vitality)
 	turn_speed = float(data.turn_speed)
 	detection_range = float(data.detection_range)
 	attack_range = float(data.attack_range)
@@ -238,9 +243,9 @@ func _setup_visuals() -> void:
 			_build_procedural_head()
 	if attack_area and hit_collision:
 		_hitbox_mat = StandardMaterial3D.new()
-		_hitbox_mat.transparency = 1
-		_hitbox_mat.shading_mode = 0
-		_hitbox_mat.cull_mode = 2
+		_hitbox_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		_hitbox_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_hitbox_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 		_hitbox_mat.albedo_color = HITBOX_WINDUP
 		var hd: MeshInstance3D = attack_area.get_node_or_null("HitboxDebug")
 		if hd:
@@ -253,7 +258,7 @@ func _setup_visuals() -> void:
 
 ## Resize the body mesh (Capsule/Cube/Sphere/Cylinder) based on data params.
 ## This replaces the hardcoded Capsule sizes in the .tscn files.
-func _resize_body_mesh(mesh_inst: MeshInstance3D, height: float, radius: float, scale: float) -> void:
+func _resize_body_mesh(mesh_inst: MeshInstance3D, height: float, radius: float, body_scale: float) -> void:
 	var m: Mesh = mesh_inst.mesh
 	if m is CapsuleMesh:
 		m.height = height
@@ -266,7 +271,7 @@ func _resize_body_mesh(mesh_inst: MeshInstance3D, height: float, radius: float, 
 		m.radius = max(radius, height * 0.5)
 	elif m is BoxMesh:
 		m.size = Vector3(radius * 2.0, height, radius * 2.0)
-	mesh_inst.scale = Vector3.ONE * scale
+	mesh_inst.scale = Vector3.ONE * body_scale
 
 
 ## Build a small procedural head sphere on top of the body.
@@ -482,7 +487,7 @@ func _update_hp_label() -> void:
 
 # === Combat ===
 
-func take_damage(amount: float, attacker: Node = null, element: StringName = &"") -> float:
+func take_damage(amount: float, _attacker: Node = null, element: StringName = &"") -> float:
 	if state == State.DEAD:
 		return 0.0
 	# Aplicar damage_modifiers (weakness/resistance)

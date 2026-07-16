@@ -17,10 +17,12 @@ collision_layer = 1
 collision_mask = 0
 script = ExtResource("1_crate")
 object_name = "crate"
-max_hp = 10.0
+max_hp = 200.0
 weight = 5.0
 material_type = "wood"
 destructible = true
+push_effect = 1.0
+vitality = 0.5
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("bs_crate")

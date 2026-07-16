@@ -16,10 +16,18 @@ run/main_scene="uid://b2playmain"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
+[autoload]
+
+ErrorLogger="*res://scripts/error_logger.gd"
+
 [display]
 
 window/size/viewport_width=1280
 window/size/viewport_height=720
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/debugger_errors/plugin.cfg")
 
 [input]
 

@@ -63,9 +63,10 @@
       },
       {
         "input": "face_3",
-        "skill_id": "slot_3",
+        "skill_id": "hit_projectile_001",
         "type": "button",
-        "label": "△ / Y"
+        "label": "△ / Y",
+        "note": "Triangle button on PS4 / Y on Xbox. Fires hit_projectile — moving hitbox toward camera direction."
       },
       {
         "input": "L1+face_0",
@@ -203,6 +204,12 @@
         "input": "RMB",
         "skill_id": "slot_1",
         "type": "button"
+      },
+      {
+        "input": "Q",
+        "skill_id": "hit_projectile_001",
+        "type": "button",
+        "note": "Q key for hit_projectile on keyboard (equivalent to triangle on gamepad)."
       },
       {
         "input": "key_1",
