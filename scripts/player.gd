@@ -51,7 +51,7 @@ func _physics_process(delta: float) -> void:
 
 
 ## Called by hitbox or any damage source.
-func take_damage(amount: float, attacker: Node = null, element: StringName = &"") -> float:
+func take_damage(amount: float, _attacker: Node = null, _element: StringName = &"") -> float:
 	current_hp = maxf(0.0, current_hp - amount)
 	_log("took %.0f damage → hp=%.0f/%.0f" % [amount, current_hp, max_hp_stat])
 	if current_hp <= 0.0:

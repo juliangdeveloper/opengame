@@ -26,11 +26,12 @@
     },
     "combat": {
       "file": "skills/combat/melee.json",
-      "count": 3,
+      "count": 4,
       "skills": [
         "light_attack_001",
         "defenderse_001",
-        "parry_riposte_001"
+        "parry_riposte_001",
+        "hit_projectile_001"
       ]
     },
     "guide": {
@@ -52,7 +53,7 @@
       ]
     }
   },
-  "total_skills": 19,
+  "total_skills": 20,
   "innate_skills": [
     "ver_guia",
     "camera_rotate_right",

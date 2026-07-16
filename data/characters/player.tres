@@ -13,6 +13,7 @@ max_stamina = 100.0
 move_speed = 4.0
 weight = 50.0
 push_effect = 2.0
+vitality = 1.0
 turn_speed = 12.0
 detection_range = 0.0
 attack_range = 2.6

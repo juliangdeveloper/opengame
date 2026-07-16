@@ -4,10 +4,10 @@
 
 [resource]
 script = ExtResource("1")
-id = &"hit"
-name = "Golpear"
-description = "Golpe frontal. Spawna un cubo trigger que empuja y daña todo lo que toque."
-flavor_text = "La fuerza bruta, canalizada a través de la voluntad."
+id = &"hit_projectile"
+name = "Golpe Proyectil"
+description = "Golpe frontal con movimiento. Spawna un cubo trigger que viaja en la dirección de la cámara durante 2 segundos a 1 m/s."
+flavor_text = "La fuerza bruta, ahora con propósito — viaja hacia donde miras."
 category = &"combat"
 type = &"combat"
 target_resolver = {
@@ -30,8 +30,12 @@ atoms = [{
 "y": 0.5,
 "z": 0.5
 },
-"duration": 0.1,
-"spawn_time": 0.5,
+"duration": 2.0,
+"spawn_time": 2.0,
+"movement": {
+"direction": "camera",
+"speed": 1.0
+},
 "push_force": 1.0,
 "base_damage": 2.0
 }

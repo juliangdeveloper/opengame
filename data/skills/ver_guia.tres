@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="SkillResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skill/skill_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ver_guia"
+name = "Ver al Guía"
+description = "Perceive the Guide's presence. The first and only innate skill."
+flavor_text = "The first breath in a new world. The player opens their eyes and sees not the sky, but a shimmering intelligence that has been waiting."
+category = &"control"
+type = &"control"
+target_resolver = {
+"kind": "self",
+"params": {}
+}
+atoms = [{
+"type": "guide_commune",
+"params": {
+"action": "perceive",
+"always_active": true
+}
+}]
+costs = {
+"stamina": 0.0,
+"cooldown": 0.0
+}

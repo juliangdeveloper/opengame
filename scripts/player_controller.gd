@@ -13,6 +13,7 @@ var active_skills: Array[StringName] = [
 	&"walk",
 	&"jump",
 	&"hit",
+	&"hit_projectile",
 ]
 
 # === Camera params (from .tres) ===
@@ -31,6 +32,9 @@ var _walk_loaded: bool = false
 # === Jump params (loaded from jump.tres) ===
 var _jump_height: float = 0.0
 var _jump_loaded: bool = false
+
+# === Hit projectile params (loaded from hit_projectile.tres) ===
+var _hit_projectile_loaded: bool = false
 
 # === Stamina (generic — reads costs from any skill .tres) ===
 var current_stamina: float = 100.0
@@ -53,6 +57,7 @@ func _ready() -> void:
 	_load_camera_params()
 	_load_walk_params()
 	_load_jump_params()
+	_load_hit_projectile_params()
 	# Load max_stamina from character data
 	if character != null and "max_stamina" in character:
 		max_stamina = character.max_stamina
@@ -115,6 +120,17 @@ func _load_jump_params() -> void:
 	else:
 		_jump_height = 6.5
 	_jump_loaded = true
+
+
+func _load_hit_projectile_params() -> void:
+	if _hit_projectile_loaded:
+		return
+	var res: Resource = load("res://data/skills/hit_projectile.tres")
+	if res != null:
+		_log("Loaded hit_projectile: %s" % res.name)
+	else:
+		_log("WARNING: hit_projectile.tres not found")
+	_hit_projectile_loaded = true
 
 
 func _is_skill_active(skill_id: StringName) -> bool:
@@ -283,6 +299,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		# Square (button 2) → hit
 		if event.button_index == 2 and _is_skill_active(&"hit"):
 			_execute_hit()
+		# Triangle (button 3) → hit_projectile
+		if event.button_index == 3 and _is_skill_active(&"hit_projectile"):
+			_execute_hit_projectile()
 	elif event is InputEventKey and event.pressed:
 		if event.keycode == KEY_ESCAPE:
 			Input.mouse_mode = (
@@ -293,6 +312,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		# F → hit (keyboard)
 		if event.physical_keycode == 70 and _is_skill_active(&"hit"):
 			_execute_hit()
+		# Q → hit_projectile (keyboard)
+		if event.physical_keycode == 81 and _is_skill_active(&"hit_projectile"):
+			_execute_hit_projectile()
 
 
 func _execute_camera_reset() -> void:
@@ -322,7 +344,7 @@ func _execute_hit() -> void:
 	var dims: Dictionary = params.get("dimensions", {})
 	var duration: float = float(params.get("duration", 0.1))
 	var push_force: float = float(params.get("push_force", 8.0))
-	var weight_mult: bool = params.get("weight_multiplier", true)
+	var _weight_mult: bool = params.get("weight_multiplier", true)
 	# Load and instantiate
 	var packed: PackedScene = load(asset_path)
 	if packed == null:
@@ -334,6 +356,8 @@ func _execute_hit() -> void:
 	var sy: float = float(dims.get("y", 1.0))
 	var sz: float = float(dims.get("z", 1.0))
 	hitbox.scale = Vector3(sx, sy, sz)
+	# Add to scene FIRST (so global_position works)
+	character.get_tree().current_scene.add_child(hitbox)
 	# Set position: offset from CAMERA facing direction
 	var cam: Camera3D = _camera_pivot.get_node_or_null("Camera3D")
 	var forward: Vector3 = Vector3.FORWARD
@@ -356,15 +380,101 @@ func _execute_hit() -> void:
 		if character.get("data") != null and "push_effect" in character.data:
 			effect = float(character.data.push_effect)
 		hitbox.push_effect = effect
+	if "caster_vitality" in hitbox:
+		var vit: float = 1.0
+		if character.get("data") != null and "vitality" in character.data:
+			vit = float(character.data.vitality)
+		hitbox.caster_vitality = vit
+	if "base_damage" in hitbox:
+		hitbox.base_damage = float(params.get("base_damage", 0.0))
 	if "push_direction" in hitbox:
 		hitbox.push_direction = forward
 	if "lifetime" in hitbox:
 		hitbox.lifetime = duration
-	# Add to scene
-	character.get_tree().current_scene.add_child(hitbox)
 	_log("hit: force=%.1f stamina=%.0f/%.0f cd=%.1f" % [
 		push_force, current_stamina, max_stamina,
 		_cooldowns.get("hit", 0.0)
+	])
+
+
+## Hit projectile interpreter — reads hit_projectile.tres atom, spawns moving trigger hitbox.
+## Supports spawn_time + movement (direction + speed) for projectile behavior.
+func _execute_hit_projectile() -> void:
+	if not _try_activate_skill(&"hit_projectile"):
+		return
+	var res: Resource = load("res://data/skills/hit_projectile.tres")
+	if res == null or res.atoms.size() == 0:
+		return
+	var params: Dictionary = res.atoms[0].get("params", {})
+	var asset_path: String = params.get("asset", "res://assets/hitbox_cube.tscn")
+	var offset: Dictionary = params.get("offset", {})
+	var dims: Dictionary = params.get("dimensions", {})
+	var duration: float = float(params.get("duration", 0.5))
+	var spawn_time: float = float(params.get("spawn_time", 0.5))
+	var movement: Dictionary = params.get("movement", {})
+	var push_force: float = float(params.get("push_force", 1.0))
+	# Load and instantiate
+	var packed: PackedScene = load(asset_path)
+	if packed == null:
+		_log("ERROR: hit_projectile asset not found: %s" % asset_path)
+		return
+	var hitbox: Node3D = packed.instantiate()
+	# Set dimensions
+	var sx: float = float(dims.get("x", 1.0))
+	var sy: float = float(dims.get("y", 1.0))
+	var sz: float = float(dims.get("z", 1.0))
+	hitbox.scale = Vector3(sx, sy, sz)
+	# Add to scene FIRST
+	character.get_tree().current_scene.add_child(hitbox)
+	# Set position: offset from CAMERA facing direction
+	var cam: Camera3D = _camera_pivot.get_node_or_null("Camera3D")
+	var forward: Vector3 = Vector3.FORWARD
+	if cam != null:
+		forward = -cam.global_transform.basis.z
+	else:
+		forward = -_camera_pivot.global_transform.basis.z
+	forward = forward.normalized()
+	var right_v: Vector3 = forward.cross(Vector3.UP).normalized()
+	var spawn_pos: Vector3 = character.global_position
+	spawn_pos += forward * float(offset.get("forward", 0.0))
+	spawn_pos += right_v * float(offset.get("right", 0.0))
+	spawn_pos.y += float(offset.get("up", 0.0))
+	hitbox.global_position = spawn_pos
+	# Set hitbox properties
+	if "push_force" in hitbox:
+		hitbox.push_force = push_force
+	if "push_effect" in hitbox:
+		var effect: float = 1.0
+		if character.get("data") != null and "push_effect" in character.data:
+			effect = float(character.data.push_effect)
+		hitbox.push_effect = effect
+	if "caster_vitality" in hitbox:
+		var vit: float = 1.0
+		if character.get("data") != null and "vitality" in character.data:
+			vit = float(character.data.vitality)
+		hitbox.caster_vitality = vit
+	if "base_damage" in hitbox:
+		hitbox.base_damage = float(params.get("base_damage", 0.0))
+	if "push_direction" in hitbox:
+		hitbox.push_direction = forward
+	if "lifetime" in hitbox:
+		hitbox.lifetime = spawn_time
+	# Set movement properties if present
+	if movement.size() > 0 and "movement_velocity" in hitbox:
+		var move_speed: float = float(movement.get("speed", 0.0))
+		var move_dir_str: String = String(movement.get("direction", "camera"))
+		var move_dir: Vector3 = forward  # default = camera forward
+		if move_dir_str == "camera":
+			move_dir = forward
+		elif move_dir_str == "caster":
+			move_dir = -character.global_transform.basis.z
+			move_dir.y = 0
+			move_dir = move_dir.normalized()
+		hitbox.movement_velocity = move_dir * move_speed
+		_log("hit_projectile: movement dir=%s speed=%.1f → velocity=%s" % [move_dir_str, move_speed, hitbox.movement_velocity])
+	_log("hit_projectile: force=%.1f spawn_time=%.1f stamina=%.0f/%.0f cd=%.1f" % [
+		push_force, spawn_time, current_stamina, max_stamina,
+		_cooldowns.get("hit_projectile", 0.0)
 	])
 
 

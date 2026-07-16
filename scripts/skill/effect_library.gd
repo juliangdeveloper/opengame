@@ -842,9 +842,9 @@ static func spawn_hitbox(executor: Node, config: Dictionary, targets: Array[Node
 	mat.emission_enabled = true
 	mat.emission = color
 	mat.emission_energy_multiplier = emission
-	mat.transparency = 1  # ALPHA
-	mat.shading_mode = 0  # UNSHADED
-	mat.cull_mode = 2     # DISABLED (se ve desde ambos lados)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	mat.blend_mode = blend_mode
 	# wireframe desactivado (ver nota arriba)
 	mesh.material_override = mat
@@ -1121,9 +1121,9 @@ static func _spawn_debug_hit_sphere(executor: Node, center: Vector3, radius: flo
 	mat.emission_enabled = true
 	mat.emission = Color(1.0, 0.5, 0.0)
 	mat.emission_energy_multiplier = 8.0
-	mat.transparency = 1
-	mat.shading_mode = 0
-	mat.cull_mode = 2
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	mat.blend_mode = 1  # ADD
 	mesh.material_override = mat
 	sphere.add_child(mesh)
