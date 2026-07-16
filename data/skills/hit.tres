@@ -17,7 +17,7 @@ target_resolver = {
 }
 }
 atoms = [{
-"type": "hit",
+"type": "spawn",
 "params": {
 "asset": "res://assets/hitbox_cube.tscn",
 "offset": {
@@ -30,12 +30,23 @@ atoms = [{
 "y": 0.5,
 "z": 0.5
 },
-"duration": 0.1,
-"spawn_time": 0.5,
-"push_force": 1.0,
-"base_damage": 2.0
+"duration": 0.5
+}
+}, {
+"type": "push",
+"params": {
+"force": 1.0,
+"weight_multiplier": true
+}
+}, {
+"type": "damage",
+"params": {
+"amount": 2.0,
+"damage_type": "physical",
+"element": "physical"
 }
 }]
+skill_flow = ["spawn", ["push", "damage"]]
 costs = {
 "stamina": 10.0,
 "cooldown": 0.4

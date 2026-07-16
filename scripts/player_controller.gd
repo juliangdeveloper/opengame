@@ -1,4 +1,5 @@
 ## player_controller.gd — RuleBook-driven input controller.
+## Processes skills according to skill_flow: sequential steps with parallel groups.
 extends Node
 class_name PlayerController
 
@@ -16,7 +17,7 @@ var active_skills: Array[StringName] = [
 	&"hit_projectile",
 ]
 
-# === Camera params (from .tres) ===
+# === Camera params ===
 var _camera_yaw_speed: float = 0.0
 var _camera_pitch_speed: float = 0.0
 var _camera_pitch_clamp_min: float = -85.0
@@ -25,25 +26,22 @@ var _camera_reset_duration: float = 0.2
 var _camera_pivot: Node3D = null
 var _camera_loaded: bool = false
 
-# === Walk params (loaded from walk.tres) ===
+# === Walk params ===
 var _walk_speed: float = 0.0
 var _walk_loaded: bool = false
 
-# === Jump params (loaded from jump.tres) ===
+# === Jump params ===
 var _jump_height: float = 0.0
 var _jump_loaded: bool = false
 
-# === Hit projectile params (loaded from hit_projectile.tres) ===
-var _hit_projectile_loaded: bool = false
-
-# === Stamina (generic — reads costs from any skill .tres) ===
+# === Stamina ===
 var current_stamina: float = 100.0
 var max_stamina: float = 100.0
-var stamina_regen_rate: float = 15.0  # points/sec when idle
-var _stamina_consuming_this_frame: bool = false  # set by skills, reset each frame
+var stamina_regen_rate: float = 15.0
+var _stamina_consuming_this_frame: bool = false
 
-# === Cooldowns (generic — reads cooldown from any skill .tres) ===
-var _cooldowns: Dictionary = {}  # skill_id → remaining seconds
+# === Cooldowns ===
+var _cooldowns: Dictionary = {}
 
 const MOUSE_SENSITIVITY: float = 0.0025
 const GAMEPAD_DEADZONE: float = 0.15
@@ -57,8 +55,6 @@ func _ready() -> void:
 	_load_camera_params()
 	_load_walk_params()
 	_load_jump_params()
-	_load_hit_projectile_params()
-	# Load max_stamina from character data
 	if character != null and "max_stamina" in character:
 		max_stamina = character.max_stamina
 	current_stamina = max_stamina
@@ -80,7 +76,6 @@ func _load_camera_params() -> void:
 	var yaw_res: Resource = load("res://data/skills/camera_rotate_right.tres")
 	if yaw_res != null and yaw_res.atoms.size() > 0:
 		_camera_yaw_speed = float(yaw_res.atoms[0].get("params", {}).get("base_speed", 2.5))
-		_log("Loaded camera_rotate_right: base_speed=%.2f" % _camera_yaw_speed)
 	else:
 		_camera_yaw_speed = 2.5
 	var pitch_res: Resource = load("res://data/skills/camera_look_up.tres")
@@ -89,7 +84,6 @@ func _load_camera_params() -> void:
 		_camera_pitch_speed = float(p.get("base_speed", 2.0))
 		_camera_pitch_clamp_min = deg_to_rad(float(p.get("clamp_min", -85.0)))
 		_camera_pitch_clamp_max = deg_to_rad(float(p.get("clamp_max", 85.0)))
-		_log("Loaded camera_look_up: base_speed=%.2f" % _camera_pitch_speed)
 	else:
 		_camera_pitch_speed = 2.0
 	var reset_res: Resource = load("res://data/skills/camera_reset.tres")
@@ -104,7 +98,6 @@ func _load_walk_params() -> void:
 	var walk_res: Resource = load("res://data/skills/walk.tres")
 	if walk_res != null and walk_res.atoms.size() > 0:
 		_walk_speed = float(walk_res.atoms[0].get("params", {}).get("speed", 4.0))
-		_log("Loaded walk: speed=%.1f" % _walk_speed)
 	else:
 		_walk_speed = 0.0
 	_walk_loaded = true
@@ -116,29 +109,15 @@ func _load_jump_params() -> void:
 	var jump_res: Resource = load("res://data/skills/jump.tres")
 	if jump_res != null and jump_res.atoms.size() > 0:
 		_jump_height = float(jump_res.atoms[0].get("params", {}).get("height", 6.5))
-		_log("Loaded jump: height=%.1f" % _jump_height)
 	else:
 		_jump_height = 6.5
 	_jump_loaded = true
-
-
-func _load_hit_projectile_params() -> void:
-	if _hit_projectile_loaded:
-		return
-	var res: Resource = load("res://data/skills/hit_projectile.tres")
-	if res != null:
-		_log("Loaded hit_projectile: %s" % res.name)
-	else:
-		_log("WARNING: hit_projectile.tres not found")
-	_hit_projectile_loaded = true
 
 
 func _is_skill_active(skill_id: StringName) -> bool:
 	return skill_id in active_skills
 
 
-## Generic: read stamina_per_second from a skill's .tres costs.
-## Returns 0.0 if the skill has no per-second cost.
 func _get_skill_cost_per_second(skill_id: StringName) -> float:
 	var res: Resource = load("res://data/skills/%s.tres" % String(skill_id))
 	if res == null:
@@ -146,8 +125,6 @@ func _get_skill_cost_per_second(skill_id: StringName) -> float:
 	return float(res.costs.get("stamina_per_second", 0.0))
 
 
-## Generic: read stamina (flat) from a skill's .tres costs.
-## Returns 0.0 if the skill has no flat stamina cost.
 func _get_skill_cost_flat(skill_id: StringName) -> float:
 	var res: Resource = load("res://data/skills/%s.tres" % String(skill_id))
 	if res == null:
@@ -155,7 +132,6 @@ func _get_skill_cost_flat(skill_id: StringName) -> float:
 	return float(res.costs.get("stamina", 0.0))
 
 
-## Generic: read cooldown from a skill's .tres costs.
 func _get_skill_cooldown(skill_id: StringName) -> float:
 	var res: Resource = load("res://data/skills/%s.tres" % String(skill_id))
 	if res == null:
@@ -163,43 +139,33 @@ func _get_skill_cooldown(skill_id: StringName) -> float:
 	return float(res.costs.get("cooldown", 0.0))
 
 
-## Generic: check if a skill is off cooldown and has enough stamina.
-## Deducts flat stamina cost if available. Returns true if skill can execute.
 func _try_activate_skill(skill_id: StringName) -> bool:
-	# Cooldown check
 	if _cooldowns.get(String(skill_id), 0.0) > 0.0:
 		return false
-	# Stamina check
 	var cost: float = _get_skill_cost_flat(skill_id)
 	if cost > 0.0 and current_stamina < cost:
 		return false
-	# Deduct stamina
 	if cost > 0.0:
 		current_stamina = maxf(0.0, current_stamina - cost)
 		_stamina_consuming_this_frame = true
-	# Set cooldown
 	var cd: float = _get_skill_cooldown(skill_id)
 	if cd > 0.0:
 		_cooldowns[String(skill_id)] = cd
 	return true
 
 
-## Walk + jump + stamina — called from player._physics_process.
 func process_movement(delta: float) -> void:
 	if character == null or not is_instance_valid(character):
 		return
 
-	# Reset stamina flag each frame
 	_stamina_consuming_this_frame = false
 
-	# === Walk: set velocity, drain stamina per second ===
+	# === Walk ===
 	if _is_skill_active(&"walk") and _walk_speed > 0.0:
 		var input_dir := _read_move_input()
 		if input_dir != Vector2.ZERO:
-			# Check stamina before moving
 			var walk_cost: float = _get_skill_cost_per_second(&"walk")
 			if walk_cost > 0.0 and current_stamina <= 0.0:
-				# No stamina → can't walk
 				character.velocity.x = 0.0
 				character.velocity.z = 0.0
 			else:
@@ -214,7 +180,6 @@ func process_movement(delta: float) -> void:
 					world_dir = world_dir.normalized()
 				character.velocity.x = world_dir.x * _walk_speed
 				character.velocity.z = world_dir.z * _walk_speed
-				# Drain stamina
 				if walk_cost > 0.0:
 					current_stamina = maxf(0.0, current_stamina - walk_cost * delta)
 					_stamina_consuming_this_frame = true
@@ -228,7 +193,7 @@ func process_movement(delta: float) -> void:
 	elif character.velocity.y < 0:
 		character.velocity.y = 0
 
-	# === Jump: flat stamina cost on activation ===
+	# === Jump ===
 	if _is_skill_active(&"jump") and _jump_height > 0.0:
 		if character.is_on_floor():
 			var want_jump: bool = false
@@ -246,29 +211,24 @@ func process_movement(delta: float) -> void:
 	for skill_id in _cooldowns.keys():
 		_cooldowns[skill_id] = maxf(0.0, _cooldowns[skill_id] - delta)
 
-	# === Stamina regeneration ===
+	# === Stamina regen ===
 	if not _stamina_consuming_this_frame and current_stamina < max_stamina:
 		current_stamina = minf(max_stamina, current_stamina + stamina_regen_rate * delta)
 
-	# === Move ===
 	character.move_and_slide()
 
 
-## Camera yaw: rotate CHARACTER around Y (CameraPivot follows as child).
-## Camera pitch: rotate CameraPivot around local X only.
 func _process(delta: float) -> void:
 	if character == null or not is_instance_valid(character):
 		return
 	if _camera_pivot == null:
 		return
 
-	# === Yaw: rotate character body → camera follows ===
 	if _is_skill_active(&"camera_rotate_right") or _is_skill_active(&"camera_rotate_left"):
 		var rx: float = _get_joy_axis(JOY_AXIS_RIGHT_X)
 		if absf(rx) > GAMEPAD_DEADZONE:
 			character.rotate_y(-rx * _camera_yaw_speed * delta)
 
-	# === Pitch: rotate CameraPivot only ===
 	if _is_skill_active(&"camera_look_up") or _is_skill_active(&"camera_look_down"):
 		var ry: float = _get_joy_axis(JOY_AXIS_RIGHT_Y)
 		if absf(ry) > GAMEPAD_DEADZONE:
@@ -293,15 +253,12 @@ func _unhandled_input(event: InputEvent) -> void:
 					_camera_pitch_clamp_max
 				)
 	elif event is InputEventJoypadButton and event.pressed:
-		# R3 (button 8) → camera reset
 		if event.button_index == 8 and _is_skill_active(&"camera_reset"):
 			_execute_camera_reset()
-		# Square (button 2) → hit
 		if event.button_index == 2 and _is_skill_active(&"hit"):
-			_execute_hit()
-		# Triangle (button 3) → hit_projectile
+			_execute_skill_atoms(&"hit")
 		if event.button_index == 3 and _is_skill_active(&"hit_projectile"):
-			_execute_hit_projectile()
+			_execute_skill_atoms(&"hit_projectile")
 	elif event is InputEventKey and event.pressed:
 		if event.keycode == KEY_ESCAPE:
 			Input.mouse_mode = (
@@ -309,12 +266,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
 				else Input.MOUSE_MODE_CAPTURED
 			)
-		# F → hit (keyboard)
 		if event.physical_keycode == 70 and _is_skill_active(&"hit"):
-			_execute_hit()
-		# Q → hit_projectile (keyboard)
+			_execute_skill_atoms(&"hit")
 		if event.physical_keycode == 81 and _is_skill_active(&"hit_projectile"):
-			_execute_hit_projectile()
+			_execute_skill_atoms(&"hit_projectile")
 
 
 func _execute_camera_reset() -> void:
@@ -330,152 +285,181 @@ func _execute_camera_reset() -> void:
 		_camera_pivot.rotation.x = 0.0
 
 
-## Hit skill interpreter — reads hit.tres atom, spawns trigger hitbox.
-## Atom: { type: "hit", params: { asset, offset, dimensions, duration, push_force, weight_multiplier } }
-func _execute_hit() -> void:
-	if not _try_activate_skill(&"hit"):
+## ============================================================
+## GENERIC ATOM EXECUTOR — respects skill_flow
+## ============================================================
+##
+## skill_flow syntax:
+##   Sequential: ["spawn", "movement"]         → execute in order
+##   Parallel:   [["push", "damage"]]          → execute simultaneously
+##   Mixed:      ["spawn", "movement", ["push", "damage"]]
+##
+## If skill_flow is omitted from .tres, atoms execute in list order.
+## Each atom type has a handler: _atom_spawn, _atom_movement, _atom_push, _atom_damage.
+## Shared state (spawned_node, spawn_forward) flows between steps.
+
+func _execute_skill_atoms(skill_id: StringName) -> void:
+	if not _try_activate_skill(skill_id):
 		return
-	var hit_res: Resource = load("res://data/skills/hit.tres")
-	if hit_res == null or hit_res.atoms.size() == 0:
+	var res: Resource = load("res://data/skills/%s.tres" % String(skill_id))
+	if res == null or res.atoms.size() == 0:
 		return
-	var params: Dictionary = hit_res.atoms[0].get("params", {})
-	var asset_path: String = params.get("asset", "res://assets/hitbox_cube.tscn")
-	var offset: Dictionary = params.get("offset", {})
-	var dims: Dictionary = params.get("dimensions", {})
-	var duration: float = float(params.get("duration", 0.1))
-	var push_force: float = float(params.get("push_force", 8.0))
-	var _weight_mult: bool = params.get("weight_multiplier", true)
-	# Load and instantiate
-	var packed: PackedScene = load(asset_path)
-	if packed == null:
-		_log("ERROR: hit asset not found: %s" % asset_path)
-		return
-	var hitbox: Node3D = packed.instantiate()
-	# Set dimensions (scale relative to asset's base 1x1x1)
-	var sx: float = float(dims.get("x", 1.0))
-	var sy: float = float(dims.get("y", 1.0))
-	var sz: float = float(dims.get("z", 1.0))
-	hitbox.scale = Vector3(sx, sy, sz)
-	# Add to scene FIRST (so global_position works)
-	character.get_tree().current_scene.add_child(hitbox)
-	# Set position: offset from CAMERA facing direction
-	var cam: Camera3D = _camera_pivot.get_node_or_null("Camera3D")
-	var forward: Vector3 = Vector3.FORWARD
-	if cam != null:
-		forward = -cam.global_transform.basis.z
+
+	# Build atom lookup: type → atom dict
+	var atom_map: Dictionary = {}
+	for atom in res.atoms:
+		atom_map[String(atom.get("type", ""))] = atom
+
+	# Get skill_flow; if omitted, use atoms in list order
+	var flow: Array = []
+	if "skill_flow" in res and res.skill_flow.size() > 0:
+		flow = res.skill_flow
 	else:
-		forward = -_camera_pivot.global_transform.basis.z
-	forward = forward.normalized()
-	var right_v: Vector3 = forward.cross(Vector3.UP).normalized()
-	var spawn_pos: Vector3 = character.global_position
-	spawn_pos += forward * float(offset.get("forward", 0.0))
-	spawn_pos += right_v * float(offset.get("right", 0.0))
-	spawn_pos.y += float(offset.get("up", 0.0))
-	hitbox.global_position = spawn_pos
-	# Set hitbox properties
-	if "push_force" in hitbox:
-		hitbox.push_force = push_force
-	if "push_effect" in hitbox:
-		var effect: float = 1.0
-		if character.get("data") != null and "push_effect" in character.data:
-			effect = float(character.data.push_effect)
-		hitbox.push_effect = effect
-	if "caster_vitality" in hitbox:
-		var vit: float = 1.0
-		if character.get("data") != null and "vitality" in character.data:
-			vit = float(character.data.vitality)
-		hitbox.caster_vitality = vit
-	if "base_damage" in hitbox:
-		hitbox.base_damage = float(params.get("base_damage", 0.0))
-	if "push_direction" in hitbox:
-		hitbox.push_direction = forward
-	if "lifetime" in hitbox:
-		hitbox.lifetime = duration
-	_log("hit: force=%.1f stamina=%.0f/%.0f cd=%.1f" % [
-		push_force, current_stamina, max_stamina,
-		_cooldowns.get("hit", 0.0)
+		# Default: sequential from atoms array
+		for atom in res.atoms:
+			flow.append(String(atom.get("type", "")))
+
+	# Shared state
+	var spawned_node: Node3D = null
+	var spawn_forward: Vector3 = Vector3.FORWARD
+
+	# Process flow
+	for step in flow:
+		if step is Array:
+			# === PARALLEL GROUP: process all atoms simultaneously ===
+			for atom_type in step:
+				var atom_type_str: String = String(atom_type)
+				if atom_map.has(atom_type_str):
+					var result: Dictionary = _dispatch_atom(atom_type_str, atom_map[atom_type_str].get("params", {}), spawned_node, spawn_forward)
+					if result.has("spawned_node"):
+						spawned_node = result.spawned_node
+						spawn_forward = result.spawn_forward
+		else:
+			# === SEQUENTIAL STEP ===
+			var atom_type_str: String = String(step)
+			if atom_map.has(atom_type_str):
+				var result: Dictionary = _dispatch_atom(atom_type_str, atom_map[atom_type_str].get("params", {}), spawned_node, spawn_forward)
+				if result.has("spawned_node"):
+					spawned_node = result.spawned_node
+					spawn_forward = result.spawn_forward
+
+	_log("%s: flow=%s | stamina=%.0f/%.0f cd=%.1f" % [
+		String(skill_id), str(flow),
+		current_stamina, max_stamina,
+		_cooldowns.get(String(skill_id), 0.0)
 	])
 
 
-## Hit projectile interpreter — reads hit_projectile.tres atom, spawns moving trigger hitbox.
-## Supports spawn_time + movement (direction + speed) for projectile behavior.
-func _execute_hit_projectile() -> void:
-	if not _try_activate_skill(&"hit_projectile"):
-		return
-	var res: Resource = load("res://data/skills/hit_projectile.tres")
-	if res == null or res.atoms.size() == 0:
-		return
-	var params: Dictionary = res.atoms[0].get("params", {})
+## Dispatch a single atom to its handler. Returns shared state updates.
+func _dispatch_atom(atom_type: String, params: Dictionary, spawned_node: Node3D, spawn_forward: Vector3) -> Dictionary:
+	var result: Dictionary = {}
+	match atom_type:
+		"spawn":
+			var node: Node3D = _atom_spawn(params)
+			if node != null:
+				result["spawned_node"] = node
+				result["spawn_forward"] = _get_camera_forward()
+		"movement":
+			if spawned_node != null:
+				_atom_movement_on_object(spawned_node, params, spawn_forward)
+			else:
+				_atom_movement_on_caster(params)
+		"push":
+			_atom_push(spawned_node, params, spawn_forward)
+		"damage":
+			_atom_damage(spawned_node, params)
+	return result
+
+
+## --- Atom handlers ---
+
+func _atom_spawn(params: Dictionary) -> Node3D:
 	var asset_path: String = params.get("asset", "res://assets/hitbox_cube.tscn")
 	var offset: Dictionary = params.get("offset", {})
 	var dims: Dictionary = params.get("dimensions", {})
 	var duration: float = float(params.get("duration", 0.5))
-	var spawn_time: float = float(params.get("spawn_time", 0.5))
-	var movement: Dictionary = params.get("movement", {})
-	var push_force: float = float(params.get("push_force", 1.0))
-	# Load and instantiate
+
 	var packed: PackedScene = load(asset_path)
 	if packed == null:
-		_log("ERROR: hit_projectile asset not found: %s" % asset_path)
-		return
-	var hitbox: Node3D = packed.instantiate()
-	# Set dimensions
-	var sx: float = float(dims.get("x", 1.0))
-	var sy: float = float(dims.get("y", 1.0))
-	var sz: float = float(dims.get("z", 1.0))
-	hitbox.scale = Vector3(sx, sy, sz)
-	# Add to scene FIRST
-	character.get_tree().current_scene.add_child(hitbox)
-	# Set position: offset from CAMERA facing direction
-	var cam: Camera3D = _camera_pivot.get_node_or_null("Camera3D")
-	var forward: Vector3 = Vector3.FORWARD
-	if cam != null:
-		forward = -cam.global_transform.basis.z
-	else:
-		forward = -_camera_pivot.global_transform.basis.z
-	forward = forward.normalized()
+		_log("ERROR: spawn asset not found: %s" % asset_path)
+		return null
+
+	var node: Node3D = packed.instantiate()
+	node.scale = Vector3(
+		float(dims.get("x", 1.0)),
+		float(dims.get("y", 1.0)),
+		float(dims.get("z", 1.0))
+	)
+	character.get_tree().current_scene.add_child(node)
+
+	var forward: Vector3 = _get_camera_forward()
 	var right_v: Vector3 = forward.cross(Vector3.UP).normalized()
 	var spawn_pos: Vector3 = character.global_position
 	spawn_pos += forward * float(offset.get("forward", 0.0))
 	spawn_pos += right_v * float(offset.get("right", 0.0))
 	spawn_pos.y += float(offset.get("up", 0.0))
-	hitbox.global_position = spawn_pos
-	# Set hitbox properties
-	if "push_force" in hitbox:
-		hitbox.push_force = push_force
-	if "push_effect" in hitbox:
+	node.global_position = spawn_pos
+
+	if "lifetime" in node:
+		node.lifetime = duration
+
+	return node
+
+
+func _atom_movement_on_object(node: Node3D, params: Dictionary, forward: Vector3) -> void:
+	if "movement_velocity" not in node:
+		return
+	var speed: float = float(params.get("speed", 0.0))
+	var dir_str: String = String(params.get("direction", "camera"))
+	var move_dir: Vector3 = forward
+	if dir_str == "caster":
+		move_dir = -character.global_transform.basis.z
+		move_dir.y = 0
+		move_dir = move_dir.normalized()
+	node.movement_velocity = move_dir * speed
+	_log("movement: dir=%s speed=%.1f → %s" % [dir_str, speed, node.movement_velocity])
+
+
+func _atom_movement_on_caster(params: Dictionary) -> void:
+	var kind: String = String(params.get("kind", ""))
+	if kind == "jump":
+		var height: float = float(params.get("height", 6.5))
+		if character.is_on_floor():
+			character.velocity.y = height
+			_log("movement(jump): height=%.1f" % height)
+
+
+func _atom_push(node: Node3D, params: Dictionary, forward: Vector3) -> void:
+	if node == null:
+		return
+	if "push_force" in node:
+		node.push_force = float(params.get("force", 1.0))
+	if "push_effect" in node:
 		var effect: float = 1.0
 		if character.get("data") != null and "push_effect" in character.data:
 			effect = float(character.data.push_effect)
-		hitbox.push_effect = effect
-	if "caster_vitality" in hitbox:
+		node.push_effect = effect
+	if "push_direction" in node:
+		node.push_direction = forward
+
+
+func _atom_damage(node: Node3D, params: Dictionary) -> void:
+	if node == null:
+		return
+	if "base_damage" in node:
+		node.base_damage = float(params.get("amount", 0.0))
+	if "caster_vitality" in node:
 		var vit: float = 1.0
 		if character.get("data") != null and "vitality" in character.data:
 			vit = float(character.data.vitality)
-		hitbox.caster_vitality = vit
-	if "base_damage" in hitbox:
-		hitbox.base_damage = float(params.get("base_damage", 0.0))
-	if "push_direction" in hitbox:
-		hitbox.push_direction = forward
-	if "lifetime" in hitbox:
-		hitbox.lifetime = spawn_time
-	# Set movement properties if present
-	if movement.size() > 0 and "movement_velocity" in hitbox:
-		var move_speed: float = float(movement.get("speed", 0.0))
-		var move_dir_str: String = String(movement.get("direction", "camera"))
-		var move_dir: Vector3 = forward  # default = camera forward
-		if move_dir_str == "camera":
-			move_dir = forward
-		elif move_dir_str == "caster":
-			move_dir = -character.global_transform.basis.z
-			move_dir.y = 0
-			move_dir = move_dir.normalized()
-		hitbox.movement_velocity = move_dir * move_speed
-		_log("hit_projectile: movement dir=%s speed=%.1f → velocity=%s" % [move_dir_str, move_speed, hitbox.movement_velocity])
-	_log("hit_projectile: force=%.1f spawn_time=%.1f stamina=%.0f/%.0f cd=%.1f" % [
-		push_force, spawn_time, current_stamina, max_stamina,
-		_cooldowns.get("hit_projectile", 0.0)
-	])
+		node.caster_vitality = vit
+
+
+func _get_camera_forward() -> Vector3:
+	var cam: Camera3D = _camera_pivot.get_node_or_null("Camera3D")
+	if cam != null:
+		return -cam.global_transform.basis.z
+	return -_camera_pivot.global_transform.basis.z
 
 
 func _read_move_input() -> Vector2:

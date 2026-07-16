@@ -1,78 +1,54 @@
 {
-  "version": "1.0.0",
-  "description": "Master index of all skills in the RuleBook. Each skill is defined in its category file.",
+  "version": "2.0.0",
+  "description": "Master index. Skills compose atoms with skill_flow for execution order and parallelism.",
+  "atom_types": {
+    "spawn": "Instantiates a scene asset.",
+    "movement": "Applies movement to caster or spawned object.",
+    "push": "On collision: pushes the target.",
+    "damage": "On collision: damages the target.",
+    "camera": "Rotates camera.",
+    "buff": "Temporary stat modification.",
+    "status": "Apply status effect."
+  },
+  "skill_flow_syntax": {
+    "sequential": "[\"spawn\", \"movement\"] — execute in order.",
+    "parallel": "[[\"push\", \"damage\"]] — execute simultaneously.",
+    "mixed": "[\"spawn\", \"movement\", [\"push\", \"damage\"]] — sequential with parallel group.",
+    "default": "If skill_flow omitted, atoms execute sequentially in list order."
+  },
   "categories": {
-    "control": {
-      "file": "skills/control/camera.json",
-      "count": 6,
-      "skills": [
-        "camera_rotate_right",
-        "camera_rotate_left",
-        "camera_look_up",
-        "camera_look_down",
-        "camera_free_look",
-        "camera_reset"
-      ]
-    },
     "movement": {
       "file": "skills/movement/locomotion.json",
       "count": 4,
       "skills": [
-        "walk",
-        "saltar_001",
-        "correr_001",
-        "esquivar_001"
+        { "id": "walk", "atoms": 1, "flow": ["movement"] },
+        { "id": "saltar_001", "atoms": 1, "flow": ["movement"] },
+        { "id": "correr_001", "atoms": 1, "flow": ["buff"] },
+        { "id": "esquivar_001", "atoms": 1, "flow": ["movement"] }
       ]
     },
     "combat": {
       "file": "skills/combat/melee.json",
       "count": 4,
       "skills": [
-        "light_attack_001",
-        "defenderse_001",
-        "parry_riposte_001",
-        "hit_projectile_001"
+        { "id": "light_attack_001", "atoms": 3, "flow": ["spawn", ["push", "damage"]] },
+        { "id": "defenderse_001", "atoms": 1, "flow": ["status"] },
+        { "id": "parry_riposte_001", "atoms": 3, "flow": ["spawn", ["push", "damage"]] },
+        { "id": "hit_projectile_001", "atoms": 4, "flow": ["spawn", "movement", ["push", "damage"]] }
       ]
+    },
+    "control": {
+      "file": "skills/control/camera.json",
+      "count": 6
     },
     "guide": {
       "file": "skills/guide/guide.json",
-      "count": 4,
-      "skills": [
-        "ver_guia",
-        "hablar_guia",
-        "solicitar_habilidad",
-        "guia_otorga"
-      ]
+      "count": 4
     },
     "magic": {
       "file": "skills/magic/elemental.json",
-      "count": 2,
-      "skills": [
-        "kamehameha_001",
-        "bola_fuego_001"
-      ]
+      "count": 2
     }
   },
-  "total_skills": 20,
-  "innate_skills": [
-    "ver_guia",
-    "camera_rotate_right",
-    "camera_rotate_left",
-    "camera_look_up",
-    "camera_look_down",
-    "camera_free_look",
-    "camera_reset",
-    "walk"
-  ],
-  "player_starting_skills": [
-    "ver_guia",
-    "camera_rotate_right",
-    "camera_rotate_left",
-    "camera_look_up",
-    "camera_look_down",
-    "camera_free_look",
-    "camera_reset",
-    "walk"
-  ],
-  "note": "This index is auto-maintained. When adding a new skill to any category file, update this index."
+  "total_skills": 20
 }

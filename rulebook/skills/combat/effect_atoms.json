@@ -1,92 +1,92 @@
 {
   "concept": "Effect Atoms",
-  "description": "Atoms are the building blocks of skills. Each atom represents a single effect that the engine interprets. A skill can have multiple atoms executed in sequence.",
+  "description": "Atoms are the building blocks of skills. Each atom represents a SINGLE effect. A skill can have multiple atoms. The skill_flow determines execution order and parallelism.",
   "atom_types": {
-    "move": {
-      "description": "Applies movement to the caster. Sub-kinds: directional (walk), jump, dash.",
-      "params_example": { "kind": "jump", "height": 6.5 }
-    },
-    "camera": {
-      "description": "Rotates the camera. Axis: yaw or pitch.",
-      "params_example": { "axis": "yaw", "direction": "right", "base_speed": 2.5 }
-    },
-    "spawn_object": {
-      "description": "Instantiates a reusable scene asset at a position relative to the caster. The object is a trigger (Area3D) — it detects overlaps but has no physics response.",
+    "spawn": {
+      "description": "Instantiates a scene asset at a position relative to the caster.",
       "params": {
         "asset": "Path to the .tscn asset to instantiate.",
         "offset": "Position relative to the caster's facing direction (forward, right, up).",
-        "dimensions": "Scale of the spawned object relative to the asset's base size.",
-        "duration": "How long the object lives before being freed (seconds). If omitted, defaults to 0.5s.",
-        "spawn_time": "Total lifetime of the spawned object in seconds. If omitted, defaults to 0.5s. If present, the object persists for this duration.",
-        "movement": {
-          "description": "If present, the spawned object moves during its lifetime. Only processed if spawn_time is also defined.",
-          "params": {
-            "direction": "Movement direction. Special values: 'camera' = player camera forward, 'caster' = caster forward, 'target' = toward locked target. Or explicit Vector3.",
-            "speed": "Movement speed in meters per second (m/s)."
-          }
-        }
-      },
-      "defaults": {
-        "spawn_time": 0.5,
-        "duration": 0.5,
-        "note": "If spawn_time or duration are omitted from atom params, the engine uses 0.5s as default. Skills that want shorter/longer lifetime must explicitly declare spawn_time."
-      },
-      "params_example": {
-        "asset": "res://assets/hitbox_cube.tscn",
-        "offset": { "forward": 0.5, "right": 0.0, "up": 0.0 },
-        "dimensions": { "x": 0.5, "y": 0.5, "z": 0.5 },
-        "duration": 0.1
-      },
-      "params_example_with_movement": {
-        "asset": "res://assets/hitbox_cube.tscn",
-        "offset": { "forward": 1.0, "right": 0.0, "up": 0.0 },
-        "dimensions": { "x": 0.5, "y": 0.5, "z": 0.5 },
-        "duration": 2.0,
-        "spawn_time": 2.0,
-        "movement": {
-          "direction": "camera",
-          "speed": 1.0
-        }
+        "dimensions": "Scale of the spawned object {x, y, z}.",
+        "duration": "How long the object lives before being freed (seconds). Defaults to 0.5s if omitted."
+      }
+    },
+    "movement": {
+      "description": "Applies continuous movement to the caster OR to a spawned object.",
+      "params": {
+        "direction": "'camera' = player camera forward, 'caster' = caster forward, 'target' = toward locked target, or explicit {x, y, z}.",
+        "speed": "Movement speed in meters per second (m/s)."
       }
     },
     "push": {
-      "description": "Applies a velocity impulse to all bodies overlapping a trigger. Direction is the caster's forward. Force is calculated from skill speed and caster weight.",
+      "description": "On collision: applies a velocity impulse to the target body.",
       "params": {
-        "force": "Base push force (speed of the skill).",
-        "weight_multiplier": "If true, force is multiplied by the caster's weight attribute."
-      },
-      "params_example": {
-        "force": 8.0,
-        "weight_multiplier": true
+        "force": "Base push force.",
+        "weight_multiplier": "If true, force is modified by caster/target weight ratio."
       }
     },
-    "hit": {
-      "description": "Composite atom: spawn_object + push. Spawns a trigger hitbox and pushes anything inside it. This is a convenience atom that combines spawn_object and push into one.",
-      "params_example": {
-        "asset": "res://assets/hitbox_cube.tscn",
-        "offset": { "forward": 0.5 },
-        "dimensions": { "x": 0.5, "y": 0.5, "z": 0.5 },
-        "duration": 0.1,
-        "push_force": 8.0,
-        "weight_multiplier": true
+    "damage": {
+      "description": "On collision: applies HP damage to the target.",
+      "params": {
+        "amount": "Base damage value.",
+        "damage_type": "physical | magical | elemental.",
+        "element": "physical | fire | ice | lightning | dark | holy."
       }
+    },
+    "camera": {
+      "description": "Rotates the camera.",
+      "params_example": { "axis": "yaw", "direction": "right", "base_speed": 2.5 }
+    },
+    "buff": {
+      "description": "Temporary stat modification.",
+      "params_example": { "stat": "defense", "value": 1.5, "kind": "multiply", "duration": 10.0 }
+    },
+    "status": {
+      "description": "Apply a status effect.",
+      "params_example": { "kind": "parry_window", "duration": 0.4 }
     }
   },
-  "trigger": {
-    "description": "A trigger is an Area3D node that detects overlaps with physics bodies but does not push them. Used for hit detection, zones, and area effects.",
-    "implementation": "Godot: Area3D with collision_layer=0, collision_mask set to target layers. On body_entered → apply effect.",
-    "reusable_assets": "Trigger objects (hitbox_cube.tscn, hitbox_sphere.tscn) are stored in res://assets/ and reused across skills. Only dimensions and spawn offset change per skill."
-  },
-  "movement_rules": {
-    "description": "Spawned objects can move during their lifetime. This enables projectiles, moving hitboxes, and directional attacks.",
-    "activation": "Movement is ONLY processed if the atom params include BOTH 'spawn_time' AND 'movement'. If either is missing, the object is static (spawns at offset, stays there until freed).",
-    "direction_resolution": {
-      "camera": "Direction = player camera's forward vector (full 3D including pitch).",
-      "caster": "Direction = caster's forward vector (horizontal plane only).",
-      "target": "Direction = normalized vector from spawn position to locked target center.",
-      "explicit": "Direction = explicit Vector3 value {x, y, z} in world space."
+  "skill_flow": {
+    "description": "Defines HOW atoms are executed — order and parallelism. If omitted from a skill, atoms execute sequentially in list order.",
+    "syntax": {
+      "sequential": "Atoms listed one after another: [\"spawn\", \"movement\"]. Executes top to bottom.",
+      "parallel": "Atoms grouped in a sub-array: [[\"push\", \"damage\"]]. Executes simultaneously.",
+      "mixed": "Sequential steps can contain parallel groups: [\"spawn\", \"movement\", [\"push\", \"damage\"]]."
     },
-    "speed_units": "Speed is in meters per second (m/s). The object moves speed * delta each physics frame.",
-    "example": "A projectile with spawn_time=2.0 and movement.speed=1.0 travels 2 meters total before being freed."
+    "default_behavior": "If skill_flow is omitted, atoms execute sequentially in the order they appear in the atoms array.",
+    "examples": {
+      "walk": {
+        "flow": ["movement"],
+        "note": "Single atom, no flow needed."
+      },
+      "hit": {
+        "flow": ["spawn", "movement", ["push", "damage"]],
+        "note": "Spawn first, then movement starts, then push and damage apply simultaneously on collision."
+      },
+      "hit_projectile": {
+        "flow": ["spawn", "movement", ["push", "damage"]],
+        "note": "Same as hit — spawn, travel, then push+damage on contact."
+      },
+      "defenderse": {
+        "flow": ["status"],
+        "note": "Single atom."
+      }
+    },
+    "engine_rule": "When a step is a parallel group [[a, b]], the engine processes both atoms in the same frame. For push+damage this means both are applied to the target in a single collision event."
+  },
+  "composition_rules": {
+    "description": "An atom that needs a spawned object applies to the MOST RECENT spawn atom's object.",
+    "examples": {
+      "walk": ["movement"],
+      "jump": ["movement"],
+      "hit": ["spawn", "movement", ["push", "damage"]],
+      "hit_projectile": ["spawn", "movement", ["push", "damage"]],
+      "camera_rotate": ["camera"],
+      "defenderse": ["status"]
+    }
+  },
+  "defaults": {
+    "spawn_duration": 0.5,
+    "note": "If spawn atom's duration is omitted, engine uses 0.5s."
   }
 }

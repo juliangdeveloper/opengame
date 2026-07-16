@@ -1,50 +1,48 @@
 {
   "skill_schema": {
-    "description": "Every action in the game is a skill. This includes movement, combat, magic, camera control, UI interaction, and even breathing.",
+    "description": "Every action in the game is a skill. Skills are composed of atoms with a skill_flow that defines execution order and parallelism.",
     "fields": {
       "id": "Unique identifier (snake_case + 3-digit suffix)",
       "name": "Display name",
       "category": "movement | combat | magic | control | guide | social | craft",
       "description": "What the skill does in game terms",
       "lore": "Why this skill exists in the world's narrative",
-      "is_innate": "true if granted at birth (e.g. ver_guia). Cannot be lost.",
-      "atoms": "Array of effect atoms that compose this skill. Each atom is executed in order.",
+      "is_innate": "true if granted at birth. Cannot be lost.",
+      "atoms": "Array of effect atoms. Each atom is ONE effect.",
+      "skill_flow": "Execution order. Sequential list or parallel groups. If omitted, atoms execute in list order.",
       "cooldown": "Seconds before the skill can be used again",
       "stamina_cost": "Stamina consumed on use (0 = free)",
       "input_type": "button | trigger | hold | toggle | axis | gesture",
-      "input_sensitivity": "For triggers/axes: how input magnitude affects output (0.0-1.0)",
-      "usable_by": "player | npc | both",
-      "animation_hint": "Suggested visual representation (for engines that support it)",
-      "combo_triggers": "Skills auto-cast on specific conditions (e.g. parry_success → riposte)"
+      "usable_by": "player | npc | both"
+    },
+    "skill_flow": {
+      "description": "Defines how atoms are executed. If omitted, atoms run sequentially in list order.",
+      "syntax": {
+        "sequential": "[\"spawn\", \"movement\"] — execute top to bottom.",
+        "parallel": "[[\"push\", \"damage\"]] — execute simultaneously.",
+        "mixed": "[\"spawn\", \"movement\", [\"push\", \"damage\"]] — sequential with parallel groups."
+      },
+      "default": "If skill_flow is omitted from the skill, atoms execute sequentially in the order they appear in the atoms array."
     },
     "atom_types": {
-      "hit": "Direct damage to target. Params: amount, damage_type, element, knockback.",
-      "move": "Spatial movement. Params: kind (dash/jump/teleport/push), distance, duration, direction, i_frames.",
-      "buff": "Temporary stat modification. Params: stat, value, kind (add/multiply), duration.",
-      "status": "Apply status effect. Params: status_id, duration, chance.",
-      "dot": "Damage over time. Params: amount, interval, duration, element.",
-      "burst_aoe": "Area of effect burst. Params: radius, shape, amount, element.",
-      "projectile": "Ranged projectile. Params: speed, lifetime, on_hit_atoms.",
-      "camera": "Camera manipulation. Params: axis (yaw/pitch/roll), speed, sensitivity, relative.",
-      "interact": "Interaction with entities/objects. Params: target_type, action, range.",
-      "guide_commune": "Communication with the Guide. Params: message_type, context.",
-      "spawn_object": "Instantiate a scene asset at offset from caster. Params: asset, offset, dimensions, duration, spawn_time, movement."
+      "spawn": "Instantiate a scene asset. Params: asset, offset, dimensions, duration.",
+      "movement": "Apply movement to caster or spawned object. Params: direction, speed.",
+      "push": "On collision: push the target. Params: force, weight_multiplier.",
+      "damage": "On collision: damage the target. Params: amount, damage_type, element.",
+      "camera": "Rotate camera. Params: axis, direction, base_speed.",
+      "buff": "Temporary stat modification. Params: stat, value, kind, duration.",
+      "status": "Apply status effect. Params: kind, duration."
     },
-    "spawn_defaults": {
-      "description": "If spawn_time or duration are omitted from atom params, the engine uses 0.5s as default lifetime.",
-      "spawn_time_default": 0.5,
-      "duration_default": 0.5,
-      "note": "Skills that want shorter/longer lifetime must explicitly declare spawn_time. Movement only activates when BOTH spawn_time AND movement are present."
+    "composition_examples": {
+      "walk": { "atoms": ["movement"], "flow": ["movement"], "count": 1 },
+      "jump": { "atoms": ["movement"], "flow": ["movement"], "count": 1 },
+      "hit": { "atoms": ["spawn", "movement", "push", "damage"], "flow": ["spawn", "movement", ["push", "damage"]], "count": 4 },
+      "hit_projectile": { "atoms": ["spawn", "movement", "push", "damage"], "flow": ["spawn", "movement", ["push", "damage"]], "count": 4 },
+      "defenderse": { "atoms": ["status"], "flow": ["status"], "count": 1 }
     },
-    "spawn_object_extended": {
-      "description": "When spawn_time AND movement are both present in spawn_object params, the object moves during its lifetime. If either is missing, object is static.",
-      "params": {
-        "spawn_time": "Total lifetime in seconds. Defaults to 0.5s if omitted.",
-        "movement": {
-          "direction": "'camera' | 'caster' | 'target' | {x, y, z}. 'camera' = player camera forward.",
-          "speed": "Speed in meters per second (m/s)."
-        }
-      }
+    "defaults": {
+      "spawn_duration": 0.5,
+      "note": "If spawn atom's duration is omitted, engine uses 0.5s."
     }
   }
 }

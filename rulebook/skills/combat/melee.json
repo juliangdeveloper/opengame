@@ -8,15 +8,32 @@
     "is_innate": false,
     "atoms": [
       {
-        "type": "hit",
+        "type": "spawn",
+        "params": {
+          "asset": "res://assets/hitbox_cube.tscn",
+          "offset": { "forward": 0.5, "right": 0.0, "up": 0.0 },
+          "dimensions": { "x": 0.5, "y": 0.5, "z": 0.5 },
+          "duration": 0.1
+        }
+      },
+      {
+        "type": "push",
+        "params": {
+          "force": 1.5,
+          "weight_multiplier": true
+        }
+      },
+      {
+        "type": "damage",
         "params": {
           "amount": 28.0,
           "damage_type": "physical",
-          "element": "physical",
-          "knockback": 1.5
+          "element": "physical"
         }
       }
     ],
+    "skill_flow": ["spawn", ["push", "damage"]],
+    "atom_count": 3,
     "cooldown": 0.6,
     "stamina_cost": 8.0,
     "input_type": "button",
@@ -39,6 +56,8 @@
         }
       }
     ],
+    "skill_flow": ["status"],
+    "atom_count": 1,
     "combo_triggers": [
       {
         "condition": "parry_success",
@@ -60,15 +79,32 @@
     "is_innate": false,
     "atoms": [
       {
-        "type": "hit",
+        "type": "spawn",
+        "params": {
+          "asset": "res://assets/hitbox_cube.tscn",
+          "offset": { "forward": 0.5, "right": 0.0, "up": 0.0 },
+          "dimensions": { "x": 0.5, "y": 0.5, "z": 0.5 },
+          "duration": 0.1
+        }
+      },
+      {
+        "type": "push",
+        "params": {
+          "force": 3.0,
+          "weight_multiplier": true
+        }
+      },
+      {
+        "type": "damage",
         "params": {
           "amount": 45.0,
           "damage_type": "physical",
-          "element": "physical",
-          "knockback": 3.0
+          "element": "physical"
         }
       }
     ],
+    "skill_flow": ["spawn", ["push", "damage"]],
+    "atom_count": 3,
     "cooldown": 0.0,
     "stamina_cost": 0.0,
     "input_type": "auto",
@@ -79,33 +115,48 @@
     "id": "hit_projectile_001",
     "name": "Golpe Proyectil",
     "category": "combat",
-    "description": "Golpe frontal con movimiento. Spawna un cubo trigger que viaja en la dirección de la cámara durante 2 segundos a 1 m/s.",
+    "description": "Golpe frontal con movimiento. Spawna un cubo trigger que viaja hacia la cámara a 1 m/s durante 2s, empujando y dañando lo que toque.",
     "lore": "La fuerza bruta, ahora con propósito — viaja hacia donde miras.",
     "is_innate": false,
     "atoms": [
       {
-        "type": "hit",
+        "type": "spawn",
         "params": {
           "asset": "res://assets/hitbox_cube.tscn",
           "offset": { "forward": 1.0, "right": 0.0, "up": 0.0 },
           "dimensions": { "x": 0.5, "y": 0.5, "z": 0.5 },
-          "duration": 2.0,
-          "spawn_time": 2.0,
-          "movement": {
-            "direction": "camera",
-            "speed": 1.0
-          },
-          "push_force": 1.0,
-          "base_damage": 2.0,
+          "duration": 2.0
+        }
+      },
+      {
+        "type": "movement",
+        "params": {
+          "direction": "camera",
+          "speed": 1.0
+        }
+      },
+      {
+        "type": "push",
+        "params": {
+          "force": 1.0,
+          "weight_multiplier": true
+        }
+      },
+      {
+        "type": "damage",
+        "params": {
+          "amount": 2.0,
           "damage_type": "physical",
           "element": "physical"
         }
       }
     ],
+    "skill_flow": ["spawn", "movement", ["push", "damage"]],
+    "atom_count": 4,
     "cooldown": 0.4,
     "stamina_cost": 10.0,
     "input_type": "button",
     "usable_by": "both",
-    "note": "First skill with spawn movement. The hitbox travels toward the camera direction for 2 seconds at 1 m/s. Demonstrates the new spawn_time + movement concept."
+    "note": "First skill with 4 atoms. Flow: spawn → movement → [push, damage] parallel."
   }
 ]
