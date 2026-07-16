@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = &"hit_projectile"
 name = "Golpe Proyectil"
-description = "Golpe frontal con movimiento. Spawna un cubo trigger que viaja en la dirección de la cámara durante 2 segundos a 1 m/s."
+description = "Golpe frontal con movimiento. Spawna un cubo que viaja hacia la cámara a 1 m/s durante 2s."
 flavor_text = "La fuerza bruta, ahora con propósito — viaja hacia donde miras."
 category = &"combat"
 type = &"combat"
@@ -17,7 +17,7 @@ target_resolver = {
 }
 }
 atoms = [{
-"type": "hit",
+"type": "spawn",
 "params": {
 "asset": "res://assets/hitbox_cube.tscn",
 "offset": {
@@ -30,16 +30,29 @@ atoms = [{
 "y": 0.5,
 "z": 0.5
 },
-"duration": 2.0,
-"spawn_time": 2.0,
-"movement": {
+"duration": 2.0
+}
+}, {
+"type": "movement",
+"params": {
 "direction": "camera",
 "speed": 1.0
-},
-"push_force": 1.0,
-"base_damage": 2.0
+}
+}, {
+"type": "push",
+"params": {
+"force": 1.0,
+"weight_multiplier": true
+}
+}, {
+"type": "damage",
+"params": {
+"amount": 2.0,
+"damage_type": "physical",
+"element": "physical"
 }
 }]
+skill_flow = ["spawn", "movement", ["push", "damage"]]
 costs = {
 "stamina": 10.0,
 "cooldown": 0.4
