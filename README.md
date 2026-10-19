@@ -20,3 +20,5 @@ Godot 4.6 (GDScript) y especificación del juego en JSON.
 ---
 
 Más proyectos: https://juliangdeveloper.github.io/
+
+Hecho con ❤️ y 🗡️
