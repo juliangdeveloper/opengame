@@ -10,24 +10,10 @@
 data_*/
 mono_crash.*.json
 
-# Python (mcp_bridge)
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.egg-info/
-.venv/
-venv/
-pip-wheel-metadata/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-
 # Test artifacts
 logs/
 *.log
 test_outputs/
-mcp_bridge/test_skills_*.tres
 data/skills/test_*.tres
 data/skills/*_test_*.tres
 data/skills/mcp_e2e_*.tres

@@ -16,11 +16,9 @@
 ## Se accede vía el autoload directamente: ProgressionState.xxx
 extends Node
 
-const Balance := preload("res://scripts/skill/balance.gd")
+const Balance := preload("res://_legacy/scripts/skill/balance.gd")
 const Elements := preload("res://scripts/skill/elements.gd")
-const AttributeComponentScript := preload("res://scripts/attribute_component.gd")
 const SkillExecutorScript := preload("res://scripts/skill/skill_executor.gd")
-const WeaponCatalogScript := preload("res://scripts/skill/weapon_catalog.gd")
 
 signal skill_points_changed(new_value: int)
 signal proficiency_changed(new_value: int)
@@ -88,9 +86,9 @@ var weapon_allocations: Dictionary = {}
 
 func _ready() -> void:
 	Balance.load_config()
-	# Inicializar el catálogo de armas (carga todos los .tres de data/weapons/).
-	# Llamar esto en _ready es seguro porque el catálogo es estático (no autoload).
-	WeaponCatalogScript.initialize()
+	var catalog = _weapon_catalog()
+	if catalog:
+		catalog.initialize()
 	# Auto-otorgar armas básicas al jugador si no las tiene.
 	# unarmed siempre está en owned; short_sword se otorga al primer ready.
 	_starter_weapon_grant()
@@ -100,7 +98,14 @@ func _ready() -> void:
 	print("[ProgressionState] ready (skill_points=%d, proficiency=%d, tier=%s)" % [
 		skill_points, proficiency, Balance.get_tier(proficiency).name
 	])
-	print("[ProgressionState] weapons in catalog: %d" % WeaponCatalogScript.list_ids().size())
+	if catalog:
+		print("[ProgressionState] weapons in catalog: %d" % catalog.list_ids().size())
+
+
+## The catalog script lives under _legacy and still preloads weapon_resource
+## from the old scripts/ path, so it cannot be preload()'d here.
+func _weapon_catalog():
+	return load("res://_legacy/scripts/skill/weapon_catalog.gd")
 
 
 ## Restaura el estado desde SaveSystem (si hay datos guardados).
@@ -654,7 +659,10 @@ func equip_weapon(weapon_id: StringName) -> bool:
 	if weapon_id not in owned_weapons:
 		push_warning("[ProgressionState] equip_weapon: %s not owned" % weapon_id)
 		return false
-	var catalog := preload("res://scripts/skill/weapon_catalog.gd")
+	var catalog = _weapon_catalog()
+	if catalog == null:
+		push_warning("[ProgressionState] equip_weapon: weapon catalog unavailable")
+		return false
 	var wpn: Resource = catalog.get_weapon(weapon_id)
 	if wpn == null:
 		push_warning("[ProgressionState] equip_weapon: %s not in catalog" % weapon_id)
@@ -752,17 +760,19 @@ func get_weapon_points(weapon_id: StringName = &"", stat: StringName = &"") -> i
 
 ## get_weapon(weapon_id) — devuelve el WeaponResource del catálogo, o null.
 func get_weapon(weapon_id: StringName) -> Resource:
-	if WeaponCatalogScript == null:
+	var catalog = _weapon_catalog()
+	if catalog == null:
 		return null
-	return WeaponCatalogScript.get_weapon(weapon_id)
+	return catalog.get_weapon(weapon_id)
 
 
 ## get_weapon_catalog(filter) — Array[StringName] de weapon_ids del catálogo.
 ## filter: "all" (default), "owned", "unequipped".
 func get_weapon_catalog(filter: StringName = &"all") -> Array[StringName]:
-	if WeaponCatalogScript == null:
+	var catalog = _weapon_catalog()
+	if catalog == null:
 		return []
-	var ids: Array[StringName] = WeaponCatalogScript.list_ids()
+	var ids: Array[StringName] = catalog.list_ids()
 	if filter == &"owned":
 		return ids.filter(func(wid): return wid in owned_weapons)
 	return ids

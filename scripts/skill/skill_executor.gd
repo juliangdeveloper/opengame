@@ -21,7 +21,7 @@ extends Node
 const SkillResource := preload("res://scripts/skill/skill_resource.gd")
 const EffectLibrary := preload("res://scripts/skill/effect_library.gd")
 const TargetResolver := preload("res://scripts/skill/target_resolver.gd")
-const Balance := preload("res://scripts/skill/balance.gd")
+const Balance := preload("res://_legacy/scripts/skill/balance.gd")
 
 signal skill_started(skill)
 signal skill_finished(skill)

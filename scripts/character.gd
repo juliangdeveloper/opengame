@@ -4,9 +4,8 @@
 ## player.gd. Se inicializa desde un CharacterResource (.tres) que
 ## define TODOS sus stats, skills, armas y comportamiento.
 ##
-## Este nodo NO tiene input handling — eso lo hace un Controller child:
-##   - PlayerController: si data.ai_controlled = false
-##   - AIController:     si data.ai_controlled = true
+## Este nodo NO tiene input handling — eso lo hace PlayerController
+## cuando data.ai_controlled es false.
 ##
 ## CUMPLIMIENTO DE DIRECTRIZ DEL USER:
 ##   "Refinar los jefes y enemigos para que sean full data driven.
@@ -192,32 +191,17 @@ func _sync_progression_state() -> void:
 		ps.attribute_allocations = (attribute_allocations as Dictionary).duplicate(true)
 
 
-## Instala el Controller apropiado (Player vs AI) según data.ai_controlled.
-## Este es el ÚNICO branching técnico entre player y AI.
+## Instala PlayerController. Personajes con ai_controlled no reciben controller:
+## ningún recurso vivo marca ese flag, y el AIController ya no está en scripts/.
 func _install_default_controller() -> void:
-	if data == null:
+	if data == null or data.ai_controlled:
 		return
-	if data.ai_controlled:
-		controller = _make_ai_controller()
-	else:
-		controller = _make_player_controller()
-	# Add controller to scene tree so _process/_input/_physics_process fire
+	controller = _make_player_controller()
 	if controller != null and not controller.is_inside_tree():
 		add_child(controller)
 
 
-## Crea el AIController. (Stub — el script real se implementa aparte)
-func _make_ai_controller() -> Node:
-	var script: GDScript = load("res://scripts/ai/ai_controller.gd")
-	if script == null:
-		return null
-	var ctrl: Node = script.new()
-	ctrl.name = "AIController"
-	ctrl.set("character", self)
-	return ctrl
-
-
-## Crea el PlayerController. (Stub — el script real se implementa aparte)
+## Crea el PlayerController.
 func _make_player_controller() -> Node:
 	var script: GDScript = load("res://scripts/player_controller.gd")
 	if script == null:
