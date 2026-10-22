@@ -1091,7 +1091,7 @@ static func _apply_temporary_resistance(actor: Node, element: String, multiplier
 	if actor == null or not is_instance_valid(actor):
 		return
 	if not actor.has_node("ResistanceComponent"):
-		const ResistanceCompScript := preload("res://scripts/skill/components/ResistanceComponent.gd")
+		const ResistanceCompScript := preload("res://_legacy/scripts/skill/components/ResistanceComponent.gd")
 		var rc: Node = ResistanceCompScript.new()
 		rc.name = "ResistanceComponent"
 		actor.add_child(rc)
@@ -1236,6 +1236,8 @@ static func _get_or_create_component(target: Node, component_name: String) -> No
 		if child.name == component_name:
 			return child
 	var comp_script = load("res://scripts/skill/components/" + component_name + ".gd")
+	if not comp_script:
+		comp_script = load("res://_legacy/scripts/skill/components/" + component_name + ".gd")
 	if not comp_script:
 		# Si no hay script, crea un nodo genérico (placeholder).
 		var n := Node.new()
