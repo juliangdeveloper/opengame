@@ -1,7 +1,3 @@
-## DoTComponent — Damage over time aplicado a un target.
-##
-## Componente hijo que se añade a NPCs/jugadores cuando reciben un dot.
-## Hace tick damage cada tick_interval durante duration.
 class_name DoTComponent
 extends Node
 
@@ -25,7 +21,6 @@ func start_dot(dpt: float, duration: float, tick_interval: float, source: Node) 
 	set_process(true)
 	if Engine.has_singleton("Debug"):
 		pass
-	# Refrescar si ya estaba activo: simplemente reiniciamos
 	print("[DoT] start target=%s dpt=%.1f duration=%.1f" % [get_parent().name, dpt, duration])
 
 

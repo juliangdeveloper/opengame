@@ -1,20 +1,14 @@
-## MCP Test — corre Godot con MCPReceiver y envía un set de requests JSON-RPC.
-##
-## Imprime PASS/FAIL por cada test. Exit code 0 si todos pasan, 1 si falla alguno.
-##
-## Uso:
-##   godot --headless --quit-after 60 scenes/mcp_test.tscn
 extends Node
 
 var _client: StreamPeerTCP
-var _results: Dictionary = {}  # test_name -> bool
+var _results: Dictionary = {}
 var _next_id: int = 1
-var _pending: Dictionary = {}  # id -> test_name
+var _pending: Dictionary = {}
 var _current_test: String = ""
 var _timeout_timer: Timer
 var _tests_to_run: Array = []
 var _test_idx: int = 0
-var _last_results: Dictionary = {}  # test_name -> {id, result, error}
+var _last_results: Dictionary = {}
 
 
 func _ready() -> void:
@@ -23,13 +17,11 @@ func _ready() -> void:
 	_timeout_timer.one_shot = true
 	_timeout_timer.timeout.connect(_on_timeout)
 	add_child(_timeout_timer)
-	# Espera a que el MCPReceiver esté listo y se conecte
 	call_deferred("_connect_to_server")
 
 
 func _connect_to_server() -> void:
 	_client = StreamPeerTCP.new()
-	# MCPReceiver escucha en 9876 (mismo proceso)
 	var err: int = _client.connect_to_host("127.0.0.1", 9876)
 	if err != OK:
 		print("[MCPTest] connect error: %d" % err)
@@ -37,12 +29,10 @@ func _connect_to_server() -> void:
 		get_tree().quit(1)
 		return
 	print("[MCPTest] connecting...")
-	# Espera la conexión
 	_poll_connection()
 
 
 func _poll_connection() -> void:
-	# Espera a STATUS_CONNECTED
 	var start := Time.get_ticks_msec()
 	while _client.get_status() == StreamPeerTCP.STATUS_CONNECTING:
 		_client.poll()
@@ -58,7 +48,6 @@ func _poll_connection() -> void:
 		get_tree().quit(1)
 		return
 	print("[MCPTest] connected")
-	# Encola los tests
 	_tests_to_run = [
 		"ping",
 		"get_player_state",
@@ -210,10 +199,8 @@ func _handle_response(line: String) -> void:
 	var test_name: String = _pending.get(id_v, _current_test)
 	_pending.erase(id_v)
 	print("[MCPTest] <- %s" % JSON.stringify(resp))
-	# Store for chained tests
 	var result_var: Variant = resp.get("result", {})
 	_last_results[test_name] = {"id": id_v, "result": result_var, "error": resp.get("error", null)}
-	# Validación
 	var ok := _validate(test_name, resp)
 	_results[test_name] = ok
 	if ok:
@@ -225,7 +212,6 @@ func _handle_response(line: String) -> void:
 
 func _validate(test_name: String, resp: Dictionary) -> bool:
 	if test_name == "unknown_method":
-		# Debe tener "error"
 		return resp.has("error") and int(resp.get("error", {}).get("code", 0)) == -32601
 	var result: Variant = resp.get("result", null)
 	if result == null:

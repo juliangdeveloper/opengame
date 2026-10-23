@@ -1,5 +1,3 @@
-## player_controller.gd — RuleBook-driven input controller.
-## Processes skills according to skill_flow: sequential steps with parallel groups.
 extends Node
 class_name PlayerController
 
@@ -17,7 +15,6 @@ var active_skills: Array[StringName] = [
 	&"hit_projectile",
 ]
 
-# === Camera params ===
 var _camera_yaw_speed: float = 0.0
 var _camera_pitch_speed: float = 0.0
 var _camera_pitch_clamp_min: float = -85.0
@@ -26,21 +23,17 @@ var _camera_reset_duration: float = 0.2
 var _camera_pivot: Node3D = null
 var _camera_loaded: bool = false
 
-# === Walk params ===
 var _walk_speed: float = 0.0
 var _walk_loaded: bool = false
 
-# === Jump params ===
 var _jump_height: float = 0.0
 var _jump_loaded: bool = false
 
-# === Stamina ===
 var current_stamina: float = 100.0
 var max_stamina: float = 100.0
 var stamina_regen_rate: float = 15.0
 var _stamina_consuming_this_frame: bool = false
 
-# === Cooldowns ===
 var _cooldowns: Dictionary = {}
 
 const MOUSE_SENSITIVITY: float = 0.0025
@@ -160,7 +153,6 @@ func process_movement(delta: float) -> void:
 
 	_stamina_consuming_this_frame = false
 
-	# === Walk ===
 	if _is_skill_active(&"walk") and _walk_speed > 0.0:
 		var input_dir := _read_move_input()
 		if input_dir != Vector2.ZERO:
@@ -187,13 +179,11 @@ func process_movement(delta: float) -> void:
 			character.velocity.x = 0.0
 			character.velocity.z = 0.0
 
-	# === Gravity ===
 	if not character.is_on_floor():
 		character.velocity.y -= 22.0 * delta
 	elif character.velocity.y < 0:
 		character.velocity.y = 0
 
-	# === Jump ===
 	if _is_skill_active(&"jump") and _jump_height > 0.0:
 		if character.is_on_floor():
 			var want_jump: bool = false
@@ -207,11 +197,9 @@ func process_movement(delta: float) -> void:
 				character.velocity.y = _jump_height
 				_log("jump: height=%.1f stamina=%.0f/%.0f" % [_jump_height, current_stamina, max_stamina])
 
-	# === Cooldown tick ===
 	for skill_id in _cooldowns.keys():
 		_cooldowns[skill_id] = maxf(0.0, _cooldowns[skill_id] - delta)
 
-	# === Stamina regen ===
 	if not _stamina_consuming_this_frame and current_stamina < max_stamina:
 		current_stamina = minf(max_stamina, current_stamina + stamina_regen_rate * delta)
 
@@ -285,18 +273,6 @@ func _execute_camera_reset() -> void:
 		_camera_pivot.rotation.x = 0.0
 
 
-## ============================================================
-## GENERIC ATOM EXECUTOR — respects skill_flow
-## ============================================================
-##
-## skill_flow syntax:
-##   Sequential: ["spawn", "movement"]         → execute in order
-##   Parallel:   [["push", "damage"]]          → execute simultaneously
-##   Mixed:      ["spawn", "movement", ["push", "damage"]]
-##
-## If skill_flow is omitted from .tres, atoms execute in list order.
-## Each atom type has a handler: _atom_spawn, _atom_movement, _atom_push, _atom_damage.
-## Shared state (spawned_node, spawn_forward) flows between steps.
 
 func _execute_skill_atoms(skill_id: StringName) -> void:
 	if not _try_activate_skill(skill_id):
@@ -305,28 +281,22 @@ func _execute_skill_atoms(skill_id: StringName) -> void:
 	if res == null or res.atoms.size() == 0:
 		return
 
-	# Build atom lookup: type → atom dict
 	var atom_map: Dictionary = {}
 	for atom in res.atoms:
 		atom_map[String(atom.get("type", ""))] = atom
 
-	# Get skill_flow; if omitted, use atoms in list order
 	var flow: Array = []
 	if "skill_flow" in res and res.skill_flow.size() > 0:
 		flow = res.skill_flow
 	else:
-		# Default: sequential from atoms array
 		for atom in res.atoms:
 			flow.append(String(atom.get("type", "")))
 
-	# Shared state
 	var spawned_node: Node3D = null
 	var spawn_forward: Vector3 = Vector3.FORWARD
 
-	# Process flow
 	for step in flow:
 		if step is Array:
-			# === PARALLEL GROUP: process all atoms simultaneously ===
 			for atom_type in step:
 				var atom_type_str: String = String(atom_type)
 				if atom_map.has(atom_type_str):
@@ -335,7 +305,6 @@ func _execute_skill_atoms(skill_id: StringName) -> void:
 						spawned_node = result.spawned_node
 						spawn_forward = result.spawn_forward
 		else:
-			# === SEQUENTIAL STEP ===
 			var atom_type_str: String = String(step)
 			if atom_map.has(atom_type_str):
 				var result: Dictionary = _dispatch_atom(atom_type_str, atom_map[atom_type_str].get("params", {}), spawned_node, spawn_forward)
@@ -350,7 +319,6 @@ func _execute_skill_atoms(skill_id: StringName) -> void:
 	])
 
 
-## Dispatch a single atom to its handler. Returns shared state updates.
 func _dispatch_atom(atom_type: String, params: Dictionary, spawned_node: Node3D, spawn_forward: Vector3) -> Dictionary:
 	var result: Dictionary = {}
 	match atom_type:
@@ -371,7 +339,6 @@ func _dispatch_atom(atom_type: String, params: Dictionary, spawned_node: Node3D,
 	return result
 
 
-## --- Atom handlers ---
 
 func _atom_spawn(params: Dictionary) -> Node3D:
 	var asset_path: String = params.get("asset", "res://assets/hitbox_cube.tscn")

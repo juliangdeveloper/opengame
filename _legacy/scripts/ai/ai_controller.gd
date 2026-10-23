@@ -1,69 +1,44 @@
-## ai_controller.gd — Data-driven AI brain for any Character.
-##
-## FASE 4+ (2026-06-22): Reescrito para ser 100% data-driven.
-## Usa los campos de CharacterResource para tomar TODAS las decisiones:
-##   - behavior:      estilo de combate (aggressive, defensive, caster, etc.)
-##   - aggression:    0.0-1.0, frecuencia de ataque vs esperar
-##   - preferred_range: melee/ranged/any — influye en chase/retreat
-##   - reaction_time_sec: delay entre decisiones (simula "tiempo de reacción")
-##
-## NO tiene stats propios — solo DECIDE; el Character ejecuta.
-## El controller también auto-resuelve el target (player) si el character
-## no tiene uno asignado.
-##
-## Cumple la directiva del user:
-##   "Los skills y armas son JSON iguales a los del jugador.
-##    La única diferencia técnica ... es un simple bool [ai_controlled]."
 extends Node
 class_name AIController
 
-var character: Node = null  # EntityCharacter (set externally)
+var character: Node = null
 
-# === Reaction timer ===
 var _reaction_timer: float = 0.0
 
-# === Anti-streak ===
 const ANTI_STREAK_DEPTH: int = 3
 var _recent_skills: Array[StringName] = []
 
-# === Skill cache (para no re-cargar .tres cada decisión) ===
 var _skill_cache: Dictionary = {}
 
 
 func _ready() -> void:
-	_reaction_timer = randf_range(0.1, 0.4)  # stagger initial decision
+	_reaction_timer = randf_range(0.1, 0.4)
 
 
 func _physics_process(delta: float) -> void:
 	if character == null or not is_instance_valid(character):
 		return
-	# Auto-resolver target si no tiene uno
 	var tgt = _ch("target")
 	if tgt == null or not is_instance_valid(tgt):
 		_find_target()
 		tgt = _ch("target")
 		if tgt == null:
 			return
-	# Reaction timer
 	_reaction_timer = maxf(0.0, _reaction_timer - delta)
 	if _reaction_timer > 0.0:
 		return
-	# Evaluar transiciones según estado actual
 	var st = _ch("state")
 	if st == null:
 		return
-	# State enum values: IDLE=0, CHASE=1, CHOOSE_SKILL=2, WINDUP=3, etc.
-	if st == 0:  # IDLE
+	if st == 0:
 		_evaluate_idle()
-	elif st == 1:  # CHASE
+	elif st == 1:
 		_evaluate_chase(delta)
-	elif st == 5:  # RECOVER
+	elif st == 5:
 		_evaluate_recover()
-	# Reset reaction timer
 	_reaction_timer = _get_reaction_time()
 
 
-## Auto-encuentra el target (player) para el character.
 func _find_target() -> void:
 	var override = _ch("target_override")
 	if override != null and is_instance_valid(override):
@@ -168,7 +143,6 @@ func _retreat_from_target() -> void:
 		character.velocity.z = away.z * spd
 
 
-# === Skill decision (llamado por Character._state_choose_skill) ===
 
 
 func decide_skill() -> StringName:
@@ -177,12 +151,10 @@ func decide_skill() -> StringName:
 		return &""
 	var behavior: String = _get_behavior()
 	var weights: Array = _get_modified_weights(behavior)
-	# Anti-streak
 	for i in weights.size():
 		for recent in _recent_skills:
 			if i < sids.size() and sids[i] == recent:
 				weights[i] *= 0.3
-	# Weighted random
 	var total: float = 0.0
 	for w in weights:
 		total += maxf(w, 0.01)
@@ -260,11 +232,8 @@ func _get_modified_weights(behavior: String) -> Array:
 	return base_weights
 
 
-# === Helpers ===
 
 
-## Lee una propiedad del character. Usa get() primero, luego get_meta()
-## como fallback (para tests que usan set_meta).
 func _ch(prop: String):
 	var v = character.get(prop)
 	if v != null:

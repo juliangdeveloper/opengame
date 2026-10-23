@@ -1,25 +1,7 @@
 extends BookTabBase
-## Menu (antes "SkillBook") — UI "libro abierto" con tabs.
-##
-## Pestañas (5, navegación cíclica con L1/R1):
-##   - Skills     (master, este nodo)         — skills owned + bindings
-##   - Misión     (master, MissionPanel)      — quest actual
-##   - Objetivos  (master, ObjectivesPanel)   — bosses disponibles
-##   - Atributos  (slave)                     — atributos + elementos unificados
-##   - Armas      (slave)                     — weapon_allocator
-##
 
 const MenuNavHelperScript := preload("res://scripts/ui/menu_nav.gd")
 const MenuFocusableScript := preload("res://scripts/ui/menu_focusable.gd")
-## El LLM crea misiones vía MCP (create_mission). El jugador escoge
-## dificultad 1-5 desde esta pestaña, ve el config (enemigos, rewards,
-## damage_modifiers), y hace click START. Dentro de la misión, puede
-## ABANDONAR, RETRY, o EDIT (cambiar dificultad) cuantas veces quiera.
-##
-## Lifecycle: open()/close() con get_tree().paused toggle.
-## process_mode = Node.PROCESS_MODE_ALWAYS (botones responden en pausa).
-##
-## No usa class_name (choca con autoload ProgressionState).
 
 const BalanceScript := preload("res://scripts/skill/balance.gd")
 
@@ -37,10 +19,8 @@ const BINDINGS: Array = [
 
 const SWALLOW_WINDOW := 0.2
 
-# Tab order. 0=Skills, 1=Misión, 2=Objetivos, 3=Atributos (atributos+elementos unificados), 4=Armas
 const TABS: Array = [&"skills", &"mision", &"objetivos", &"atributos", &"armas"]
 
-# --- Nodos (configurados en .tscn) ---
 @onready var skill_list: ItemList = $Panel/Margin/VBox/HBoxBody/LeftPanel/LeftMargin/Scroll/ItemList
 @onready var name_label: Label = $Panel/Margin/VBox/HBoxBody/RightPanel/RightMargin/Scroll/DetailVBox/NameLabel
 @onready var desc_label: Label = $Panel/Margin/VBox/HBoxBody/RightPanel/RightMargin/Scroll/DetailVBox/DescLabel
@@ -53,13 +33,12 @@ const TABS: Array = [&"skills", &"mision", &"objetivos", &"atributos", &"armas"]
 @onready var header_label: Label = $Panel/Margin/VBox/TopBar/HeaderLabel
 @onready var prev_tab_button: Button = $Panel/Margin/VBox/TopBar/PrevTabButton
 @onready var next_tab_button: Button = $Panel/Margin/VBox/TopBar/NextTabButton
-# MissionPanel — sibling de HBoxBody, solo visible cuando TABS[_current_tab] == &"mision"
 @onready var mission_panel: Control = $Panel/Margin/VBox/MissionPanel
 
 const MISSION_TAB_SCENE := preload("res://scripts/ui/mission_tab_content.gd")
 const OBJECTIVES_TAB_SCENE := preload("res://scripts/ui/objectives_tab_content.gd")
-var _mission_tab: RefCounted = null  # control node that implements mission tab logic
-var _objectives_tab: RefCounted = null  # control node that implements objectives tab logic
+var _mission_tab: RefCounted = null
+var _objectives_tab: RefCounted = null
 
 var _scroll_left: ScrollContainer = null
 var _scroll_right: ScrollContainer = null
@@ -71,11 +50,11 @@ var _binding_capture_mode: bool = false
 var _original_binding_text: String = ""
 var _last_close_time: float = 0.0
 var _pending_focus_rows: Array = []
-var _scrolls_to_keep_visible: Array = []  # ScrollContainers que siguen el foco
+var _scrolls_to_keep_visible: Array = []
 var _current_tab: int = 0
 var _last_l1: bool = false
 var _last_r1: bool = false
-var _autorepeat: MenuFocusableScript = null  # D-pad auto-repeat driver
+var _autorepeat: MenuFocusableScript = null
 
 
 func _do_initialize() -> void:
@@ -84,14 +63,10 @@ func _do_initialize() -> void:
 	_scroll_left = get_node_or_null("Panel/Margin/VBox/HBoxBody/LeftPanel/LeftMargin/Scroll")
 	_scroll_right = get_node_or_null("Panel/Margin/VBox/HBoxBody/RightPanel/RightMargin/Scroll")
 	scroll = _scroll_right
-	# Init mission tab
 	if mission_panel != null:
 		_mission_tab = MISSION_TAB_SCENE.new()
-		# Apply the script to the MissionPanel by attaching manually
-		# (mission_panel is built in .tscn with UI nodes; we connect to its children by name)
 		_mission_tab.bind_nodes(mission_panel)
 		_mission_tab.connect_manager()
-	# Signals
 	if not close_button.pressed.is_connected(_close):
 		close_button.pressed.connect(_close)
 	if not prev_tab_button.pressed.is_connected(_on_prev_tab):
@@ -103,7 +78,6 @@ func _do_initialize() -> void:
 	if not binding_button.pressed.is_connected(_on_binding_button_pressed):
 		binding_button.pressed.connect(_on_binding_button_pressed)
 	_update_top_bar_tabs()
-	# Initially hide mission panel
 	if mission_panel != null:
 		mission_panel.visible = false
 
@@ -111,36 +85,26 @@ func _do_initialize() -> void:
 func _input(event: InputEvent) -> void:
 	if not visible:
 		return
-	# Llamar al base primero (BookTabBase — L1/R1 tab nav, Esc/Back cerrar)
 	super._input(event)
-	# Alimentar el driver de auto-repeat
 	if _autorepeat:
 		_autorepeat.feed_event(event)
 	if _binding_capture_mode:
 		return
 	if event is InputEventJoypadButton and event.pressed:
 		var btn: int = event.button_index
-		if btn == 9:  # L1
+		if btn == 9:
 			_on_prev_tab()
 			get_viewport().set_input_as_handled()
 			return
-		elif btn == 10:  # R1
+		elif btn == 10:
 			_on_next_tab()
 			get_viewport().set_input_as_handled()
 			return
 
 
-## Llamado por el MenuFocusable cuando se detecta un D-pad mantenido.
-## Por ahora la primera pulsación ya la maneja Godot (focus moves);
-## aquí manejamos los REPEAT steps para navegar más rápido.
 func _on_repeat_step(direction: String) -> void:
 	if not visible or _binding_capture_mode:
 		return
-	# No-op: el primer step ya lo entrega Godot. Los repeat steps no
-	# necesitan hacer nada extra porque Godot sigue procesando el input
-	# repeat del D-pad automáticamente (ui_focus_next/prev repeat).
-	# Este hook queda por si en el futuro queremos wrap-around programático
-	# o auto-scroll adicional.
 
 
 func _on_prev_tab() -> void:
@@ -158,7 +122,6 @@ func _switch_to_tab(idx: int) -> void:
 	_update_top_bar_tabs()
 	_close_internal_no_release_pause()
 	_close_all_slave_tabs()
-	# Hide all panel-style tabs by default
 	if mission_panel != null:
 		mission_panel.visible = false
 	var obj_panel: Control = get_node_or_null("Panel/Margin/VBox/ObjectivesPanel")
@@ -169,7 +132,7 @@ func _switch_to_tab(idx: int) -> void:
 	if parent_layer == null:
 		parent_layer = get_tree().root.find_child("MenuLayer", true, false)
 	if parent_layer == null:
-		parent_layer = get_tree().root.find_child("SkillBookContainer", true, false)  # backwards compat
+		parent_layer = get_tree().root.find_child("SkillBookContainer", true, false)
 	if parent_layer == null:
 		parent_layer = get_tree().root
 	if tab_id_str == &"skills":
@@ -198,12 +161,10 @@ func _switch_to_tab(idx: int) -> void:
 		var objectives_panel_node: Control = get_node_or_null("Panel/Margin/VBox/ObjectivesPanel")
 		if objectives_panel_node != null:
 			objectives_panel_node.visible = true
-			# Attach the objectives tab content if not yet
 			if _objectives_tab == null:
 				_objectives_tab = OBJECTIVES_TAB_SCENE.new()
 			(_objectives_tab as Object).call("attach", self)
 			(_objectives_tab as Object).call("refresh")
-			# Foco en el primer botón RETAR habilitado
 			(_objectives_tab as Object).call("focus_default")
 		return
 	if tab_id_str == &"atributos":
@@ -229,7 +190,7 @@ func _close_all_slave_tabs() -> void:
 	if parent_layer == null:
 		parent_layer = get_tree().root.find_child("MenuLayer", true, false)
 	if parent_layer == null:
-		parent_layer = get_tree().root.find_child("SkillBookContainer", true, false)  # backwards compat
+		parent_layer = get_tree().root.find_child("SkillBookContainer", true, false)
 	if parent_layer == null:
 		return
 	for slave_name in ["AttributeAllocator", "WeaponAllocator"]:
@@ -258,7 +219,6 @@ func _tab_display_name(id: StringName) -> String:
 	return "?"
 
 
-# --- Public API ---
 
 func open() -> void:
 	_current_tab = 0
@@ -302,7 +262,6 @@ func was_recently_open() -> bool:
 	return (Time.get_ticks_msec() / 1000.0 - _last_close_time) < SWALLOW_WINDOW
 
 
-# --- Skills refresh ---
 
 func _refresh() -> void:
 	var ps: Node = _get_progression_state()
@@ -361,41 +320,30 @@ func _show_skill_detail(skill_id: StringName) -> void:
 			continue
 		var row: Control = _build_stat_row(ps, skill_id, stat_name, designed)
 		atom_rows.add_child(row)
-		# Track first button of each row for focus navigation wiring.
 		_pending_focus_rows.append(row)
 	_set_binding_button(ps, skill_id)
 	_wire_focus_paths()
 
 
-## Conecta focus_neighbor_* entre las filas de stats generadas dinámicamente
-## y las fija al BindingButton (arriba) y al siguiente row (abajo).
-## Usa MenuNavHelper para unificar el comportamiento con los otros menús
-## (wrap-around, scroll-follow, mismo formato de puntos).
-## Llamado desde _refresh() después de poblar atom_rows.
 func _wire_focus_paths() -> void:
 	if _pending_focus_rows.is_empty():
 		return
-	# Cada row: bind_row() configura focus_neighbor_top/bottom entre rows,
-	# left/right dentro del row, wrap-around, y first row's top → binding.
 	for i in _pending_focus_rows.size():
 		var row: HBoxContainer = _pending_focus_rows[i]
 		MenuNavHelperScript.bind_row(
 			row, _pending_focus_rows, i,
 			binding_button if i == 0 else null,
-			true  # wrap
+			true
 		)
-	# Scroll-follow safety net
 	var scroll: ScrollContainer = get_node_or_null("Panel/Margin/VBox/HBoxBody/RightPanel/RightMargin/Scroll")
 	if scroll:
 		_scrolls_to_keep_visible.append(scroll)
-	# Auto-repeat: el menu escucha el signal del driver
 	if _autorepeat == null:
 		_autorepeat = MenuFocusableScript.new()
 		add_child(_autorepeat)
 		_autorepeat.repeat_step.connect(_on_repeat_step)
 
 
-## Recolecta todos los Buttons focusables dentro de un nodo (recursivo).
 func _collect_buttons(n: Node, out: Array) -> void:
 	if n is Button and not (n as Button).disabled:
 		out.append(n)
@@ -404,8 +352,6 @@ func _collect_buttons(n: Node, out: Array) -> void:
 		_collect_buttons(c, out)
 
 
-## Devuelve el primer Button focusable de una fila (los stat rows tienen
-## varios botones +1/-1/+5/-5; el primero es +1).
 func _first_button_of_row(row: Control) -> Button:
 	for c in row.get_children():
 		if c is Button and not c.disabled:
@@ -445,7 +391,6 @@ func _set_binding_button(ps: Node, skill_id: StringName) -> void:
 	binding_button.text = String(BINDINGS[0]["name"])
 
 
-# --- Binding capture ---
 
 func _on_binding_button_pressed() -> void:
 	if _current_skill_id == &"":
@@ -554,7 +499,6 @@ func _release_all_skill_actions() -> void:
 		_release_skill_action(slot)
 
 
-# --- Helpers (rows for skill detail) ---
 
 func _get_progression_state() -> Node:
 	return Engine.get_main_loop().root.get_node_or_null("ProgressionState")

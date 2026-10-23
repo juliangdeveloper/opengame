@@ -11,14 +11,11 @@ func _init():
 	var crate = world.get_node("Crate1")
 	print("[TEST] Player: %s Crate: %s" % [player.global_position, crate.global_position])
 	
-	# Simulate _execute_hit manually
 	var hitbox_scene = load("res://assets/hitbox_cube.tscn")
 	var hitbox = hitbox_scene.instantiate()
 	
-	# Add to tree first
 	world.add_child(hitbox)
 	
-	# Position near crate
 	hitbox.global_position = crate.global_position
 	hitbox.scale = Vector3(0.5, 0.5, 0.5)
 	hitbox.push_force = 1.0
@@ -30,7 +27,6 @@ func _init():
 	
 	print("[TEST] Hitbox spawned at: %s" % hitbox.global_position)
 	
-	# Wait for overlap detection
 	await create_timer(1.0).timeout
 	
 	print("[TEST] Crate hp: %s/%s" % [crate.hp, crate.max_hp])

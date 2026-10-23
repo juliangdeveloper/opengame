@@ -1,4 +1,3 @@
-## file_logger.gd — Custom Logger that captures ALL output to a file.
 extends Logger
 class_name FileLogger
 

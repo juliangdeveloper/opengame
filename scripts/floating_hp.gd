@@ -1,5 +1,3 @@
-## floating_hp.gd — HUD bar showing hit object's HP for 5 seconds.
-## Only one instance at a time — new hits replace the previous bar instantly.
 extends CanvasLayer
 
 static var _current: CanvasLayer = null
@@ -11,12 +9,10 @@ var _duration: float = 5.0
 
 
 func _ready() -> void:
-	# Destroy previous instance if still alive
 	if _current != null and is_instance_valid(_current):
 		_current.queue_free()
 	_current = self
 	layer = 10
-	# Label — add first, then configure
 	_label = Label.new()
 	add_child(_label)
 	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -24,7 +20,6 @@ func _ready() -> void:
 	_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.9))
 	_label.position = Vector2(374, 20)
 	_label.size = Vector2(532, 20)
-	# HP bar
 	_bar = ProgressBar.new()
 	add_child(_bar)
 	_bar.position = Vector2(374, 44)

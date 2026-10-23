@@ -1,25 +1,9 @@
-## MissionManager — autoload que gestiona todas las misiones.
-##
-## Responsabilidades:
-##   - Crear misiones (vía LLM/MCP o seed al boot)
-##   - Asignar dificultad (jugador) → computar config
-##   - Iniciar / abandonar / reintentar / editar misiones
-##   - Spawn de enemigos con damage_modifiers del balance
-##   - Monitor de progreso (kills, casts, timer, reach, survival)
-##   - Otorgar recompensas (skill_points) al completar
-##   - Notificar al HUD con el objetivo actual
-##
-## State machine por misión:
-##   AVAILABLE → READY → ACTIVE → COMPLETED | FAILED | ABANDONED
-##   Desde terminal: RETRY (vuelve a ACTIVE con misma config)
-##                  EDIT (cambia dificultad → READY)
 extends Node
 
 const MissionResourceScript := preload("res://scripts/missions/mission_resource.gd")
 const MissionBalanceScript := preload("res://scripts/missions/mission_balance.gd")
 const MissionValidatorScript := preload("res://scripts/missions/mission_validator.gd")
 
-# === Signals ===
 signal mission_created(mission_id: StringName)
 signal mission_state_changed(mission_id: StringName, new_state: StringName)
 signal mission_progress(mission_id: StringName, progress: Dictionary)
@@ -28,14 +12,11 @@ signal mission_failed(mission_id: StringName, reason: String)
 signal mission_abandoned(mission_id: StringName)
 signal active_mission_changed(mission_id: StringName)
 
-## Emitido en cada mutación del estado. SaveSystem escucha este signal
-## y persiste tras debounce.
 signal data_changed
 
-# === Storage ===
-var _missions: Dictionary = {}  # {StringName: MissionResource}
+var _missions: Dictionary = {}
 var _active_mission_id: StringName = &""
-var _spawned_enemies: Array = []  # [instance_id, ...]
+var _spawned_enemies: Array = []
 var _destination_marker: Node3D = null
 var _monitor_timer: Timer
 var _alive_count: int = 0
@@ -47,18 +28,12 @@ func _ready() -> void:
 	_monitor_timer.timeout.connect(_tick)
 	_monitor_timer.autostart = true
 	add_child(_monitor_timer)
-	# Hook player skill cast signal (for cast_skill_n missions)
 	call_deferred("_connect_player_signals")
-	# Restaurar estado persistido ANTES del seed (si hay save, no se seedea).
 	_apply_saved_state()
-	# Seed: 3 misiones de ejemplo si no hay ninguna
 	call_deferred("_seed_default_missions")
 	print("[MissionManager] ready")
 
 
-## Restaura misiones/active del SaveSystem (si hay datos guardados).
-## Llamado en _ready() ANTES de _seed_default_missions, así que si hay save
-## no se sobreescribe con el seed.
 func _apply_saved_state() -> void:
 	var save_sys: Node = Engine.get_main_loop().root.get_node_or_null("SaveSystem")
 	if save_sys == null or not save_sys.has_method("consume"):
@@ -69,7 +44,6 @@ func _apply_saved_state() -> void:
 	from_dict(data)
 
 
-## to_dict() — serializa todas las misiones + el active_mission_id.
 func to_dict() -> Dictionary:
 	var missions_arr: Array = []
 	for id_v in _missions.keys():
@@ -104,8 +78,6 @@ func to_dict() -> Dictionary:
 	}
 
 
-## from_dict(data) — restaura misiones y active_mission_id.
-## Idempotente: si data está vacío, no-op.
 func from_dict(data: Dictionary) -> void:
 	if data.is_empty():
 		return
@@ -155,9 +127,6 @@ func _seed_default_missions() -> void:
 	create_mission(&"teach_skill", &"uraraka_zero_gravity_001", &"survive", "Flota y sobrevive")
 
 
-# ============================================================
-# Public API — usado por MCP handlers y por la UI
-# ============================================================
 
 func create_mission(purpose: StringName, target_id: StringName, mission_type: StringName = &"defeat_enemies", title: String = "") -> MissionResource:
 	var spec := {"purpose": purpose, "target_id": target_id, "mission_type": mission_type, "title": title}
@@ -213,23 +182,18 @@ func start_mission(mission_id: StringName) -> Dictionary:
 	var m: MissionResource = _missions[mission_id]
 	if m.state != &"READY":
 		return {"error": "mission not in READY state (current: %s)" % m.state}
-	# If hay una activa, abandonarla primero
 	if _active_mission_id != &"" and _missions.has(_active_mission_id):
 		abandon_mission(_active_mission_id)
-	# Reset tracking
 	m.kills = 0
 	m.casts = 0
 	m.elapsed_sec = 0.0
 	m.reached_destination = false
 	m.survived = false
 	m.started_at = Time.get_ticks_msec()
-	# Spawn
 	_spawn_enemies_for_mission(m)
 	if m.mission_type == &"reach_destination":
 		_place_destination_marker(m)
-	# HUD
 	_set_hud_objective(m.get_objective_text())
-	# Active
 	_active_mission_id = mission_id
 	_set_state(m, &"ACTIVE")
 	active_mission_changed.emit(mission_id)
@@ -322,9 +286,6 @@ func get_state_snapshot(mission_id: StringName) -> Dictionary:
 	}
 
 
-# ============================================================
-# Internals
-# ============================================================
 
 func _tick() -> void:
 	if _active_mission_id == &"" or not _missions.has(_active_mission_id):
@@ -333,12 +294,10 @@ func _tick() -> void:
 	if m.state != &"ACTIVE":
 		return
 	m.elapsed_sec += _monitor_timer.wait_time
-	# Check player death
 	var player: Node = get_tree().root.find_child("Player", true, false)
 	if player != null and "hp" in player and float(player.hp) <= 0.0:
 		_complete_mission(m, false, "player_death")
 		return
-	# Time limit
 	if m.time_limit_sec > 0.0 and m.elapsed_sec >= m.time_limit_sec:
 		var success := false
 		match m.mission_type:
@@ -350,7 +309,6 @@ func _tick() -> void:
 				success = m.kills >= m.enemy_count
 		_complete_mission(m, success, "time_limit")
 		return
-	# Type-specific
 	match m.mission_type:
 		&"defeat_enemies", &"1v1", &"timed":
 			_count_alive_enemies()
@@ -369,7 +327,6 @@ func _tick() -> void:
 		&"cast_skill_n":
 			if m.casts >= m.enemy_count:
 				_complete_mission(m, true, "casts_done")
-	# Progress emit
 	mission_progress.emit(m.id, {
 		"kills": m.kills,
 		"enemy_count": m.enemy_count,
@@ -384,7 +341,6 @@ func _count_alive_enemies() -> void:
 	for id_v in _spawned_enemies:
 		var node: Node = instance_from_id(id_v)
 		if node != null and is_instance_valid(node) and node.is_in_group("enemies"):
-			# Enemy que está en DEAD state o que tiene hp <= 0
 			if "hp" in node and float(node.hp) > 0.0:
 				_alive_count += 1
 
@@ -430,8 +386,6 @@ func _spawn_enemies_for_mission(m: MissionResource) -> void:
 		return
 	var n: int = max(1, m.enemy_count)
 	if m.mission_type == &"cast_skill_n":
-		# cast_skill_n: no enemies needed; usar 1 dummy opcional
-		# Para que el jugador no esté solo, spawneamos 1 enemigo dummy
 		n = 1
 	var radius: float = 8.0
 	for i in range(n):
@@ -442,11 +396,9 @@ func _spawn_enemies_for_mission(m: MissionResource) -> void:
 		enemy.position = pos
 		enemy.add_to_group("mission_enemies")
 		enemy.add_to_group("mcp_spawned")
-		# HP mult
 		if "max_hp" in enemy:
 			enemy.max_hp = float(enemy.max_hp) * m.enemy_hp_mult
 			enemy.hp = enemy.max_hp
-		# Damage modifiers
 		if "damage_modifiers" in enemy:
 			enemy.damage_modifiers = m.damage_modifiers.duplicate(true)
 		get_tree().current_scene.add_child(enemy)
@@ -460,11 +412,9 @@ func _clear_spawned_enemies() -> void:
 		if node != null and is_instance_valid(node):
 			node.queue_free()
 	_spawned_enemies.clear()
-	# Safety: clear any leftover mission_enemies not in our list
 	var tree := get_tree()
 	if tree == null or tree.current_scene == null:
 		return
-	# Snapshot the group first (queue_free modifies the tree)
 	var leftovers: Array = []
 	for n in tree.get_nodes_in_group("mission_enemies"):
 		if is_instance_valid(n):
@@ -479,7 +429,6 @@ func _cleanup_mission_runtime(m: MissionResource) -> void:
 	if _destination_marker != null and is_instance_valid(_destination_marker):
 		_destination_marker.queue_free()
 		_destination_marker = null
-	# For non-completed states, clear HUD objective
 	if m.state == &"ACTIVE" or m.state == &"READY":
 		_set_hud_objective("")
 
@@ -551,7 +500,5 @@ func _auto_title(purpose: StringName, target_id: StringName, mission_type: Strin
 	return "%s %s" % [prefix, target_id]
 
 
-# External hook: called by player.gd (or anyone) when a skill is cast.
-# Used for cast_skill_n missions. player.skill_cast_started signal is connected in _connect_player_signals.
 func notify_skill_cast(skill_id: StringName) -> void:
 	_on_player_skill_cast(skill_id, -1)

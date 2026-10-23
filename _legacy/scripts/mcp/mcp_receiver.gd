@@ -1,25 +1,3 @@
-## MCPReceiver — Autoload TCP server que recibe comandos JSON-RPC del LLM.
-##
-## Arquitectura:
-##   [LLM/MCP] -> [FastAPI bridge] -> [Godot MCPReceiver (este)] -> [acciones]
-##
-## Escucha en 127.0.0.1:9876 (configurable). Cada conexión es una serie de
-## requests JSON-RPC 2.0 (un JSON por línea, newline-delimited).
-##
-## Métodos expuestos (mapean a mcp_tools.md):
-##   - ping
-##   - get_player_state
-##   - grant_skill_points
-##   - grant_skill
-##   - spawn_enemy
-##   - set_objective
-##   - run_skill_test
-##
-## Respuestas siguen JSON-RPC 2.0:
-##   {"jsonrpc": "2.0", "id": N, "result": {...}}  (éxito)
-##   {"jsonrpc": "2.0", "id": N, "error": {"code": N, "message": "..."}}  (error)
-##
-## El autoload se registra en project.godot.
 extends Node
 
 const DEFAULT_HOST := "*"
@@ -27,11 +5,10 @@ const DEFAULT_PORT := 9876
 
 var _server: TCPServer
 var _is_running: bool = false
-var _clients: Array = []  # Array[StreamPeerBuffer] activos
+var _clients: Array = []
 var _poll_timer: Timer
 
-# Comandos pendientes de procesar en _process
-var _pending_commands: Array = []  # Array[Dictionary] {client_idx, request}
+var _pending_commands: Array = []
 
 
 func _ready() -> void:
@@ -43,7 +20,6 @@ func _ready() -> void:
 		return
 	_is_running = true
 	print("[MCPReceiver] listening on %s:%d" % [DEFAULT_HOST, DEFAULT_PORT])
-	# Timer para poll (acepta conexiones + lee clientes)
 	_poll_timer = Timer.new()
 	_poll_timer.wait_time = 0.05
 	_poll_timer.timeout.connect(_poll)
@@ -52,7 +28,6 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	# Procesa comandos pendientes
 	while _pending_commands.size() > 0:
 		var cmd: Dictionary = _pending_commands.pop_front()
 		_handle_command(cmd)
@@ -61,11 +36,9 @@ func _process(_delta: float) -> void:
 func _poll() -> void:
 	if not _is_running:
 		return
-	# Acepta nuevas conexiones
 	while _server.is_connection_available():
 		var conn: StreamPeerTCP = _server.take_connection()
 		_clients.append(conn)
-	# Lee clientes existentes
 	for i in range(_clients.size() - 1, -1, -1):
 		var c: StreamPeerTCP = _clients[i]
 		c.poll()
@@ -80,7 +53,6 @@ func _poll() -> void:
 		if bytes.size() == 0:
 			continue
 		var text := bytes.get_string_from_utf8()
-		# Cada línea = un JSON request
 		for line in text.split("\n", false):
 			if line.strip_edges() == "":
 				continue
@@ -100,7 +72,6 @@ func _handle_command(cmd: Dictionary) -> void:
 	var method: String = String(req.get("method", ""))
 	var params: Dictionary = req.get("params", {})
 	var id_v: Variant = req.get("id", null)
-	# Despacha
 	var result: Variant = null
 	var error: Dictionary = {}
 	match method:
@@ -126,7 +97,6 @@ func _handle_command(cmd: Dictionary) -> void:
 			result = _cmd_allocate_skill_points(params)
 		"list_skills":
 			result = _cmd_list_skills(params)
-		# === MISSION SYSTEM (replaces old spawn_challenge) ===
 		"create_mission":
 			result = _cmd_create_mission(params)
 		"set_mission_difficulty":
@@ -153,7 +123,6 @@ func _handle_command(cmd: Dictionary) -> void:
 			result = _cmd_complete_objective(params)
 		"get_completed_objectives":
 			result = _cmd_get_completed_objectives(params)
-		# === SISTEMA DE ARMAS (Post-MVP) ===
 		"create_weapon":
 			result = _cmd_create_weapon(params)
 		"grant_weapon":
@@ -166,7 +135,6 @@ func _handle_command(cmd: Dictionary) -> void:
 			result = _cmd_allocate_weapon_points(params)
 		_:
 			error = {"code": -32601, "message": "method not found: %s" % method}
-	# Responde
 	var response: Dictionary = {"jsonrpc": "2.0", "id": id_v}
 	if not error.is_empty():
 		response["error"] = error
@@ -185,7 +153,6 @@ func _send_error(c: StreamPeerTCP, id_v: Variant, code: int, message: String) ->
 	c.put_data((JSON.stringify(response) + "\n").to_utf8_buffer())
 
 
-# -------------------- Comandos --------------------
 
 func _cmd_get_player_state() -> Dictionary:
 	var ps: Node = get_tree().root.get_node_or_null("ProgressionState")
@@ -215,7 +182,6 @@ func _cmd_grant_skill(params: Dictionary) -> Dictionary:
 	if ps == null:
 		return {"error": "ProgressionState not found"}
 	var skill_id: String = String(params.get("skill_id", ""))
-	# Busca el .tres cuyo id field == skill_id
 	var skill: Resource = _find_skill_resource(skill_id)
 	if skill == null:
 		return {"error": "skill not found: %s" % skill_id}
@@ -223,7 +189,6 @@ func _cmd_grant_skill(params: Dictionary) -> Dictionary:
 	return {"granted_skill": skill_id, "owned": Array(ps.owned_skills)}
 
 
-## Busca un skill resource por su campo "id" en data/skills/*.tres
 func _find_skill_resource(skill_id: String) -> Resource:
 	var dir: DirAccess = DirAccess.open("res://data/skills")
 	if dir == null:
@@ -244,7 +209,6 @@ func _find_skill_resource(skill_id: String) -> Resource:
 
 
 func _cmd_spawn_enemy(params: Dictionary) -> Dictionary:
-	# Params: scene (string), position (Vector3 dict)
 	var scene_path: String = String(params.get("scene", "res://scenes/enemy.tscn"))
 	if not ResourceLoader.exists(scene_path):
 		return {"error": "scene not found: %s" % scene_path}
@@ -258,7 +222,6 @@ func _cmd_spawn_enemy(params: Dictionary) -> Dictionary:
 
 
 func _cmd_set_objective(params: Dictionary) -> Dictionary:
-	# Encuentra el HUD y setea el texto
 	var hud: Node = get_tree().root.find_child("HUD", true, false)
 	if hud == null:
 		return {"error": "HUD not found"}
@@ -269,7 +232,6 @@ func _cmd_set_objective(params: Dictionary) -> Dictionary:
 
 
 func _cmd_run_skill_test(params: Dictionary) -> Dictionary:
-	# Spawn N enemies around player y los manda a atacar
 	var count: int = int(params.get("count", 3))
 	var radius: float = float(params.get("radius", 5.0))
 	var player: Node = get_tree().root.find_child("Player", true, false)
@@ -291,57 +253,37 @@ func _cmd_run_skill_test(params: Dictionary) -> Dictionary:
 	return {"spawned": spawned, "count": count}
 
 
-## create_skill(params) — Crea un nuevo SkillResource .tres desde el LLM.
-##
-## Params:
-##   id: String (required)        -- ej: "fireball_001"
-##   name: String                 -- ej: "Fireball"
-##   description: String          -- texto libre
-##   atoms: Array[Dictionary]     -- [{type, params, applies_to_target}, ...]
-##   target_resolver: String      -- ej: "nearest_in_range", "aoe", "self"
-##   designed_max: Dictionary     -- {stat_name: float}
-##   costs: Dictionary            -- {stamina: 30, cooldown: 5.0, ...}
-##   cast: Dictionary             -- {charge_time: 0.0, channel_time: 0.0, ...}
-##
-## Returns:
-##   {created: path, id: id, atoms_count: N}
 func _cmd_create_skill(params: Dictionary) -> Dictionary:
 	var skill_id: String = String(params.get("id", ""))
 	if skill_id == "":
 		return {"error": "id is required"}
-	# Sanitize filename
 	var safe_id: String = skill_id.replace("/", "_").replace("\\", "_")
 	var path: String = "res://data/skills/%s.tres" % safe_id
 	if ResourceLoader.exists(path):
 		return {"error": "skill already exists: %s" % path}
-	# Build the resource dict
 	var resource_dict: Dictionary = {
 		"id": StringName(skill_id),
 		"name": String(params.get("name", skill_id)),
-		"type": String(params.get("type", "damage")),  # 'damage' or 'control'
+		"type": String(params.get("type", "damage")),
 		"target_resolver": params.get("target_resolver", "nearest_npc_in_range"),
 		"atoms": params.get("atoms", []),
 		"designed_max": params.get("designed_max", {}),
 		"costs": params.get("costs", {}),
 	}
-	# Validate atoms against the skill validator
 	var validator_script: GDScript = load("res://scripts/skill/skill_validator.gd")
 	if validator_script == null:
 		return {"error": "validator script not found"}
-	# SkillValidator is a class_name; instantiate and call its static method.
 	var validator_obj: Object = validator_script.new()
 	var vres: Dictionary = validator_obj.validate(resource_dict)
 	var errors: Array = vres.get("errors", [])
 	var warnings: Array = vres.get("warnings", [])
 	if not bool(vres.get("valid", false)):
 		return {"error": "validation failed", "errors": errors, "warnings": warnings}
-	# Write the .tres
 	var f: FileAccess = FileAccess.open(path, FileAccess.WRITE)
 	if f == null:
 		return {"error": "cannot write to %s" % path}
 	f.store_string(_format_skill_tres(resource_dict))
 	f.close()
-	# Reload to verify
 	var res: Resource = load(path)
 	if res == null:
 		return {"error": "created but failed to load"}
@@ -353,20 +295,16 @@ func _cmd_create_skill(params: Dictionary) -> Dictionary:
 	}
 
 
-## modify_skill(params) — Modifica campos de un skill existente.
-## Params: id, plus any of: name, description, atoms, costs, designed_max, etc.
 func _cmd_modify_skill(params: Dictionary) -> Dictionary:
 	var skill_id: String = String(params.get("id", ""))
 	var skill: Resource = _find_skill_resource(skill_id)
 	if skill == null:
 		return {"error": "skill not found: %s" % skill_id}
-	# Update fields
 	for key_v in params.keys():
 		var key: String = String(key_v)
 		if key in ["id", "method", "params", "jsonrpc"]:
 			continue
 		skill.set(key, params[key_v])
-	# Re-validate
 	var validator_script: GDScript = load("res://scripts/skill/skill_validator.gd")
 	var resource_dict: Dictionary = {
 		"name": String(skill.name) if "name" in skill else "",
@@ -381,7 +319,6 @@ func _cmd_modify_skill(params: Dictionary) -> Dictionary:
 	var errors: Array = vres.get("errors", [])
 	if not bool(vres.get("valid", false)):
 		return {"error": "validation failed after modify", "errors": errors}
-	# Save back to disk
 	var path: String = skill.resource_path
 	if path == "" or not path.ends_with(".tres"):
 		return {"error": "skill has no .tres path"}
@@ -394,11 +331,6 @@ func _cmd_modify_skill(params: Dictionary) -> Dictionary:
 	return {"modified": path, "id": skill_id}
 
 
-## === MISSION HANDLERS (7) ===
-## El LLM crea misiones con `create_mission` (solo pasa purpose, target_id,
-## mission_type, title). El jugador escoge dificultad vía UI → set_difficulty.
-## El juego calcula enemigos, rewards y damage_modifiers en base a la
-## dificultad. Estos handlers son thin wrappers sobre MissionManager.
 
 func _cmd_create_mission(params: Dictionary) -> Dictionary:
 	var mm: Node = Engine.get_main_loop().root.get_node_or_null("MissionManager")
@@ -494,9 +426,6 @@ func _cmd_list_missions(_params: Dictionary) -> Dictionary:
 	return {"missions": out, "count": out.size(), "active_mission_id": String(mm.get_active_mission().id) if mm.get_active_mission() != null else ""}
 
 
-# === OBJECTIVE HANDLERS (5) ===
-# El LLM/jugador puede listar los 20 bosses, ver detalles, iniciar uno
-# (lo que spawnea el boss cerca del player), o forzar completado (testing).
 
 func _cmd_list_objectives(_params: Dictionary) -> Dictionary:
 	var om: Node = Engine.get_main_loop().root.get_node_or_null("ObjectivesManager")
@@ -537,8 +466,6 @@ func _cmd_get_completed_objectives(_params: Dictionary) -> Dictionary:
 	return {"completed": om.get_completed_objectives()}
 
 
-## allocate_skill_points(params) — Asigna puntos a un stat de una skill owned.
-## Params: skill_id, stat, points
 func _cmd_allocate_skill_points(params: Dictionary) -> Dictionary:
 	var ps: Node = get_tree().root.get_node_or_null("ProgressionState")
 	if ps == null:
@@ -550,7 +477,6 @@ func _cmd_allocate_skill_points(params: Dictionary) -> Dictionary:
 	return {"allocated": ok, "skill_id": skill_id_v, "stat": stat_v, "points": points}
 
 
-## list_skills(params) — Lista todas las skills disponibles en data/skills/.
 func _cmd_list_skills(_params: Dictionary) -> Dictionary:
 	var dir: DirAccess = DirAccess.open("res://data/skills")
 	if dir == null:
@@ -573,20 +499,11 @@ func _cmd_list_skills(_params: Dictionary) -> Dictionary:
 	return {"skills": skills, "count": skills.size()}
 
 
-## Format a skill dict as a .tres file. Mimics the existing kamehameha_001.tres style.
-##
-## Acepta un Dictionary (spec cruda del LLM) o un Resource (skill ya cargada).
-## Para Resources, extrae los campos TAL CUAL — sin forzar String() en campos
-## que pueden ser Dictionary/Array (target_resolver, atoms, designed_max, etc).
-## Luego _format_tres_value() se encarga de serializar el valor correcto
-## según su tipo. Bug anterior: String(skill.target_resolver) reventaba porque
-## target_resolver es Dict y GDScript 4 no tiene constructor String(Dict).
 func _format_skill_tres(skill) -> String:
 	var data: Dictionary
 	if skill is Dictionary:
 		data = skill.duplicate(true)
 	else:
-		# Resource — extraer campos raw (String/Dict/Array/etc sin forzar)
 		data = {
 			"id": skill.id if "id" in skill else "",
 			"name": skill.name if "name" in skill else "",
@@ -622,18 +539,14 @@ func _format_skill_tres(skill) -> String:
 	return "\n".join(lines) + "\n"
 
 
-## === SISTEMA DE ARMAS — HANDLERS MCP ===
-## _cmd_create_weapon(params) — Crea un nuevo WeaponResource .tres desde el LLM.
 func _cmd_create_weapon(params: Dictionary) -> Dictionary:
 	var id: String = String(params.get("id", ""))
 	if id == "":
 		return {"error": "id is required"}
-	# Sanitize el id para path
 	var safe_id: String = id.replace("/", "_").replace("\\", "_").replace("..", "_")
 	var out_path: String = "res://data/weapons/%s.tres" % safe_id
-	# Construir el dict para el .tres
 	var family_str: String = String(params.get("family", "sword"))
-	var family_idx: int = 0  # SWORD por defecto
+	var family_idx: int = 0
 	match family_str:
 		"sword":    family_idx = 0
 		"scimitar": family_idx = 1
@@ -662,23 +575,19 @@ func _cmd_create_weapon(params: Dictionary) -> Dictionary:
 		"hit_sound": "weapon_hit",
 		"category": StringName(String(params.get("category", "melee"))),
 	}
-	# Validar tipos básicos
 	if not spec["designed_stats"] is Dictionary:
 		return {"error": "designed_stats must be a dict"}
 	if not spec["stat_scaling"] is Dictionary:
 		return {"error": "stat_scaling must be a dict"}
-	# Escribir el .tres
 	var tres: String = _format_weapon_tres(spec)
 	var f: FileAccess = FileAccess.open(out_path, FileAccess.WRITE)
 	if f == null:
 		return {"error": "could not open %s for writing" % out_path}
 	f.store_string(tres)
 	f.close()
-	# Re-load para verificar
 	var res: Resource = load(out_path)
 	if res == null:
 		return {"error": "created but failed to load"}
-	# Registrar en el catálogo
 	var catalog: GDScript = load("res://scripts/skill/weapon_catalog.gd")
 	var ok: bool = catalog.register_mcp_generated(StringName(id), out_path)
 	if not ok:
@@ -750,7 +659,6 @@ func _cmd_allocate_weapon_points(params: Dictionary) -> Dictionary:
 	}
 
 
-## _format_weapon_tres(spec) — Escribe el contenido de un .tres para WeaponResource.
 func _format_weapon_tres(spec: Dictionary) -> String:
 	var lines: Array = [
 		"[gd_resource type=\"Resource\" script_class=\"WeaponResource\" load_steps=2 format=3]",
@@ -778,8 +686,6 @@ func _format_weapon_tres(spec: Dictionary) -> String:
 	return "\n".join(lines) + "\n"
 
 
-## Format any value (Dict/Array/String/Number) as a Godot .tres expression.
-## Dict/Array → literal block (not JSON-quoted). Strings → quoted. Numbers/bools → literal.
 func _format_tres_value(v: Variant, indent: int = 0) -> String:
 	var pad: String = "    ".repeat(indent)
 	if v == null:

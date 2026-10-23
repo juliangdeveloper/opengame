@@ -1,5 +1,4 @@
 extends CharacterBody3D
-## Dummy enemy for testing combat. Static (no AI), takes damage, dies.
 
 @export var max_hp := 100.0
 @export var flash_color := Color(1, 0.3, 0.3)
@@ -19,7 +18,6 @@ func _ready() -> void:
 
 func take_damage(amount: float, source: Node = null) -> void:
 	hp -= amount
-	# visual feedback
 	mat.albedo_color = flash_color
 	await get_tree().create_timer(0.12).timeout
 	if is_instance_valid(self) and mat:
@@ -30,7 +28,6 @@ func take_damage(amount: float, source: Node = null) -> void:
 
 
 func die() -> void:
-	# Simple death: collapse and queue_free
 	mat.albedo_color = Color(0.1, 0.1, 0.1)
 	await get_tree().create_timer(0.6).timeout
 	queue_free()

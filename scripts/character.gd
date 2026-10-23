@@ -1,52 +1,23 @@
-## character.gd — Unified body for player, enemy, boss, NPC, ally.
-##
-## FASE 4 (2026-06-14): reemplaza enemy.gd y la lógica de body de
-## player.gd. Se inicializa desde un CharacterResource (.tres) que
-## define TODOS sus stats, skills, armas y comportamiento.
-##
-## Este nodo NO tiene input handling — eso lo hace un Controller child:
-##   - PlayerController: si data.ai_controlled = false
-##   - AIController:     si data.ai_controlled = true
-##
-## CUMPLIMIENTO DE DIRECTRIZ DEL USER:
-##   "Refinar los jefes y enemigos para que sean full data driven.
-##    Los skills y armas son JSON iguales a los del jugador.
-##    La única diferencia técnica entre un jugador y un personaje
-##    del juego es que el personaje tiene habilitado el control por ia
-##    y no por el jugador, un simple bool. Elimina cualquier dato
-##    quemado en el código."
-##
-## STATEMACHINE: IDLE → CHASE → WINDUP → ACTIVE → RECOVER → (DEAD)
-##   - WINDUP/ACTIVE/RECOVER usan los timings de data (no hardcoded)
-##   - DEAD respawna si data.can_respawn()
 extends CharacterBody3D
 class_name EntityCharacter
 
-## Resource .tres con todos los datos del personaje
 @export var data: Resource = null
 
-## Multiplicador de dificultad (boss arenas lo setean a 1.5x para bosses finales)
 @export var difficulty_mult: float = 1.0
 
-## Si true, castea skills. Si false, fallback a melee básico.
 @export var use_skills: bool = true
 
-## Si está seteado, este personaje targetea a este nodo en vez del player.
-## (Usado en boss-vs-boss arena, ally assist, etc.)
 @export var target_override: Node3D = null
 
-## Si true, loguea cada decisión AI al CombatLog.
 @export var log_ai_decisions: bool = true
 
 
-# === State machine ===
 enum State { IDLE, CHASE, CHOOSE_SKILL, WINDUP, ACTIVE, RECOVER, STAGGER, DEAD }
 var state: State = State.IDLE
 var state_timer: float = 0.0
 var current_skill_id: StringName = &""
 var is_dying: bool = false
 
-# === Stats (seteadas por _ready() desde data) ===
 var max_hp: float = 100.0
 var hp: float = 100.0
 var max_stamina: float = 50.0
@@ -64,7 +35,6 @@ var recover_duration: float = 0.75
 var stagger_duration: float = 1.30
 var respawn_delay: float = 999.0
 
-# === Loadout ===
 var weapon_id: StringName = &""
 var skill_ids: Array[StringName] = []
 var skill_weights: Array[float] = []
@@ -72,26 +42,20 @@ var attribute_allocations: Dictionary = {}
 var element_allocations: Dictionary = {}
 var damage_modifiers: Dictionary = {}
 
-# === Visual ===
 var base_color: Color = Color(0.8, 0.15, 0.2)
 var flash_color: Color = Color(1.0, 0.5, 0.2)
 
-# === Spawn position (para respawn) ===
 var spawn_position: Vector3 = Vector3.ZERO
 
-# === Cooldowns defensivos (segundos) ===
 var parry_cooldown: float = 0.0
 var dodge_cooldown: float = 0.0
 var defend_cooldown: float = 0.0
 
-# === Anti-streak: track últimas N skills para evitar spam ===
 var _recent_skill_uses: Array[StringName] = []
 const ANTI_STREAK_DEPTH: int = 3
 
-# === Controller reference (set externally) ===
-var controller: Node = null  # PlayerController o AIController
+var controller: Node = null
 
-# === Signals ===
 signal character_killed(character_id: StringName)
 signal character_damaged(amount: float, hp_left: float)
 @warning_ignore("unused_signal")
@@ -103,7 +67,6 @@ signal character_blocked(attacker: Node)
 signal skill_started(skill_id: StringName)
 signal skill_finished(skill_id: StringName)
 
-# === Nodes (auto-detectados) ===
 @onready var model: Node3D = $Model if has_node("Model") else null
 @onready var mesh_instance: MeshInstance3D = _find_mesh(model) if model else null
 @onready var attack_area: Area3D = $AttackArea if has_node("AttackArea") else null
@@ -120,7 +83,6 @@ signal skill_finished(skill_id: StringName)
 	$Model/ParryLabel if has_node("Model/ParryLabel") else null
 )
 
-# Materiales y constantes visuales (no son DATA, son presentation)
 var _base_mat: StandardMaterial3D
 var _hitbox_mat: StandardMaterial3D
 const HITBOX_WINDUP := Color(1.0, 0.7, 0.1, 0.4)
@@ -129,22 +91,18 @@ const HITBOX_ACTIVE := Color(1.0, 0.15, 0.1, 0.55)
 
 func _ready() -> void:
 	add_to_group("characters")
-	# ¿Soy un enemy o un player? Determinado por data.ai_controlled
 	if data != null and data.ai_controlled:
 		add_to_group("enemies")
 	else:
 		add_to_group("player_characters")
 	_apply_data()
 	_setup_visuals()
-	# Inicializar controller apropiado si no se asignó uno externamente
 	if controller == null:
 		_install_default_controller()
-	# Conectar attack_area signal — subclases override _on_attack_body
 	if attack_area and not attack_area.body_entered.is_connected(_on_attack_body):
 		attack_area.body_entered.connect(_on_attack_body)
 
 
-## Aplica el CharacterResource al cuerpo. Cero hardcoded — todo viene de data.
 func _apply_data() -> void:
 	if data == null:
 		push_warning("[Character] no data assigned, using defaults")
@@ -174,14 +132,9 @@ func _apply_data() -> void:
 	base_color = data.base_color
 	flash_color = data.flash_color
 	spawn_position = global_position
-	# Sincronizar con ProgressionState si los allocations están poblados
-	# (para que AttributeComponent y ResistanceComponent se actualicen).
 	_sync_progression_state()
 
 
-## Sincroniza los allocations con ProgressionState (la single source of truth).
-## Si data.attribute_allocations NO está vacío, lo escribe a PS.attribute_allocations
-## para que AttributeComponent.refresh_from_progression_state() lo vea.
 func _sync_progression_state() -> void:
 	if attribute_allocations.is_empty():
 		return
@@ -192,8 +145,6 @@ func _sync_progression_state() -> void:
 		ps.attribute_allocations = (attribute_allocations as Dictionary).duplicate(true)
 
 
-## Instala el Controller apropiado (Player vs AI) según data.ai_controlled.
-## Este es el ÚNICO branching técnico entre player y AI.
 func _install_default_controller() -> void:
 	if data == null:
 		return
@@ -201,12 +152,10 @@ func _install_default_controller() -> void:
 		controller = _make_ai_controller()
 	else:
 		controller = _make_player_controller()
-	# Add controller to scene tree so _process/_input/_physics_process fire
 	if controller != null and not controller.is_inside_tree():
 		add_child(controller)
 
 
-## Crea el AIController. (Stub — el script real se implementa aparte)
 func _make_ai_controller() -> Node:
 	var script: GDScript = load("res://scripts/ai/ai_controller.gd")
 	if script == null:
@@ -217,7 +166,6 @@ func _make_ai_controller() -> Node:
 	return ctrl
 
 
-## Crea el PlayerController. (Stub — el script real se implementa aparte)
 func _make_player_controller() -> Node:
 	var script: GDScript = load("res://scripts/player_controller.gd")
 	if script == null:
@@ -229,16 +177,12 @@ func _make_player_controller() -> Node:
 
 
 func _setup_visuals() -> void:
-	# Apply procedural visuals from CharacterResource data.
-	# No FBX models — just primitives with data-driven colors, shapes, sizes.
 	if mesh_instance and data != null:
 		_base_mat = StandardMaterial3D.new()
 		_base_mat.albedo_color = base_color
 		mesh_instance.material_override = _base_mat
-		# Resize body mesh according to data.body_height / body_radius / size_scale
 		if data.body_height > 0.0:
 			_resize_body_mesh(mesh_instance, data.body_height, data.body_radius, data.size_scale)
-		# Build head if enabled and not already in scene
 		if data.has_head and not _head_instance:
 			_build_procedural_head()
 	if attack_area and hit_collision:
@@ -256,8 +200,6 @@ func _setup_visuals() -> void:
 		label_hp.text = "%d/%d" % [int(hp), int(max_hp)]
 
 
-## Resize the body mesh (Capsule/Cube/Sphere/Cylinder) based on data params.
-## This replaces the hardcoded Capsule sizes in the .tscn files.
 func _resize_body_mesh(mesh_inst: MeshInstance3D, height: float, radius: float, body_scale: float) -> void:
 	var m: Mesh = mesh_inst.mesh
 	if m is CapsuleMesh:
@@ -274,8 +216,6 @@ func _resize_body_mesh(mesh_inst: MeshInstance3D, height: float, radius: float, 
 	mesh_inst.scale = Vector3.ONE * body_scale
 
 
-## Build a small procedural head sphere on top of the body.
-## Only called when data.has_head = true and no head exists in the .tscn.
 var _head_instance: MeshInstance3D = null
 func _build_procedural_head() -> void:
 	if model == null:
@@ -304,7 +244,6 @@ func _find_mesh(parent: Node) -> MeshInstance3D:
 	return null
 
 
-# === State machine ===
 
 func _state_idle() -> void:
 	velocity.x *= 0.5
@@ -333,7 +272,6 @@ func _state_chase(delta: float) -> void:
 		velocity.z = to.z * move_speed
 
 
-## Delega la decisión de skill al controller si existe,否则 weighted random.
 func _state_choose_skill() -> void:
 	if controller != null and controller.has_method("decide_skill"):
 		current_skill_id = controller.decide_skill()
@@ -348,13 +286,11 @@ func _state_choose_skill() -> void:
 func _pick_weighted_skill() -> StringName:
 	if skill_ids.is_empty():
 		return &""
-	# Anti-streak: bajar el peso de skills usadas recientemente
 	var weights: Array[float] = (skill_weights as Array).duplicate()
 	for i in weights.size():
 		for recent in _recent_skill_uses:
 			if i < skill_ids.size() and skill_ids[i] == recent:
-				weights[i] *= 0.3  # penalizar uso reciente
-	# Weighted random
+				weights[i] *= 0.3
 	var total: float = 0.0
 	for w in weights:
 		total += maxf(w, 0.01)
@@ -448,18 +384,14 @@ func _enter_stagger(duration: float = 1.30) -> void:
 	current_skill_id = &""
 
 
-# === Physics (gravity, state ticking) ===
 
 func _physics_process(delta: float) -> void:
 	if state == State.DEAD:
 		return
-	# Cooldowns defensivos
 	parry_cooldown = maxf(0.0, parry_cooldown - delta)
 	dodge_cooldown = maxf(0.0, dodge_cooldown - delta)
 	defend_cooldown = maxf(0.0, defend_cooldown - delta)
-	# Stamina regen
 	stamina = minf(max_stamina, stamina + 12.0 * delta)
-	# State timer
 	state_timer -= delta
 	match state:
 		State.IDLE: _state_idle()
@@ -469,7 +401,6 @@ func _physics_process(delta: float) -> void:
 		State.ACTIVE: _state_active()
 		State.RECOVER: _state_recover()
 		State.STAGGER: _state_stagger()
-	# Gravity
 	if not is_on_floor():
 		velocity.y -= 22.0 * delta
 	elif velocity.y < 0:
@@ -485,12 +416,10 @@ func _update_hp_label() -> void:
 		label_hp.text = "%d/%d" % [int(hp), int(max_hp)]
 
 
-# === Combat ===
 
 func take_damage(amount: float, _attacker: Node = null, element: StringName = &"") -> float:
 	if state == State.DEAD:
 		return 0.0
-	# Aplicar damage_modifiers (weakness/resistance)
 	var mult: float = 1.0
 	if element != &"" and damage_modifiers.has(element):
 		mult = float(damage_modifiers[element])
@@ -509,17 +438,14 @@ func _die() -> void:
 	state = State.DEAD
 	if data != null and data.id != &"":
 		character_killed.emit(data.id)
-	# Recompensa: si tiene reward_skill_points > 0, dar a PS
 	if data != null and data.reward_skill_points > 0:
 		var ps: Node = Engine.get_main_loop().root.get_node_or_null("ProgressionState")
 		if ps and "grant_skill_points" in ps:
 			ps.grant_skill_points(data.reward_skill_points)
-	# Respawn si aplica
 	if data != null and data.can_respawn():
 		await get_tree().create_timer(respawn_delay).timeout
 		_respawn()
 	else:
-		# Boss / no respawn — solo hide
 		visible = false
 		process_mode = Node.PROCESS_MODE_DISABLED
 
@@ -533,9 +459,8 @@ func _respawn() -> void:
 	process_mode = Node.PROCESS_MODE_INHERIT
 
 
-# === Helpers ===
 
-var target: Node3D = null  # Set by controller each frame
+var target: Node3D = null
 
 func _dist_to_target() -> float:
 	if target == null or not is_instance_valid(target):
@@ -543,7 +468,5 @@ func _dist_to_target() -> float:
 	return global_position.distance_to(target.global_position)
 
 
-## Override en subclase. Default: no-op (enemigos con skill manejan el
-## daño vía SkillExecutor; enemigos con attack_damage lo overrideen).
 func _on_attack_body(_body: Node) -> void:
 	pass

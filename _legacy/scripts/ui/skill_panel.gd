@@ -1,19 +1,9 @@
-## Skill Panel — UI de una skill individual dentro del allocator.
-##
-## Layout:
-##   Skill name + description
-##   Power ratio bar
-##   Por cada stat en designed_max:
-##     Label "stat_name: current / designed"
-##     Barra horizontal (ProgressBar)
-##     Botones -/+  (1 punto por click)
-##     Botón -5 / +5  (bulk)
 extends PanelContainer
 
 const ProgressionStateScript := preload("res://scripts/skill/progression_state.gd")
 const BalanceScript := preload("res://scripts/skill/balance.gd")
 
-var _skill: Resource = null  # SkillResource
+var _skill: Resource = null
 var _skill_id: StringName
 var _title_label: Label
 var _desc_label: Label
@@ -51,7 +41,6 @@ func _build() -> void:
 	v.add_child(_stats_container)
 
 
-## Configura el panel para una skill.
 func setup(skill) -> void:
 	_skill = skill
 	_skill_id = StringName(skill.id)
@@ -64,10 +53,8 @@ func _refresh() -> void:
 	var ps: Node = Engine.get_main_loop().root.get_node_or_null("ProgressionState")
 	if _skill == null or ps == null:
 		return
-	# Power bar
 	var ratio: float = ps.get_skill_power_ratio(_skill_id)
 	_power_bar.value = ratio
-	# Stats
 	for child in _stats_container.get_children():
 		child.queue_free()
 	for stat_name_v in _skill.designed_max.keys():
@@ -84,13 +71,11 @@ func _build_stat_row(ps: Node, stat_name: StringName, designed: float, current: 
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 6)
 
-	# Label "stat: current/designed (alloc=N)"
 	var label := Label.new()
 	label.custom_minimum_size = Vector2(220, 0)
 	label.text = "%s: %.1f / %.1f  [pts=%d]" % [stat_name, current, designed, alloc]
 	row.add_child(label)
 
-	# Progress bar
 	var bar := ProgressBar.new()
 	bar.min_value = 0.0
 	bar.max_value = designed
@@ -98,7 +83,6 @@ func _build_stat_row(ps: Node, stat_name: StringName, designed: float, current: 
 	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(bar)
 
-	# Botones -1 / +1 / -5 / +5
 	row.add_child(_make_alloc_button(ps, "-1", stat_name, -1, alloc > 0))
 	row.add_child(_make_alloc_button(ps, "+1", stat_name, 1, ps.skill_points > 0 and alloc < MAX_PTS_PER_STAT))
 	row.add_child(_make_alloc_button(ps, "-5", stat_name, -5, alloc > 0))
@@ -119,7 +103,6 @@ func _on_alloc_pressed(ps: Node, stat_name: StringName, delta: int) -> void:
 		ps.allocate(_skill_id, stat_name, delta)
 	else:
 		ps.deallocate(_skill_id, stat_name, -delta)
-	# Notifica al allocator para refrescar el header
 	var parent := get_parent()
 	while parent and not parent.has_method("_refresh"):
 		parent = parent.get_parent()

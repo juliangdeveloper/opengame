@@ -1,4 +1,3 @@
-## error_logger.gd — Autoload that registers FileLogger.
 extends Node
 
 var _logger: FileLogger = null
