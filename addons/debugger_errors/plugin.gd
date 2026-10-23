@@ -1,8 +1,6 @@
 @tool
 extends EditorPlugin
 
-## Adds "Copy All" + "Save to Log" buttons to the Debugger's Errors panel.
-## Auto-saves errors to user://logs/debugger_errors.log after 5 seconds.
 
 var _copy_button: Button = null
 var _save_button: Button = null
@@ -41,7 +39,6 @@ func _process(_delta: float) -> void:
 		return
 	if _error_tree == null:
 		return
-	# Check if Tree has items
 	var root := _error_tree.get_root()
 	if root and root.get_first_child():
 		_auto_save_done = true

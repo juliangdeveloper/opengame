@@ -1,4 +1,3 @@
-## push_error_test.gd — Tests if push_error() goes through Logger._log_message
 extends SceneTree
 
 func _init():

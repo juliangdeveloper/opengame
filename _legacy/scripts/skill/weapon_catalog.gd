@@ -1,30 +1,7 @@
-## WeaponCatalog — Registro de armas disponibles en el juego.
-##
-## A diferencia de los skills (que se autoran dinámicamente vía MCP y viven
-## en data/skills/), las armas tienen un **catálogo curado** inicial que
-## define las "clases" base del juego. La IA puede crear armas NUEVAS
-## (vía MCP create_weapon) que se añaden al catálogo en runtime.
-##
-## Diseño:
-##   - Catálogo base: 9 armas predefinidas (1 unarmed + 8 armas curadas)
-##   - Cada WeaponResource define family, stats, scaling, compatibilidades
-##   - El jugador equipa UNA a la vez (no dual-wield en MVP)
-##   - El catalogue se persiste en ProgressionState (no en disco en MVP,
-##     las armas se re-crean desde .tres al iniciar)
-##
-## Acceso desde MCP:
-##   - list_weapons() → todas las del catálogo (base + grants del MCP)
-##   - get_weapon(id) → una específica
-##   - grant_weapon(id) → añadir a la "colección" del jugador (owned_weapons)
-##   - equip_weapon(id) → marcarla como equipped en PS
-##
-## Acceso desde UI:
-##   - WeaponAllocator (tab en skill book) lista owned + equipped
 
 const WeaponResourceScript := preload("res://scripts/skill/weapon_resource.gd")
 const ProgressionState := preload("res://scripts/skill/progression_state.gd")
 
-## Catálogo base: id → path del .tres
 const BASE_CATALOG_PATHS: Dictionary = {
 	&"unarmed": "res://data/weapons/unarmed.tres",
 	&"short_sword": "res://data/weapons/short_sword.tres",
@@ -40,15 +17,11 @@ const BASE_CATALOG_PATHS: Dictionary = {
 	&"arcane_staff": "res://data/weapons/arcane_staff.tres",
 }
 
-## Catálogo runtime (se llena al _ready): id → WeaponResource
 static var _cache: Dictionary = {}
 
-## Weapons creados por la IA vía MCP (id → path del .tres generado)
 static var _mcp_generated: Dictionary = {}
 
 
-## Inicializa el cache cargando todos los .tres del catálogo base.
-## Llamar desde el autoload ProgressionState o desde la play scene _ready.
 static func initialize() -> void:
 	_cache.clear()
 	for id in BASE_CATALOG_PATHS:
@@ -58,7 +31,6 @@ static func initialize() -> void:
 			_cache[id] = res
 		else:
 			push_warning("[WeaponCatalog] failed to load base weapon: %s" % path)
-	# Cargar también los generados por MCP (si los hay)
 	for id in _mcp_generated:
 		var path_mcp: String = _mcp_generated[id]
 		var res_mcp: Resource = load(path_mcp)
@@ -66,7 +38,6 @@ static func initialize() -> void:
 			_cache[id] = res_mcp
 
 
-## Devuelve todos los ids del catálogo.
 static func list_ids() -> Array[StringName]:
 	if _cache.is_empty():
 		initialize()
@@ -77,7 +48,6 @@ static func list_ids() -> Array[StringName]:
 	return ids
 
 
-## Devuelve todos los WeaponResource del catálogo (para la UI).
 static func list_all() -> Array[Resource]:
 	if _cache.is_empty():
 		initialize()
@@ -87,7 +57,6 @@ static func list_all() -> Array[Resource]:
 	return all
 
 
-## Devuelve armas filtradas por familia.
 static func list_by_family(family_name: String) -> Array[Resource]:
 	if _cache.is_empty():
 		initialize()
@@ -99,15 +68,12 @@ static func list_by_family(family_name: String) -> Array[Resource]:
 	return out
 
 
-## Devuelve un WeaponResource por id, o null.
 static func get_weapon(id: StringName) -> Resource:
 	if _cache.is_empty():
 		initialize()
 	return _cache.get(id, null)
 
 
-## Registra un arma nueva (creada por MCP). Devuelve true si ok.
-## path: ruta absoluta al .tres recién escrito.
 static func register_mcp_generated(id: StringName, path: String) -> bool:
 	_mcp_generated[id] = path
 	var res: Resource = load(path)
@@ -117,7 +83,6 @@ static func register_mcp_generated(id: StringName, path: String) -> bool:
 	return true
 
 
-## Helper de diagnóstico.
 static func debug_dump() -> void:
 	if _cache.is_empty():
 		initialize()

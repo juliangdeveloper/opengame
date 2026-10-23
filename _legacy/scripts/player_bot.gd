@@ -1,9 +1,4 @@
 extends Node
-## Player bot: simulates a real player by sending real InputEventKey / InputEventMouseButton /
-## InputEventMouseMotion events. Uses a decision FSM to choose actions based on
-## player and enemy state. Logs every decision for review.
-##
-## Bound skills: W/A/S/D, sprint (Shift), attack (LMB), block (RMB), parry (F), dodge (Ctrl).
 
 var player: CharacterBody3D
 var enemy: Node3D
@@ -11,17 +6,14 @@ var bot_enabled := true
 var decision_cooldown := 0.0
 var current_decision: String = "IDLE"
 
-# Decision config
 const DECISION_INTERVAL := 0.15
 const APPROACH_DIST := 6.0
 const ENGAGE_DIST := 2.6
-const FACE_MAX_PX_PER_TICK := 1000.0  # essentially unlimited; in sim, we want full facing each tick
+const FACE_MAX_PX_PER_TICK := 1000.0
 
-# Track what we last sent so release_all is correct
-var _keys_held: Dictionary = {}      # keycode -> true
-var _mouse_btns_held: Dictionary = {}  # button_index -> true
+var _keys_held: Dictionary = {}
+var _mouse_btns_held: Dictionary = {}
 
-# Counters for end-of-sim stats
 var stat_decisions := 0
 var stat_attacks := 0
 var stat_parries_attempted := 0
@@ -44,19 +36,16 @@ func _ready() -> void:
 		push_error("[bot] Player not found!")
 		set_process(false)
 		return
-	# Connect to player signals for stat tracking
 	player.parry_succeeded.connect(_on_player_parry_succeeded)
 	player.attack_hit.connect(_on_player_attack_hit)
 	player.damaged.connect(_on_player_damaged)
 	player.died.connect(_on_player_died)
 	player.respawned.connect(_on_player_respawned)
 	_acquire_enemy()
-	# Initial decision after a short settle
 	await get_tree().create_timer(0.3).timeout
 	_log("BOT_READY player=%s enemy=%s" % [player.name, enemy.name if enemy else "none"])
 
 
-# --- Signal handlers (player -> bot stat counters) ---
 
 func _on_player_parry_succeeded(_enemy: Node) -> void:
 	stat_parries_succeeded += 1
@@ -67,7 +56,7 @@ func _on_player_attack_hit(_target: Node, damage: float) -> void:
 func _on_player_damaged(_amount: float, _final_amount: float, blocked: bool) -> void:
 	stat_damage_taken += _final_amount
 	if not blocked:
-		pass  # we already track total
+		pass
 
 func _on_player_died() -> void:
 	stat_player_deaths += 1
@@ -87,7 +76,6 @@ func _physics_process(delta: float) -> void:
 	_decide()
 
 
-# --- Decision FSM ---
 
 func _decide() -> void:
 	if player == null or not is_instance_valid(player):
@@ -113,7 +101,6 @@ func _decide() -> void:
 
 	stat_decisions += 1
 
-	# ---- Movement decisions ----
 	if dist > APPROACH_DIST:
 		current_decision = "APPROACH"
 		_log_decision("APPROACH", "dist=%.2f" % dist)
@@ -125,11 +112,9 @@ func _decide() -> void:
 		_close()
 		return
 
-	# ---- Engagement decisions ----
 	current_decision = "ENGAGE"
-	_release_movement()  # don't walk while fighting
+	_release_movement()
 
-	# If we're busy with our own action, don't do anything
 	if player.is_attacking or player.is_dodging or player.is_parrying:
 		_log_decision("BUSY", "player is acting")
 		return
@@ -161,7 +146,6 @@ func _release_block_if_held() -> void:
 func _approach(dist: float) -> void:
 	_release_block_if_held()
 	_release_sprint()
-	# Edge-avoidance: if near the floor edge, move toward the center instead of the enemy
 	var away := _edge_avoid_vector()
 	if away.length() > 0.01:
 		_log_decision("EDGE_RETURN", "near edge -> toward center")
@@ -190,18 +174,15 @@ func _close() -> void:
 
 
 func _edge_avoid_vector() -> Vector2:
-	# Floor is 500x500 centered at origin. Keep a safe margin.
 	var p := player.global_position
 	var xz := Vector2(p.x, p.z)
-	var limit := 240.0  # floor half-size 250 minus safety margin
+	var limit := 240.0
 	if absf(xz.x) > limit or absf(xz.y) > limit:
-		# Push toward center
 		return -xz.normalized()
 	return Vector2.ZERO
 
 
 func _move_along(world_dir: Vector2) -> void:
-	# Convert world XZ to local input keys given current facing
 	var forward := -player.global_transform.basis.z
 	forward.y = 0
 	if forward.length() < 0.01: return
@@ -209,10 +190,8 @@ func _move_along(world_dir: Vector2) -> void:
 	var right := player.global_transform.basis.x
 	right.y = 0
 	right = right.normalized()
-	# dot products
 	var f_dot := world_dir.x * forward.x + world_dir.y * forward.z
 	var r_dot := world_dir.x * right.x + world_dir.y * right.z
-	# For simplicity: snap to 8-way input
 	if absf(f_dot) > absf(r_dot):
 		if f_dot > 0: _press_s(); _release_w()
 		else: _press_w(); _release_s()
@@ -224,34 +203,27 @@ func _move_along(world_dir: Vector2) -> void:
 
 
 func _react_to_windup(windup_left: float) -> void:
-	# Parry window covers 0.4s; enemy ACTIVE starts at end of windup.
-	# Press parry when state_timer < 0.35 to land in ACTIVE.
-	# Parry is cheaper (18) than dodge (28) — prioritize it to keep stamina for the next exchange.
 	if windup_left < 0.35 and windup_left > 0.05 and player.stamina >= 22 and not player.is_parrying:
 		if randf() < 0.75:
 			_log_decision("PARRY", "windup_left=%.2f" % windup_left)
 			stat_parries_attempted += 1
 			_tap_parry()
 			return
-	# Dodge: only if stamina is high enough to recover before the next attack
 	if player.stamina >= 45 and randf() < 0.55:
 		_log_decision("DODGE", "windup_left=%.2f" % windup_left)
 		stat_dodges += 1
 		_tap_dodge_random()
 		return
-	# Block (hold) - only if we have stamina to spare
 	if player.stamina > 35 and randf() < 0.6:
 		_log_decision("BLOCK_HOLD", "windup_left=%.2f" % windup_left)
 		stat_blocks += 1
 		_press_block()
 		return
-	# Back off
 	_log_decision("BACK_OFF", "windup_left=%.2f" % windup_left)
 	_press_s()
 
 
 func _react_to_active() -> void:
-	# Already too late for parry. Block if not already, else take the hit.
 	if _mouse_btns_held.get(MOUSE_BUTTON_RIGHT, false):
 		_log_decision("BLOCK_LATE", "enemy in ACTIVE")
 		return
@@ -289,11 +261,10 @@ func _react_to_idle(_dist: float) -> void:
 	_log_decision("WAIT_IDLE", "enemy idle/chase")
 
 
-# --- Input injection (real events) ---
 
 func _send_key(keycode: int, pressed: bool) -> void:
 	if _keys_held.get(keycode, false) == pressed:
-		return  # no state change, skip
+		return
 	var e := InputEventKey.new()
 	e.keycode = keycode
 	e.physical_keycode = keycode
@@ -305,7 +276,7 @@ func _send_key(keycode: int, pressed: bool) -> void:
 
 func _send_mouse_button(button: int, pressed: bool) -> void:
 	if _mouse_btns_held.get(button, false) == pressed:
-		return  # no state change, skip
+		return
 	var e := InputEventMouseButton.new()
 	e.button_index = button
 	e.pressed = pressed
@@ -322,7 +293,6 @@ func _send_mouse_motion(relative: Vector2) -> void:
 		_log("mouse_motion rel=%s" % str(relative))
 
 
-# Higher-level press / tap helpers
 func _press_w():  _send_key(KEY_W, true)
 func _release_w(): _send_key(KEY_W, false)
 func _press_s():  _send_key(KEY_S, true)
@@ -342,7 +312,6 @@ func _tap_dodge() -> void:
 	_send_key(KEY_CTRL, false)
 
 func _tap_dodge_random() -> void:
-	# 60% back-dodge, 40% left/right
 	var r := randf()
 	_send_key(KEY_W if r < 0.6 else (KEY_A if r < 0.8 else KEY_D), true)
 	_send_key(KEY_CTRL, true)
@@ -366,13 +335,11 @@ func _release_movement() -> void:
 func release_all() -> void:
 	_release_movement()
 	_release_block()
-	# Also release dodge/parry/attack in case they're held
 	_send_key(KEY_CTRL, false)
 	_send_key(KEY_F, false)
 	_send_mouse_button(MOUSE_BUTTON_LEFT, false)
 
 
-# --- Facing ---
 
 func _face_enemy() -> void:
 	if enemy == null or player == null: return
@@ -382,15 +349,12 @@ func _face_enemy() -> void:
 	var desired_yaw: float = atan2(-to_enemy.x, -to_enemy.z)
 	var current_yaw: float = player.rotation.y
 	var delta: float = wrapf(desired_yaw - current_yaw, -PI, PI)
-	# Convert radians to mouse pixels (negative because rotate_y uses -event.relative.x)
 	var px: float = -delta / player.mouse_sensitivity
-	# Cap per-tick motion
 	if absf(px) > FACE_MAX_PX_PER_TICK:
 		px = sign(px) * FACE_MAX_PX_PER_TICK
 	_send_mouse_motion(Vector2(px, 0))
 
 
-# --- Helpers ---
 
 func _acquire_enemy() -> void:
 	for e in get_tree().get_nodes_in_group("enemies"):

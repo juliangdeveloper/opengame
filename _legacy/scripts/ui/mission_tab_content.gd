@@ -1,24 +1,4 @@
 extends RefCounted
-## MissionTabContent — lógica de la pestaña "Misión" del menú.
-##
-## Conecta los nodos UI del MissionPanel (built-in en menu.tscn) a los
-## métodos del MissionManager. NO es un nodo instanciado — se adosa
-## al MissionPanel via bind_nodes(panel) y maneja la lógica via
-## connect_manager().
-##
-## Layout esperado del MissionPanel:
-##   MissionPanel (PanelContainer)
-##   └─ VBox
-##       ├─ TitleLabel
-##       ├─ PurposeLabel
-##       ├─ TypeLabel
-##       ├─ StateLabel
-##       ├─ DifficultyRow (HBox)
-##       │   ├─ DiffLabel
-##       │   └─ [Btn1, Btn2, Btn3, Btn4, Btn5]   (5 buttons)
-##       ├─ ConfigLabel (multiline, shows enemy count, HP, rewards, modifiers)
-##       ├─ Separator
-##       └─ ActionButton (Start / Abandon / Retry / Edit)
 
 class_name MissionTabContent
 
@@ -28,10 +8,10 @@ var _purpose_label: Label = null
 var _type_label: Label = null
 var _state_label: Label = null
 var _diff_label: Label = null
-var _diff_buttons: Array = []  # [Button, Button, ...] 5 items
+var _diff_buttons: Array = []
 var _config_label: Label = null
 var _action_button: Button = null
-var _mission_list_button: Button = null  # opcional: ver lista de misiones
+var _mission_list_button: Button = null
 
 var _mm: Node = null
 var _current_mission_id: StringName = &""
@@ -42,7 +22,6 @@ func bind_nodes(panel: Control) -> void:
 	_panel = panel
 	if _panel == null:
 		return
-	# Walk the panel to find UI nodes by name
 	_title_label = _find_label(panel, "TitleLabel")
 	_purpose_label = _find_label(panel, "PurposeLabel")
 	_type_label = _find_label(panel, "TypeLabel")
@@ -63,25 +42,20 @@ func connect_manager() -> void:
 	if _mm == null:
 		push_warning("[MissionTabContent] MissionManager not found")
 		return
-	# Connect difficulty buttons
 	for i in range(_diff_buttons.size()):
 		var btn: Button = _diff_buttons[i]
 		var d: int = i + 1
 		btn.pressed.connect(_on_difficulty_pressed.bind(d))
-	# Action button
 	if _action_button != null:
 		_action_button.pressed.connect(_on_action_pressed)
-	# List button (next mission)
 	if _mission_list_button != null:
 		_mission_list_button.pressed.connect(_on_next_mission)
-	# MissionManager signals
 	if _mm.has_signal("mission_created"):
 		_mm.mission_created.connect(_on_any_mission_change)
 	if _mm.has_signal("mission_state_changed"):
 		_mm.mission_state_changed.connect(_on_state_changed)
 	if _mm.has_signal("mission_progress"):
 		_mm.mission_progress.connect(_on_progress)
-	# Initial pick: first AVAILABLE mission (or current ACTIVE)
 	_pick_default_mission()
 
 
@@ -90,19 +64,16 @@ func refresh() -> void:
 		connect_manager()
 	if _mm == null:
 		return
-	# If no current mission, pick one
 	if _current_mission_id == &"" or _mm.get_mission(_current_mission_id) == null:
 		_pick_default_mission()
 	_render()
 
 
 func focus_default() -> void:
-	# Focus the action button or first diff button
 	if _diff_buttons.size() > 0 and _diff_buttons[0] != null:
 		_diff_buttons[0].grab_focus()
 
 
-# === Internals ===
 
 func _find_label(node: Node, name: String) -> Label:
 	var n: Node = node.find_child(name, true, false)
@@ -121,22 +92,18 @@ func _find_button(node: Node, name: String) -> Button:
 func _pick_default_mission() -> void:
 	if _mm == null:
 		return
-	# Priority: ACTIVE > READY > first AVAILABLE
 	var active: Resource = _mm.get_active_mission()
 	if active != null:
 		_current_mission_id = StringName(String(active.id))
 		return
-	# First READY
 	for m in _mm.list_missions():
 		if String(m.state) == "READY":
 			_current_mission_id = StringName(String(m.id))
 			return
-	# First AVAILABLE
 	for m in _mm.list_missions():
 		if String(m.state) == "AVAILABLE":
 			_current_mission_id = StringName(String(m.id))
 			return
-	# Last terminal
 	for m in _mm.list_missions():
 		_current_mission_id = StringName(String(m.id))
 		return
@@ -147,7 +114,6 @@ func _on_next_mission() -> void:
 	var missions: Array = _mm.list_missions()
 	if missions.is_empty():
 		return
-	# Find current index, pick next
 	var idx := -1
 	for i in missions.size():
 		if String(missions[i].id) == String(_current_mission_id):
@@ -185,7 +151,6 @@ func _on_action_pressed() -> void:
 		"ACTIVE":
 			_mm.abandon_mission(_current_mission_id)
 		"COMPLETED", "FAILED", "ABANDONED":
-			# Show Edit dialog inline (simplified: cycle to next difficulty)
 			var new_diff: int = (_selected_difficulty % 5) + 1
 			_mm.edit_mission(_current_mission_id, new_diff)
 			_selected_difficulty = new_diff
@@ -197,7 +162,6 @@ func _on_state_changed(_mission_id: StringName, _new_state: StringName) -> void:
 
 
 func _on_progress(_mission_id: StringName, _progress: Dictionary) -> void:
-	# Don't re-render on every progress tick (would steal focus); just update progress label
 	if _state_label != null and _current_mission_id != &"" and String(_mission_id) == String(_current_mission_id):
 		var m: Resource = _mm.get_mission(_current_mission_id)
 		if m != null and String(m.state) == "ACTIVE":
@@ -205,7 +169,6 @@ func _on_progress(_mission_id: StringName, _progress: Dictionary) -> void:
 
 
 func _on_any_mission_change(_mission_id: StringName) -> void:
-	# Pick a mission if we don't have one
 	if _current_mission_id == &"":
 		_pick_default_mission()
 	_render()
@@ -235,14 +198,13 @@ func _render() -> void:
 	_type_label.text = "Tipo: %s" % m.mission_type
 	_state_label.text = m.get_state_label()
 	_diff_label.text = "Dificultad:"
-	# Difficulty buttons: enable only for AVAILABLE
 	var allow_diff: bool = (String(m.state) == "AVAILABLE")
 	for i in range(_diff_buttons.size()):
 		var btn: Button = _diff_buttons[i]
 		btn.disabled = not allow_diff
 		var d: int = i + 1
 		if m.difficulty == d:
-			btn.modulate = Color(0.4, 1.0, 0.4, 1)  # green = selected
+			btn.modulate = Color(0.4, 1.0, 0.4, 1)
 			btn.text = "[%d]" % d
 		elif allow_diff:
 			btn.modulate = Color.WHITE
@@ -250,7 +212,6 @@ func _render() -> void:
 		else:
 			btn.modulate = Color(0.5, 0.5, 0.5, 1)
 			btn.text = "%d" % d
-	# Config: show enemy count, HP mult, rewards, modifiers (only if has difficulty)
 	if m.difficulty > 0:
 		var cfg_text := "Dificultad: %d\n" % m.difficulty
 		cfg_text += "Enemigos: %d %s (HP x%.1f)\n" % [m.enemy_count, m.enemy_type, m.enemy_hp_mult]
@@ -267,7 +228,6 @@ func _render() -> void:
 		_config_label.text = cfg_text
 	else:
 		_config_label.text = "(elige una dificultad para ver el config)"
-	# Action button state-aware
 	match String(m.state):
 		"AVAILABLE":
 			_action_button.text = "(elige dificultad primero)"
@@ -287,7 +247,6 @@ func _render() -> void:
 		"ABANDONED":
 			_action_button.text = "↻ RETRY  (o EDIT)"
 			_action_button.disabled = false
-	# List button
 	if _mission_list_button != null:
 		var count: int = _mm.list_missions().size()
 		_mission_list_button.text = "↻ Siguiente (%d misiones)" % count

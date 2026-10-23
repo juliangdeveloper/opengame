@@ -1,5 +1,4 @@
 extends CanvasLayer
-## HUD: stamina, HP, skill bar for controller-first play, and mission objective.
 
 @onready var hp_bar: ProgressBar = $Bars/HP
 @onready var stam_bar: ProgressBar = $Bars/Stamina
@@ -9,10 +8,9 @@ extends CanvasLayer
 var player: Node3D
 var skill_hud: HBoxContainer
 var _skill_slots: Array = []
-var _objective_label: Label = null  # Creado en _ready
+var _objective_label: Label = null
 
 func _ready() -> void:
-	# Objective label (top-center of screen)
 	_objective_label = Label.new()
 	_objective_label.name = "ObjectiveLabel"
 	_objective_label.anchor_left = 0.5
@@ -35,43 +33,21 @@ func _ready() -> void:
 	_refresh_skill_hud()
 
 
-## set_objective(text) — llamado por MissionManager para mostrar el objetivo
-## de la misión activa en la HUD. Pasar "" para limpiar.
 func set_objective(text: String) -> void:
 	if _objective_label == null:
 		return
 	_objective_label.text = text
 	_objective_label.visible = text != ""
 
-# Por slot: [label_teclado, label_gamepad]. El HUD muestra ambos para que
-# el usuario sepa qué tecla/botón activa cada skill.
-#
-# Slots 0-3: face buttons SIN modifier (X/□/○/△ directos).
-# Slots 4-7: L1/R1 + face (modifier).
-#
-# Esquema de gamepad:
-#   X        → slot 0
-#   □        → slot 1
-#   ○        → slot 2
-#   △        → slot 3
-#   L1+X     → slot 4
-#   L1+□     → slot 5
-#   L1+○     → slot 6
-#   L1+△     → slot 7
-#   L2 held: block legacy.
-#
-# Esquema de teclado:
-#   1-4 → slots 0-3 (skills básicas, sin modifier)
-#   L1/R1 + 1-4 → slots 4-7 (skills especiales, con modifier)
 const SLOT_BINDINGS := [
-	{"kb": "1", "pad": "X"},        # cast_skill_1: tecla 1 / X
-	{"kb": "2", "pad": "□"},        # cast_skill_2: tecla 2 / □
-	{"kb": "3", "pad": "○"},        # cast_skill_3: tecla 3 / ○
-	{"kb": "4", "pad": "△"},        # cast_skill_4: tecla 4 / △
-	{"kb": "1+L1", "pad": "L1+X"},  # cast_skill_5: tecla 1 + L1 / L1 + X
-	{"kb": "2+L1", "pad": "L1+□"},  # cast_skill_6: tecla 2 + L1 / L1 + □
-	{"kb": "3+L1", "pad": "L1+○"},  # cast_skill_7: tecla 3 + L1 / L1 + ○
-	{"kb": "4+L1", "pad": "L1+△"},  # cast_skill_8: tecla 4 + L1 / L1 + △
+	{"kb": "1", "pad": "X"},
+	{"kb": "2", "pad": "□"},
+	{"kb": "3", "pad": "○"},
+	{"kb": "4", "pad": "△"},
+	{"kb": "1+L1", "pad": "L1+X"},
+	{"kb": "2+L1", "pad": "L1+□"},
+	{"kb": "3+L1", "pad": "L1+○"},
+	{"kb": "4+L1", "pad": "L1+△"},
 ]
 
 func _process(_delta: float) -> void:
@@ -94,7 +70,6 @@ func _build_skill_hud() -> void:
 		return
 	skill_hud = HBoxContainer.new()
 	skill_hud.name = "SkillHUD"
-	# Centrado en la parte inferior, ancho 720 (reducido), alto 56 (reducido).
 	skill_hud.anchor_left = 0.5
 	skill_hud.anchor_right = 0.5
 	skill_hud.anchor_top = 1.0
@@ -105,8 +80,6 @@ func _build_skill_hud() -> void:
 	skill_hud.offset_bottom = -12.0
 	skill_hud.add_theme_constant_override("separation", 3)
 	add_child(skill_hud)
-	# 8 slots: L1+X/□/○/△ (0-3) + R1+X/□/○/△ (4-7).
-	# Cada card reducida: 80x52. Separador entre L1 y R1.
 	for i in range(8):
 		var card := PanelContainer.new()
 		card.custom_minimum_size = Vector2(80, 52)
@@ -116,31 +89,26 @@ func _build_skill_hud() -> void:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 4)
 		vb.add_child(row)
-		# Icon más pequeño (10x10).
 		var icon := ColorRect.new()
 		icon.custom_minimum_size = Vector2(10, 10)
 		row.add_child(icon)
-		# Title corto, sin truncar.
 		var title := Label.new()
 		title.text = "Slot %d" % (i + 1)
 		title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		title.clip_text = true
 		title.add_theme_font_size_override("font_size", 10)
 		row.add_child(title)
-		# Binding: solo el pad label, sin kb (eso va en tooltip).
 		var bind := Label.new()
 		bind.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		bind.text = _pad_label_for_slot(i)
 		bind.add_theme_font_size_override("font_size", 9)
 		bind.modulate = Color(0.7, 0.7, 0.7)
 		vb.add_child(bind)
-		# Cooldown label pequeño.
 		var cd := Label.new()
 		cd.name = "CooldownLabel"
 		cd.text = "READY"
 		cd.add_theme_font_size_override("font_size", 9)
 		vb.add_child(cd)
-		# Separador visual entre grupo L1 (slots 0-3) y R1 (slots 4-7).
 		skill_hud.add_child(card)
 		if i == 3:
 			var sep := VSeparator.new()
@@ -148,8 +116,6 @@ func _build_skill_hud() -> void:
 		_skill_slots.append({"card": card, "icon": icon, "title": title, "bind": bind, "cd": cd, "slot": i})
 
 
-## Devuelve solo el pad label (sin la parte de teclado) para que el card
-## se vea compacto.
 func _pad_label_for_slot(slot_idx: int) -> String:
 	if slot_idx >= 0 and slot_idx < SLOT_BINDINGS.size():
 		return String(SLOT_BINDINGS[slot_idx]["pad"])

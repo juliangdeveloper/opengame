@@ -1,7 +1,6 @@
 extends Node
-## Sim controller: tracks elapsed time, prints end-of-sim stats, and quits after a fixed duration.
 
-@export var sim_duration := 180.0  # 3 minutes
+@export var sim_duration := 180.0
 @onready var bot: Node = get_parent().get_node_or_null("PlayerBot")
 
 var _t0_ms: int = 0
@@ -31,6 +30,5 @@ func _finish() -> void:
 			bot.stat_damage_dealt, bot.stat_damage_taken,
 			bot.stat_enemy_kills, bot.stat_player_deaths,
 		])
-	# Give a tiny moment for final prints
 	await get_tree().create_timer(0.2).timeout
 	get_tree().quit(0)

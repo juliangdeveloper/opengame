@@ -1,4 +1,3 @@
-## HoTComponent — Heal over time.
 class_name HoTComponent
 extends Node
 

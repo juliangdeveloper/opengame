@@ -1,30 +1,12 @@
 extends Node
 class_name MenuFocusable
-## D-pad auto-repeat component for any menu.
-##
-## Attach as a child of the menu (or any Control that should respond
-## to D-pad hold). Then connect signals:
-##   - on_step_up: Callable — fired once per D-up step
-##   - on_step_down: Callable — fired once per D-down step
-##   - on_step_left: Callable (optional) — fired once per D-left
-##   - on_step_right: Callable (optional) — fired once per D-right
-##
-## Behavior:
-##   - First press → 1 step immediately
-##   - Hold ≥ 0.2s → starts fast repeat (every 50ms)
-##   - Release → stops
-##
-## The first step is delivered to your handler via the standard input
-## flow (D-pad up/down/left/right already trigger Godot's built-in
-## ui_focus_prev/next/left/right). This node only delivers REPEAT
-## steps when the user holds.
 
-signal repeat_step(direction: String)  # "up" | "down" | "left" | "right"
+signal repeat_step(direction: String)
 
-const INITIAL_DELAY := 0.2  # seconds before fast repeat starts
-const INTERVAL := 0.05      # seconds between repeat steps
+const INITIAL_DELAY := 0.2
+const INTERVAL := 0.05
 
-var _press_times: Dictionary = {}  # direction (String) -> start time (float, -1 = not pressed)
+var _press_times: Dictionary = {}
 var _active_direction: String = ""
 var _last_step_time: float = -1.0
 var _enabled: bool = true
@@ -35,8 +17,6 @@ func _ready() -> void:
 	set_process(true)
 
 
-## Process a raw input event to track press/release.
-## Call this from the menu's _input or _unhandled_input.
 func feed_event(event: InputEvent) -> void:
 	if not _enabled:
 		return
@@ -45,13 +25,13 @@ func feed_event(event: InputEvent) -> void:
 	var now: float = Time.get_ticks_msec() / 1000.0
 	if event is InputEventJoypadButton:
 		match event.button_index:
-			11:  # D-up
+			11:
 				_press_times["up"] = now if event.pressed else -1.0
-			12:  # D-down
+			12:
 				_press_times["down"] = now if event.pressed else -1.0
-			13:  # D-left
+			13:
 				_press_times["left"] = now if event.pressed else -1.0
-			14:  # D-right
+			14:
 				_press_times["right"] = now if event.pressed else -1.0
 		if not event.pressed:
 			_active_direction = ""
@@ -72,7 +52,6 @@ func _process(_delta: float) -> void:
 	if not _enabled:
 		return
 	var now: float = Time.get_ticks_msec() / 1000.0
-	# Find the direction with the earliest press that has crossed the threshold
 	var chosen: String = ""
 	var chosen_start: float = -1.0
 	for dir in _press_times.keys():
@@ -88,7 +67,6 @@ func _process(_delta: float) -> void:
 	if chosen == "":
 		_last_step_time = -1.0
 		return
-	# Throttle: one step per INTERVAL
 	if _last_step_time >= 0.0 and (now - _last_step_time) < INTERVAL:
 		return
 	_last_step_time = now
