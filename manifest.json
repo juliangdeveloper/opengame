@@ -1,7 +1,7 @@
 {
   "name": "opengame",
   "short_name": "opengame",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Rulebook del mundo tejido.",
   "start_url": "./",
   "scope": "./",

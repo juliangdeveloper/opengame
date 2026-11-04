@@ -19,4 +19,4 @@ HTML, CSS y JavaScript vanilla, sin frameworks ni build. El rulebook vive en JSO
 ## Licencia
 MIT
 
-Versión actual: `opengame v0.1.0`.
+Versión actual: `opengame v0.1.1`.

@@ -1,11 +1,19 @@
 export const APP_ID = "opengame";
-export const APP_VERSION = "0.1.0";
+export const APP_VERSION = "0.1.1";
 export const PROYECTO = Object.freeze({
   objetivo: "El juego es este rulebook: cada acción del mundo tejido es una skill, y el Guía entrega las siguientes.",
   fase: 2,
   fase_estado: 1,
   fases_completadas: 1,
-  tipo: "proyecto"
+  tipo: "proyecto",
+  aportes: Object.freeze([
+    Object.freeze({ id: "programacion", aporte: 2, fuente: "creacion" }),
+    Object.freeze({ id: "juegos", aporte: 3, fuente: "creacion" }),
+    Object.freeze({ id: "datos", aporte: 2, fuente: "creacion" }),
+    Object.freeze({ id: "ux", aporte: 1, fuente: "creacion" }),
+    Object.freeze({ id: "lectura", aporte: 2, fuente: "uso" }),
+    Object.freeze({ id: "atencion", aporte: 1, fuente: "uso" })
+  ])
 });
 
 export const SECCIONES = Object.freeze([
