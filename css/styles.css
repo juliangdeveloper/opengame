@@ -1,0 +1,35 @@
+:root {
+  color-scheme: dark;
+  --bg: #100e16;
+  --panel: #1b1724;
+  --line: #3a3148;
+  --text: #f4efe6;
+  --dim: #b7ab9a;
+  --gold: #e6c56a;
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font: 16px/1.45 system-ui, sans-serif; }
+.app { height: 100dvh; display: flex; flex-direction: column; padding: var(--safe-t) 0 var(--safe-b); }
+.bar { flex: none; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 10px 16px 4px; }
+h1 { margin: 0; font-size: 1.25rem; }
+.badge { margin: 0; color: var(--gold); font-size: .82rem; }
+.secciones { flex: none; display: flex; gap: 8px; overflow-x: auto; padding: 8px 16px; scrollbar-width: none; }
+.secciones::-webkit-scrollbar { display: none; }
+.secciones button { flex: none; min-height: 44px; padding: 0 14px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--text); font: inherit; cursor: pointer; touch-action: manipulation; }
+.secciones button.on { background: var(--gold); color: #1a1408; border-color: var(--gold); }
+#hoja { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 8px 16px 20px; }
+h2 { margin: 4px 0 12px; font-size: 1.35rem; }
+h3 { margin: 16px 0 6px; font-size: 1.05rem; }
+p { margin: 0 0 10px; }
+.lore, .dim, .meta { color: var(--dim); }
+.ficha { margin: 0 0 12px; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+.ficha h3, .bloque h3 { margin-top: 0; }
+.pares { display: grid; grid-template-columns: minmax(88px, 34%) 1fr; gap: 6px 10px; margin: 0 0 12px; }
+dt { color: var(--gold); font-size: .82rem; }
+dd { margin: 0; }
+.muestra { display: inline-block; width: 14px; height: 14px; margin-right: 6px; border-radius: 4px; vertical-align: -2px; }
+ul { margin: 0 0 12px; padding-left: 1.2rem; }
+.cargando { color: var(--dim); }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }

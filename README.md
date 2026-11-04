@@ -1,24 +1,22 @@
-# 🤖 opengame
+# 📖 opengame
 
-> Prototipo de juego en Godot 4 diseñado desde un RuleBook en JSON: cada acción, de caminar a lanzar un proyectil, es una *skill*.
+**Browser rulebook of the Woven World: an isekai action RPG where every action is a skill.**
 
-**[▶ Ver el código](https://github.com/juliangdeveloper/opengame)** · prototipo, sin demo web por ahora
+> El juego es este rulebook: lo abres y lees el universo, sin instalar nada.
 
-## Qué es
-- `rulebook/` es la especificación del juego, independiente del motor: universo, sistemas (elementos, estados, stamina, progresión), skills, memorias de cada entidad, controles y escenas.
-- En Godot (`scripts/`, `scenes/`), cada acción del jugador es una skill hecha de átomos (aparecer, moverse, empujar, dañar) y definida como recurso en `data/skills/`; el mundo se carga desde `rulebook/scenes/`.
-- Los personajes y objetos son primitivas 3D con animación procedural, sin modelos ni rigs externos.
-- La idea de fondo es que un LLM pueda crear y equilibrar skills como Dungeon Master. Esa primera versión, con su puente MCP, está guardada en [`_legacy/`](_legacy/).
+**[▶ Ver el rulebook](https://juliangdeveloper.github.io/opengame/)**
 
-## Cómo probarlo
-- Abre la carpeta en **Godot 4.6** y ejecuta la escena principal (`scenes/play.tscn`).
-- Teclado y mouse: `WASD` caminar, mouse para la cámara (`Esc` libera el cursor), `Space` saltar, `F` golpe y `Q` proyectil. También funciona con gamepad.
+## Cómo se usa
+- Elige una parte: universo, personajes, elementos, skills, memorias, controles o la escena.
+- El texto sale del JSON de `rulebook/`. El mundo es un tapiz: caminar, mirar y lanzar un hechizo son skills.
+- El Guía existe entre mundos y entrega las skills. Al nacer, el personaje solo puede verlo.
+- Nueve elementos, un mismo pozo de puntos y el aguante limitan lo que se puede hacer.
+- La página cabe en el celular; el texto de cada parte se desplaza dentro de la pantalla.
 
 ## Stack
-Godot 4.6 (GDScript) y especificación del juego en JSON.
+HTML, CSS y JavaScript vanilla, sin frameworks ni build. El rulebook vive en JSON.
 
----
+## Licencia
+MIT
 
-Más proyectos: https://juliangdeveloper.github.io/
-
-Hecho con ❤️ y 🗡️
+Versión actual: `opengame v0.1.0`.
