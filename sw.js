@@ -1,12 +1,12 @@
-const CACHE = "opengame-v0.1.1";
+const CACHE = "opengame-v0.1.2";
 const ASSETS = [
   "./",
   "./index.html",
-  "./css/styles.css?v=0.1.1",
+  "./css/styles.css?v=0.1.2",
   "./js/config.js",
   "./js/meta.js",
-  "./js/app.js?v=0.1.1",
-  "./manifest.json?v=0.1.1",
+  "./js/app.js?v=0.1.2",
+  "./manifest.json?v=0.1.2",
   "./favicon.svg",
   "./rulebook/rulebook.json",
   "./rulebook/universe/lore.json",

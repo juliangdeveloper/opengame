@@ -2,6 +2,9 @@ import { APP_ID, APP_VERSION, PROYECTO } from "./config.js";
 
 const CLAVE = "meta.v1." + APP_ID;
 
+const APORTE_STAT_MAX = 32;
+const APORTE_EXP_MAX = 99;
+
 function aportesValidos(lista) {
   if (!Array.isArray(lista)) return null;
   const out = [];
@@ -9,17 +12,17 @@ function aportesValidos(lista) {
   for (let i = 0; i < lista.length; i++) {
     const it = lista[i];
     if (!it || typeof it !== "object" || Array.isArray(it)) return null;
-    const id = it.id;
+    const stat = it.stat;
+    const exp = it.exp;
     const fuente = it.fuente;
-    const aporte = it.aporte;
-    if (typeof id !== "string" || !/^[a-z][a-z0-9]*$/.test(id)) return null;
+    if (typeof stat !== "string" || !stat.trim() || stat !== stat.trim() || Array.from(stat).length > APORTE_STAT_MAX) return null;
     if (fuente !== "creacion" && fuente !== "uso") return null;
-    if (!Number.isInteger(aporte) || aporte < 1 || aporte > 3) return null;
-    const key = id + "\n" + fuente;
+    if (!(Number.isInteger(exp) && exp >= 1 && exp <= APORTE_EXP_MAX)) return null;
+    const key = stat + "\n" + fuente;
     if (seen[key]) return null;
     if (Object.keys(it).length !== 3) return null;
     seen[key] = true;
-    out.push({ id, aporte, fuente });
+    out.push({ stat: stat, exp: exp, fuente: fuente });
   }
   return out;
 }

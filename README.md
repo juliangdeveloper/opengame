@@ -6,6 +6,8 @@
 
 **[▶ Ver el rulebook](https://juliangdeveloper.github.io/opengame/)**
 
+<img src="assets/screenshot.png" alt="Primera sección del rulebook de opengame en el celular" width="320">
+
 ## Cómo se usa
 - Elige una parte: universo, personajes, elementos, skills, memorias, controles o la escena.
 - El texto sale del JSON de `rulebook/`. El mundo es un tapiz: caminar, mirar y lanzar un hechizo son skills.
@@ -15,8 +17,9 @@
 
 ## Stack
 HTML, CSS y JavaScript vanilla, sin frameworks ni build. El rulebook vive en JSON.
+Al abrirse guarda el progreso en `localStorage` (`meta.v1.opengame`), que lee el [portafolio](https://juliangdeveloper.github.io/).
 
 ## Licencia
 MIT
 
-Versión actual: `opengame v0.1.1`.
+Versión actual: `opengame v0.1.2`.
