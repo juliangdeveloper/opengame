@@ -23,3 +23,9 @@ Al abrirse guarda el progreso en `localStorage` (`meta.v1.opengame`), que lee el
 MIT
 
 Versión actual: `opengame v0.1.2`.
+
+---
+
+Más proyectos: https://juliangdeveloper.github.io/
+
+Hecho con ❤️ y 📖
