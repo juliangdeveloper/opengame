@@ -22,7 +22,7 @@ Al abrirse guarda el progreso en `localStorage` (`meta.v1.opengame`), que lee el
 ## Licencia
 MIT
 
-Versión actual: `opengame v0.1.2`.
+Versión actual: `opengame v0.1.3`.
 
 ---
 

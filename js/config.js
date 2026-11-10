@@ -1,5 +1,5 @@
 export const APP_ID = "opengame";
-export const APP_VERSION = "0.1.2";
+export const APP_VERSION = "0.1.3";
 export const PROYECTO = Object.freeze({
   objetivo: "El juego es este rulebook: cada acción del mundo tejido es una skill, y el Guía entrega las siguientes.",
   fase: 2,
